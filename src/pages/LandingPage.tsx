@@ -148,7 +148,7 @@ const navData = {
             {
                 heading: 'Company',
                 items: [
-                    { icon: <Building2 size={16} />, label: 'About Lumina URP', href: '/dashboard' },
+                    { icon: <Building2 size={16} />, label: 'About CampusCore URP', href: '/dashboard' },
                     { icon: <Briefcase size={16} />, label: 'Careers', href: '/dashboard' },
                     { icon: <Globe size={16} />, label: 'Blog & Case Studies', href: '/dashboard' },
                     { icon: <Phone size={16} />, label: 'Contact Sales', href: '/dashboard' },
@@ -254,7 +254,7 @@ const LandingPage = () => {
                             <LibraryBig size={18} color="#ffffff" />
                         </div>
                         <span className="text-lg font-bold text-text-primary tracking-tight">
-                            Lumina <span className="text-accent-primary font-medium">URP</span>
+                            CampusCore <span className="text-accent-primary font-medium">URP</span>
                         </span>
                     </div>
 
@@ -269,9 +269,6 @@ const LandingPage = () => {
                     <div className="flex items-center gap-3">
                         <Link to="/login" className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors px-3 py-2">
                             Sign In
-                        </Link>
-                        <Link to="/signup" className="px-4 py-2 rounded-md bg-accent-primary text-white text-sm font-semibold hover:bg-[#1661a3] transition-colors shadow-sm">
-                            Sign up now
                         </Link>
                     </div>
                 </div>
@@ -291,12 +288,12 @@ const LandingPage = () => {
                                 <span className="text-accent-primary">mapped to real operations</span>
                             </h1>
                             <p className="text-text-secondary text-lg leading-relaxed mb-10 max-w-xl">
-                                Lumina URP is structured around the actual sequence of university operations, supporting each stage from student enrollment and planning through examination, quality control, and placement.
+                                CampusCore URP is structured around the actual sequence of university operations, supporting each stage from student enrollment and planning through examination, quality control, and placement.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link to="/signup" className="flex items-center justify-center px-7 py-3 rounded-md bg-accent-primary text-white font-semibold hover:bg-[#1661a3] transition-colors shadow-sm">
-                                    Get started free
-                                </Link>
+                                <a href="#pricing" className="flex items-center justify-center px-7 py-3 rounded-md bg-accent-primary text-white font-semibold hover:bg-[#1661a3] transition-colors shadow-sm">
+                                    View Pricing Plans
+                                </a>
                                 <button className="px-7 py-3 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors">
                                     View demo
                                 </button>
@@ -347,11 +344,96 @@ const LandingPage = () => {
                     </div>
                 </section>
 
+                {/* Pricing Section */}
+                <section id="pricing" className="bg-bg-secondary border-b border-border-color py-20">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12">
+                        <div className="text-center mb-14">
+                            <h2 className="text-3xl font-bold text-text-primary mb-4">Transparent Pricing for Every Institution</h2>
+                            <p className="text-text-secondary max-w-xl mx-auto">Start with a plan that fits your campus size, and upgrade as your student body grows.</p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                            {/* Starter Plan */}
+                            <div className="border border-border-color rounded-xl bg-bg-primary p-8 flex flex-col hover:border-accent-primary/40 transition-all">
+                                <h3 className="text-xl font-bold text-text-primary">Starter Plan</h3>
+                                <p className="text-sm text-text-secondary mt-2 mb-6">Ideal for small or emerging colleges.</p>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-bold text-text-primary">Free</span>
+                                    <span className="text-text-secondary"> /year</span>
+                                </div>
+                                <ul className="space-y-4 mb-8 flex-1">
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Up to 1,000 Students</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Core Academic Modules</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Standard Examination Setup</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Email Support</li>
+                                </ul>
+                                <div className="mt-auto space-y-3">
+                                    <Link to="/signup?plan=starter&duration=yearly" className="w-full block text-center py-2.5 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors text-sm">
+                                        Select Yearly
+                                    </Link>
+                                    <Link to="/signup?plan=starter&duration=5year" className="w-full block text-center py-2.5 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors text-sm">
+                                        Select 5 Year
+                                    </Link>
+                                </div>
+                            </div>
+                            
+                            {/* Autonomous College */}
+                            <div className="border-2 border-accent-primary rounded-xl bg-bg-primary p-8 flex flex-col relative shadow-lg transform md:-translate-y-4">
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent-primary text-white text-xs font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
+                                    Most Popular
+                                </div>
+                                <h3 className="text-xl font-bold text-accent-primary">Autonomous College</h3>
+                                <p className="text-sm text-text-secondary mt-2 mb-6">For established mid-sized universities.</p>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-bold text-text-primary">$2,499</span>
+                                    <span className="text-text-secondary"> /year</span>
+                                </div>
+                                <ul className="space-y-4 mb-8 flex-1">
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Up to 5,000 Students</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> All Core & Advanced Modules</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Placements & Alumni Network</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Analytics Dashboard</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Priority 24/7 Support</li>
+                                </ul>
+                                <div className="mt-auto space-y-3">
+                                    <Link to="/signup?plan=autonomous&duration=yearly" className="w-full block text-center py-2.5 rounded-md bg-accent-primary text-white font-semibold hover:bg-[#1661a3] transition-colors shadow-sm text-sm">
+                                        Select Yearly
+                                    </Link>
+                                    <Link to="/signup?plan=autonomous&duration=5year" className="w-full block text-center py-2.5 rounded-md bg-white text-accent-primary border border-accent-primary font-semibold hover:bg-bg-secondary transition-colors text-sm">
+                                        Select 5 Year
+                                    </Link>
+                                </div>
+                            </div>
+
+                            {/* Enterprise Plan */}
+                            <div className="border border-border-color rounded-xl bg-bg-primary p-8 flex flex-col hover:border-accent-primary/40 transition-all">
+                                <h3 className="text-xl font-bold text-text-primary">Enterprises</h3>
+                                <p className="text-sm text-text-secondary mt-2 mb-6">For large multi-campus university systems.</p>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-bold text-text-primary">Custom</span>
+                                </div>
+                                <ul className="space-y-4 mb-8 flex-1">
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Unlimited Students</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Full Suite Access</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Custom API Integrations</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Dedicated Account Manager</li>
+                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> On-Premise Deployment Option</li>
+                                </ul>
+                                <div className="mt-auto">
+                                    <Link to="/signup?plan=enterprise&duration=custom" className="w-full block text-center py-3 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors">
+                                        Contact Team
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* CTA */}
                 <section className="bg-accent-primary">
                     <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 text-center">
                         <h2 className="text-3xl font-bold text-white mb-4">Ready to digitize your university?</h2>
-                        <p className="text-white/80 mb-8 max-w-lg mx-auto">Join hundreds of institutions already using Lumina URP to streamline their operations.</p>
+                        <p className="text-white/80 mb-8 max-w-lg mx-auto">Join hundreds of institutions already using CampusCore URP to streamline their operations.</p>
                         <Link to="/signup" className="inline-block px-8 py-3.5 bg-white text-accent-primary font-bold rounded-md hover:bg-bg-secondary transition-colors shadow-sm">
                             Sign in to your portal
                         </Link>
@@ -360,7 +442,7 @@ const LandingPage = () => {
             </main>
 
             <footer className="border-t border-border-color bg-bg-primary py-8 text-center text-text-muted text-sm">
-                <p>© {new Date().getFullYear()} Lumina URP System. All rights reserved.</p>
+                <p>© {new Date().getFullYear()} CampusCore URP System. All rights reserved.</p>
             </footer>
         </div>
     );

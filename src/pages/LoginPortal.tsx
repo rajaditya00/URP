@@ -67,7 +67,7 @@ const LoginPortal = () => {
                     <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center">
                         <LibraryBig size={20} className="text-accent-primary" />
                     </div>
-                    <span className="text-white text-xl font-bold tracking-tight">Lumina <span className="font-light opacity-80">URP</span></span>
+                    <span className="text-white text-xl font-bold tracking-tight">CampusCore <span className="font-light opacity-80">URP</span></span>
                 </Link>
 
                 <div className="z-10 relative">
@@ -92,7 +92,7 @@ const LoginPortal = () => {
                     </div>
                 </div>
 
-                <p className="text-white/40 text-xs z-10 relative">© {new Date().getFullYear()} Lumina URP System</p>
+                <p className="text-white/40 text-xs z-10 relative">© {new Date().getFullYear()} CampusCore URP System</p>
             </div>
 
             {/* Right Panel — Form */}
@@ -103,7 +103,7 @@ const LoginPortal = () => {
                         <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center">
                             <LibraryBig size={18} color="#fff" />
                         </div>
-                        <span className="font-bold text-text-primary">Lumina URP</span>
+                        <span className="font-bold text-text-primary">CampusCore URP</span>
                     </Link>
                 </div>
 
@@ -202,7 +202,7 @@ const LoginPortal = () => {
 
                                 <p className="text-center text-xs text-text-muted pt-2 flex items-center justify-center gap-1.5">
                                     <ShieldCheck size={13} className="text-status-success" />
-                                    Secured by Lumina Enterprise Security
+                                    Secured by CampusCore Enterprise Security
                                 </p>
                             </form>
                         </div>

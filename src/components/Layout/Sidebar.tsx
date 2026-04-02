@@ -44,7 +44,7 @@ const Sidebar = () => {
           <LibraryBig size={18} color="#fff" />
         </div>
         <span className="text-base font-bold text-text-primary tracking-tight">
-          Lumina <span className="text-accent-primary font-medium">URP</span>
+          CampusCore <span className="text-accent-primary font-medium">URP</span>
         </span>
       </div>
 

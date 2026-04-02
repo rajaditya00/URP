@@ -321,7 +321,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
     const [selPaper, setSelPaper] = useState('');
     const [totalMarks, setTotalMarks] = useState('100');
     const [duration, setDuration] = useState('3');
-    const [institute, setInstitute] = useState('Lumina University');
+    const [institute, setInstitute] = useState('CampusCore University');
     const [examTitle, setExamTitle] = useState('');
     const [sectConfig, setSectConfig] = useState<{ type: QuestionType; diff: Difficulty | ''; count: string }[]>([
         { type: 'objective', diff: 'easy', count: '10' },

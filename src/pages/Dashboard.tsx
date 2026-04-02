@@ -6,7 +6,10 @@ const Dashboard = () => {
     <div className="flex flex-col gap-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-border-color">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">University Overview</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-2xl font-bold text-text-primary">University Overview</h1>
+            <span className="px-2 py-0.5 rounded border border-accent-primary/30 bg-accent-primary/10 text-accent-primary text-[10px] font-bold uppercase tracking-wider">Professional Plan</span>
+          </div>
           <p className="text-sm text-text-secondary">Welcome back, Admin. Here's what's happening today.</p>
         </div>
         <button className="primary-btn shrink-0">Generate Report</button>

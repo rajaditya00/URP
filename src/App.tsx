@@ -3,6 +3,10 @@ import Layout from './components/Layout/Layout';
 import LandingPage from './pages/LandingPage';
 import LoginPortal from './pages/LoginPortal';
 import Signup from './pages/Signup';
+import UniversityPortal from './pages/UniversityPortal';
+import SystemAdminDashboard from './pages/SystemAdminDashboard';
+import UniversityLogin from './pages/UniversityLogin';
+import UniAdminDashboard from './pages/UniAdminDashboard';
 
 import Dashboard from './pages/Dashboard';
 import Academic from './pages/Academic';
@@ -27,6 +31,10 @@ function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPortal />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/portal/:uniSlug" element={<UniversityPortal />} />
+      <Route path="/system-admin" element={<SystemAdminDashboard />} />
+      <Route path="/university-login" element={<UniversityLogin />} />
+      <Route path="/uni-admin/dashboard" element={<UniAdminDashboard />} />
 
       {/* Protected Routes (Require Authentication in Real App) */}
       <Route element={<Layout />}>
