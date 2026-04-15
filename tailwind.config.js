@@ -9,8 +9,8 @@ export default {
       colors: {
         bg: {
           primary: '#ffffff', // Pure white background
-          secondary: '#f9fbfd', // Very light blue-gray for slight offset panels
-          tertiary: '#f4f6f8', // Slightly darker gray for hover states
+          secondary: '#f1f5f9', // More visible light slate
+          tertiary: '#e2e8f0', // Slightly darker slate for hover states
         },
         accent: {
           primary: '#1d72b8', // Zoho Blue
@@ -23,8 +23,8 @@ export default {
           muted: '#94a3b8', // Light slate for disabled/muted text
         },
         border: {
-          color: '#e2e8f0', // Crisp light gray border
-          highlight: '#cbd5e1', // Slightly darker for hover borders
+          color: '#94a3b8', // Strong, clear dark slate border
+          highlight: '#64748b', // Darker slate for hover borders
         },
         status: {
           success: '#10b981',
@@ -57,6 +57,9 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         }
+      },
+      borderWidth: {
+        DEFAULT: '2px',
       }
     },
   },

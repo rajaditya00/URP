@@ -13,8 +13,11 @@ import {
   Microscope,
   CalendarCheck,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  BookOpen,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const coreNav = [
   { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -33,9 +36,12 @@ const featureNav = [
   { path: '/research-hub', label: 'Research Hub', icon: <Microscope size={18} /> },
   { path: '/facilities', label: 'Book Facilities', icon: <CalendarCheck size={18} /> },
   { path: '/grievance', label: 'Grievances', icon: <AlertTriangle size={18} /> },
+  { path: '/e-learning', label: 'E-Learning', icon: <BookOpen size={18} /> },
 ];
 
 const Sidebar = () => {
+  const { user, logout } = useAuth();
+
   return (
     <aside className="w-64 h-screen flex flex-col border-r border-border-color bg-bg-primary flex-shrink-0 overflow-hidden">
       {/* Logo */}
@@ -111,13 +117,18 @@ const Sidebar = () => {
 
       {/* User Footer */}
       <div className="px-3 py-4 border-t border-border-color flex-shrink-0">
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-bg-secondary cursor-pointer transition-colors">
-          <div className="w-8 h-8 rounded-full bg-accent-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-            A
-          </div>
-          <div className="overflow-hidden flex-1 min-w-0">
-            <p className="text-sm font-semibold text-text-primary truncate">Admin User</p>
-            <p className="text-xs text-text-muted truncate">Super Admin</p>
+        <div className="flex items-center justify-between group">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-bg-secondary w-full transition-colors">
+            <div className="w-8 h-8 rounded-full bg-accent-primary flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+              {user?.name?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div className="overflow-hidden flex-1 min-w-0">
+              <p className="text-sm font-semibold text-text-primary truncate">{user?.name || 'Loading...'}</p>
+              <p className="text-xs text-text-muted truncate">{user?.role || 'Authenticating'}</p>
+            </div>
+            <button onClick={logout} title="Sign Out" className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+               <LogOut size={16} />
+            </button>
           </div>
         </div>
       </div>

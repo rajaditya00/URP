@@ -1,4 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import AuthModal from './components/AuthModal';
 import Layout from './components/Layout/Layout';
 import LandingPage from './pages/LandingPage';
 import LoginPortal from './pages/LoginPortal';
@@ -23,10 +25,15 @@ import FacultyDirectory from './pages/FacultyDirectory';
 import ResearchHub from './pages/ResearchHub';
 import Facilities from './pages/Facilities';
 import Grievance from './pages/Grievance';
+import ELearning from './pages/ELearning';
+import CourseDetail from './pages/CourseDetail';
+
+// AuthModal is decoupled intentionally from global blocking
 
 function App() {
   return (
-    <Routes>
+    <AuthProvider>
+      <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPortal />} />
@@ -53,10 +60,13 @@ function App() {
         <Route path="/research-hub" element={<ResearchHub />} />
         <Route path="/facilities" element={<Facilities />} />
         <Route path="/grievance" element={<Grievance />} />
+        <Route path="/e-learning" element={<ELearning />} />
+        <Route path="/e-learning/:courseId" element={<CourseDetail />} />
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>
+    </AuthProvider>
   );
 }
 

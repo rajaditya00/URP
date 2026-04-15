@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { Mail, Lock } from 'lucide-react';
 
 const SystemAdminDashboard = () => {
+    const { user, login } = useAuth();
+    
+    const [email, setEmail] = useState('');
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpToken, setOtpToken] = useState('');
+    const [waitMsg, setWaitMsg] = useState('');
+
     const [tab, setTab] = useState<'pending' | 'verified'>('pending');
     const [pendingUnis, setPendingUnis] = useState<any[]>([]);
     const [verifiedUnis, setVerifiedUnis] = useState<any[]>([]);
@@ -49,6 +58,63 @@ const SystemAdminDashboard = () => {
             alert('Failed to connect to server');
         }
     };
+
+    if (user?.role !== 'SYSTEM_ADMIN') {
+        return (
+            <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center font-body p-4">
+               <div className="bg-white p-8 rounded-xl shadow-lg border border-border-color max-w-md w-full animate-slide-up text-center">
+                  <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent-primary">
+                     <Lock size={28} />
+                  </div>
+                  <h1 className="text-2xl font-bold text-text-primary mb-2">System Admin Locked</h1>
+                  <p className="text-sm text-text-secondary mb-6">Enter your administrator email to receive a secure OTP code.</p>
+                  
+                  {waitMsg && <p className="text-xs font-bold text-[#16a34a] bg-[#f0fdf4] p-3 rounded-lg border border-[#bbf7d0] mb-4">{waitMsg}</p>}
+
+                  {!otpSent ? (
+                     <div className="space-y-4 text-left">
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Admin Email</label>
+                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-sm" placeholder="admin@system.com" />
+                        </div>
+                        <button onClick={async () => {
+                            if(!email) return alert('Enter email');
+                            const res = await fetch('http://localhost:5000/api/auth/system-admin/send-otp', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
+                            });
+                            const data = await res.json();
+                            alert(data.msg);
+                            setOtpSent(true);
+                            setWaitMsg('OTP generated successfully. (If disconnected, look at the running Terminal logs to view the OTP key natively).');
+                        }} className="w-full py-2.5 bg-text-primary hover:bg-black text-white font-bold text-sm rounded-lg transition-colors">
+                           Request OTP Code
+                        </button>
+                     </div>
+                  ) : (
+                     <div className="space-y-4 text-left">
+                        <div>
+                          <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Enter 6-Digit OTP</label>
+                          <input type="text" value={otpToken} onChange={e => setOtpToken(e.target.value)} className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-sm tracking-[0.2em] font-mono font-bold text-center" placeholder="• • • • • •" />
+                        </div>
+                        <button onClick={async () => {
+                            const res = await fetch('http://localhost:5000/api/auth/system-admin/verify-otp', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, otp: otpToken })
+                            });
+                            const data = await res.json();
+                            if(res.ok) {
+                                login(data.token, data.user);
+                            } else {
+                                alert(data.msg);
+                            }
+                        }} className="w-full py-2.5 bg-accent-primary hover:bg-accent-secondary text-white font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
+                           <Mail size={16} /> Verify & Access Dashboard
+                        </button>
+                     </div>
+                  )}
+               </div>
+            </div>
+        );
+    }
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center font-body">
