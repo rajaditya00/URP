@@ -313,7 +313,7 @@ const SystemAdminDashboard = () => {
                                                 </div>
                                                 <div className="pt-2 border-t border-green-200 text-[#15803d]">
                                                     <p className="text-[10px] uppercase font-bold tracking-tight mb-1">Login Password</p>
-                                                    <p className="italic text-xs">The password set during registration.</p>
+                                                    <p className="font-mono text-sm font-bold text-[#16a34a] break-all">{uni.generatedPassword || 'Not Available'}</p>
                                                 </div>
                                             </div>
                                         ) : (

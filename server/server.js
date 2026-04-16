@@ -28,12 +28,14 @@ const universityRoutes = require('./routes/university');
 const academicRoutes = require('./routes/academic');
 const placementRoutes = require('./routes/placements');
 const examinationRoutes = require('./routes/examinations');
-const noticeRoutes = require('./routes/notices');
+const noticeRoutes = require('./routes/notice'); // Updated to use the new targeted notice route
+const resultRoutes = require('./routes/result');
 const eventRoutes = require('./routes/events');
 const collegeRoutes = require('./routes/colleges');
 const facilityRoutes = require('./routes/facilitys');
 const grievanceRoutes = require('./routes/grievances');
 const elearningRoutes = require('./routes/elearning');
+const memberRoutes = require('./routes/members');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/university', universityRoutes);
@@ -41,12 +43,13 @@ app.use('/api/academic', academicRoutes);
 app.use('/api/placement', placementRoutes);
 app.use('/api/examination', examinationRoutes);
 app.use('/api/notice', noticeRoutes);
+app.use('/api/result', resultRoutes);
 app.use('/api/event', eventRoutes);
 app.use('/api/college', collegeRoutes);
 app.use('/api/facility', facilityRoutes);
 app.use('/api/grievances', grievanceRoutes);
 app.use('/api/elearning', elearningRoutes);
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/members', memberRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

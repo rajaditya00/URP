@@ -49,12 +49,13 @@ router.post('/register', upload.fields([
     // Create the SUPER_ADMIN user immediately using the signup password
     // so the university can log in right away using their signup credentials.
     // Access is gated by uni.status (pending_verification → active after System Admin approval).
+    // Password hashing is handled by User model pre-save hook.
     const existingUser = await User.findOne({ email });
     if (!existingUser) {
       const adminUser = new User({
         university: uni._id,
         email,
-        password,           // bcrypt pre-save hook will hash this automatically
+        password,
         role: 'SUPER_ADMIN',
         name: universityName
       });
@@ -124,66 +125,105 @@ router.put('/:id/validate', async (req, res) => {
 
     uni.status = 'active';
 
-    // Generate Unique ID: [Name Initial][State Initial] + 6 random digits
+    // Generate Unique University ID: [Name Initial][State Initial] + 6 random digits
     // e.g., "Delhi University" in "Delhi" -> "DD847261"
     const nameInitial = uni.name.trim().charAt(0).toUpperCase();
     const stateInitial = uni.state ? uni.state.trim().charAt(0).toUpperCase() : 'X';
-    
-    const prefix = `${nameInitial}${stateInitial}`;
-    const numericPart = Math.floor(100000 + Math.random() * 900000); // 6 digits
-    const generatedPassword = `${prefix}${numericPart}`;
+    const universityId = `${nameInitial}${stateInitial}${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Store credential on the university record so it appears in the Admin Dashboard
-    uni.generatedCredential = generatedPassword;
+    // Generate a login password: UN + 6 random alphanumeric chars
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let loginPassword = 'UN';
+    for (let i = 0; i < 6; i++) loginPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+
+    // Store University ID and initial password on the university record for Admin view
+    uni.generatedCredential = universityId;
+    uni.generatedPassword = loginPassword;
     await uni.save();
 
-    // User was already created during signup — just update name if needed
+    // Find or create the admin user and SET the new generated password
     let adminUser = await User.findOne({ email: uni.email, role: 'SUPER_ADMIN' });
-    if (!adminUser) {
-      // Fallback: create user if somehow missing
+    if (adminUser) {
+      adminUser.password = loginPassword; // pre-save hook will hash
+      await adminUser.save();
+    } else {
       adminUser = new User({
         university: uni._id,
         email: uni.email,
-        password: generatedPassword,
+        password: loginPassword,
         role: 'SUPER_ADMIN',
         name: uni.name
       });
       await adminUser.save();
     }
 
-    // Dispatch Credentials via Nodemailer
-    const message = `Hello, ${uni.name}!
+    // Dispatch Credentials via Email with Welcome Message
+    const portalUrl = `http://localhost:5173/portal/${encodeURIComponent(uni.name)}`;
+    const loginUrl = 'http://localhost:5173/university-login';
 
-Congratulations! Your university has been verified and approved on CampusCore URP.
+    const message = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  🎓 Welcome to CampusCore URP!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-========================================
-  YOUR UNIVERSITY ACCESS DETAILS
-========================================
+Hello, ${uni.name}!
 
-  University ID  : ${generatedPassword}
-  Login Email    : ${uni.email}
-  Password       : Your registration password
+Congratulations! Your university has been successfully verified and approved on CampusCore URP — the unified platform for managing your entire academic ecosystem.
 
-  Portal URL     : http://localhost:5173/portal/${encodeURIComponent(uni.name)}
-  Login URL      : http://localhost:5173/university-login
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  YOUR UNIVERSITY LOGIN CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-========================================
+  🆔  University ID  :  ${universityId}
+  📧  Login Email    :  ${uni.email}
+  🔑  Password       :  ${loginPassword}
 
-Note:
-- Use the email and password you provided during registration to sign in.
-- Your University ID (${generatedPassword}) is your unique reference number on CampusCore.
-- If you forgot your password, use the "Forgot Password" option on the login page.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  YOUR PORTAL LINKS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Welcome aboard!
-CampusCore URP Team`;
+  🌐  University Portal  :  ${portalUrl}
+  🔐  Admin Login Page   :  ${loginUrl}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  WHAT YOU CAN DO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅  Create and manage affiliated colleges
+  ✅  Assign module-level permissions to each college
+  ✅  Monitor university-wide analytics
+  ✅  Change your password anytime after login
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  Important:
+- Use the email and password above to sign in at the Admin Login Page.
+- Your University ID (${universityId}) is your unique reference number.
+- You can change your password after logging in for security.
+
+Welcome aboard! 🚀
+— The CampusCore URP Team
+`;
 
     await sendEmail({
       email: uni.email,
-      subject: 'CampusCore - University Approved & Credentials Issued',
+      subject: '🎓 Welcome to CampusCore URP — Your University Credentials',
       message: message
     });
 
-    res.status(200).json({ message: 'University validated and credentials successfully dispatched globally.' });
+    console.log('============================================');
+    console.log('🎓 UNIVERSITY CREDENTIALS DISPATCHED');
+    console.log(`   University  : ${uni.name}`);
+    console.log(`   Uni ID      : ${universityId}`);
+    console.log(`   Email       : ${uni.email}`);
+    console.log(`   Password    : ${loginPassword}`);
+    console.log(`   Portal      : ${portalUrl}`);
+    console.log('============================================');
+
+    res.status(200).json({
+      message: 'University verified! Credentials dispatched via email.',
+      credentials: { universityId, email: uni.email, password: loginPassword, portalUrl }
+    });
 
   } catch (error) {
     res.status(500).json({ error: error.message });

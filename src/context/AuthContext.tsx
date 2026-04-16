@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type UserRole = 'UNIVERSITY' | 'COLLEGE' | 'PROFESSOR' | 'STUDENT';
+type UserRole = 'SYSTEM_ADMIN' | 'SUPER_ADMIN' | 'COLLEGE' | 'PROFESSOR' | 'STUDENT';
 
 interface User {
   id: string;
@@ -20,14 +20,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   token: null,
-  login: () => {},
-  logout: () => {},
+  login: () => { },
+  logout: () => { },
   isAuthenticated: false,
 });
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 

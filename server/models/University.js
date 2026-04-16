@@ -21,6 +21,8 @@ const universitySchema = new mongoose.Schema({
   auditoriumImages: [{ type: String }],
   affiliationDocUrl: { type: String },
   affiliationDocBase64: { type: String }, // User requested string form storage
+  generatedCredential: { type: String }, // University ID
+  generatedPassword: { type: String },   // Initial generated password
   createdAt: { type: Date, default: Date.now }
 });
 

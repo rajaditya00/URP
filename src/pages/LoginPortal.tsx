@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
     LibraryBig, GraduationCap, Building2, UserCircle2, ArrowRight,
     ShieldCheck, Mail, Lock, ChevronLeft, BookOpen, BarChart3, FileText, Users
@@ -47,11 +48,109 @@ const highlights = [
 
 const LoginPortal = () => {
     const [selectedTier, setSelectedTier] = useState<LoginTier>(null);
-    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    // Forgot password states
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
+    const [otpSent, setOtpSent] = useState(false);
+    const [otpToken, setOtpToken] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmNewPassword, setConfirmNewPassword] = useState('');
+
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        navigate('/dashboard');
+        setError('');
+        setLoading(true);
+
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                setError(data.msg || 'Invalid credentials. Please check your email and password.');
+                setLoading(false);
+                return;
+            }
+
+            login(data.token, data.user);
+            navigate('/dashboard');
+        } catch (err) {
+            setError('Cannot connect to server. Make sure the backend is running on port 5000.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgotPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setSuccessMsg('');
+        if (!email) return setError('Please enter your email address to reset your password.');
+        setLoading(true);
+
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.msg);
+            } else {
+                setSuccessMsg(data.msg);
+                setOtpSent(true);
+            }
+        } catch (err) {
+            setError('Cannot connect to server.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetPassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setSuccessMsg('');
+        if (newPassword !== confirmNewPassword) return setError('New passwords do not match.');
+        if (newPassword.length < 6) return setError('New password must be at least 6 characters.');
+        setLoading(true);
+
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp: otpToken, newPassword }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setError(data.msg);
+            } else {
+                setSuccessMsg(data.msg);
+                setOtpSent(false);
+                setIsForgotPassword(false);
+                setOtpToken('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setPassword('');
+            }
+        } catch (err) {
+            setError('Cannot connect to server.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -113,14 +212,14 @@ const LoginPortal = () => {
                         <div className="w-full max-w-lg animate-slide-up">
                             <div className="mb-10">
                                 <h1 className="text-3xl font-bold text-text-primary mb-2">Select your portal</h1>
-                                <p className="text-text-secondary">Choose your access level to sign in.</p>
+                                <p className="text-text-secondary">Choose your access level to sign in with your issued credentials.</p>
                             </div>
 
                             <div className="space-y-3">
                                 {tiers.map(tier => (
                                     <button
                                         key={tier.id}
-                                        onClick={() => setSelectedTier(tier.id)}
+                                        onClick={() => { setSelectedTier(tier.id); setError(''); }}
                                         className="w-full flex items-center gap-5 p-5 border border-border-color rounded-lg bg-bg-primary hover:border-accent-primary hover:bg-bg-secondary transition-all text-left group"
                                     >
                                         <div className="w-11 h-11 rounded-md border border-border-color bg-bg-secondary flex items-center justify-center flex-shrink-0 group-hover:border-accent-primary/30 transition-colors">
@@ -138,19 +237,35 @@ const LoginPortal = () => {
                                 ))}
                             </div>
 
-                            <p className="mt-8 text-center text-text-secondary text-sm">
-                                Need help?{' '}
-                                <a href="#" className="text-accent-primary font-semibold hover:underline">Contact your administrator</a>
-                            </p>
+                            <div className="mt-8 text-center space-y-2">
+                                <p className="text-text-muted text-xs">
+                                    Credentials are issued by your administrator. Contact them if you haven't received yours.
+                                </p>
+                                <p className="text-text-secondary text-sm">
+                                    Need help?{' '}
+                                    <a href="#" className="text-accent-primary font-semibold hover:underline">Contact your administrator</a>
+                                </p>
+                            </div>
                         </div>
                     ) : (
                         /* Login Form */
                         <div className="w-full max-w-md animate-slide-up">
                             <button
-                                onClick={() => setSelectedTier(null)}
+                                onClick={() => { 
+                                    if (isForgotPassword) {
+                                        setIsForgotPassword(false);
+                                        setOtpSent(false);
+                                        setError('');
+                                        setSuccessMsg('');
+                                    } else {
+                                        setSelectedTier(null); 
+                                        setError(''); 
+                                        setSuccessMsg('');
+                                    }
+                                }}
                                 className="flex items-center gap-2 text-text-secondary hover:text-text-primary mb-8 text-sm font-medium transition-colors"
                             >
-                                <ChevronLeft size={16} /> Back to portal selection
+                                <ChevronLeft size={16} /> {isForgotPassword ? 'Back to login' : 'Back to portal selection'}
                             </button>
 
                             <div className="mb-8">
@@ -160,51 +275,158 @@ const LoginPortal = () => {
                                 <h2 className="text-2xl font-bold text-text-primary mb-1">
                                     {tiers.find(t => t.id === selectedTier)?.title}
                                 </h2>
-                                <p className="text-text-secondary text-sm">Sign in to access your dashboard.</p>
+                                <p className="text-text-secondary text-sm">Sign in with your issued credentials.</p>
                             </div>
 
-                            <form onSubmit={handleLogin} className="space-y-5">
-                                <div>
-                                    <label className="block text-sm font-semibold text-text-primary mb-1.5">Email address *</label>
-                                    <div className="relative">
-                                        <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                                        <input
-                                            type="email"
-                                            required
-                                            placeholder="name@university.edu"
-                                            className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
-                                        />
-                                    </div>
+                            {error && (
+                                <div className="p-3 bg-red-100 text-red-700 text-sm rounded-lg text-center font-semibold mb-4">
+                                    {error}
                                 </div>
+                            )}
 
-                                <div>
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <label className="block text-sm font-semibold text-text-primary">Password *</label>
-                                        <a href="#" className="text-xs text-accent-primary hover:underline font-medium">Forgot password?</a>
-                                    </div>
-                                    <div className="relative">
-                                        <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-                                        <input
-                                            type="password"
-                                            required
-                                            placeholder="••••••••"
-                                            className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
-                                        />
-                                    </div>
+                            {successMsg && (
+                                <div className="p-3 bg-green-100 text-green-700 text-sm rounded-lg text-center font-semibold mb-4">
+                                    {successMsg}
                                 </div>
+                            )}
 
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 rounded-md bg-accent-primary text-white font-semibold text-sm hover:bg-[#1661a3] transition-colors shadow-sm"
-                                >
-                                    Sign In
-                                </button>
+                            {isForgotPassword ? (
+                                !otpSent ? (
+                                    <form onSubmit={handleForgotPassword} className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-text-primary mb-1.5">Email address *</label>
+                                            <div className="relative">
+                                                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                                <input
+                                                    type="email"
+                                                    required
+                                                    value={email}
+                                                    onChange={e => setEmail(e.target.value)}
+                                                    placeholder="name@university.edu"
+                                                    className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="w-full py-3 rounded-md bg-accent-primary text-white font-semibold text-sm hover:bg-[#1661a3] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? 'Sending OTP...' : 'Send OTP via Email'}
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <form onSubmit={handleResetPassword} className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-text-primary mb-1.5">Enter 6-Digit OTP *</label>
+                                            <div className="relative">
+                                                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={otpToken}
+                                                    onChange={e => setOtpToken(e.target.value)}
+                                                    placeholder="••••••"
+                                                    className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary font-mono tracking-widest placeholder:tracking-normal focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-text-primary mb-1.5">New Password *</label>
+                                            <div className="relative">
+                                                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    value={newPassword}
+                                                    onChange={e => setNewPassword(e.target.value)}
+                                                    placeholder="At least 6 characters"
+                                                    className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-text-primary mb-1.5">Confirm New Password *</label>
+                                            <div className="relative">
+                                                <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                                <input
+                                                    type="password"
+                                                    required
+                                                    value={confirmNewPassword}
+                                                    onChange={e => setConfirmNewPassword(e.target.value)}
+                                                    placeholder="Re-enter new password"
+                                                    className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                                />
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="w-full py-3 rounded-md bg-accent-primary text-white font-semibold text-sm hover:bg-[#1661a3] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            {loading ? 'Verifying & Resetting...' : 'Verify OTP & Reset Password'}
+                                        </button>
+                                    </form>
+                                )
+                            ) : (
+                                <form onSubmit={handleLogin} className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-text-primary mb-1.5">Email address *</label>
+                                        <div className="relative">
+                                            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                            <input
+                                                type="email"
+                                                required
+                                                value={email}
+                                                onChange={e => setEmail(e.target.value)}
+                                                placeholder="name@university.edu"
+                                                className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
 
-                                <p className="text-center text-xs text-text-muted pt-2 flex items-center justify-center gap-1.5">
-                                    <ShieldCheck size={13} className="text-status-success" />
-                                    Secured by CampusCore Enterprise Security
-                                </p>
-                            </form>
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="block text-sm font-semibold text-text-primary">Password *</label>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => { setIsForgotPassword(true); setError(''); setSuccessMsg(''); }}
+                                                className="text-xs font-semibold text-accent-primary hover:underline"
+                                            >
+                                                Forgot your password?
+                                            </button>
+                                        </div>
+                                        <div className="relative">
+                                            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                                            <input
+                                                type="password"
+                                                required
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                                placeholder="••••••••"
+                                                className="w-full pl-10 pr-4 py-3 border border-border-color rounded-md text-text-primary text-sm bg-bg-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full py-3 rounded-md bg-accent-primary text-white font-semibold text-sm hover:bg-[#1661a3] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                    >
+                                        {loading ? 'Signing in...' : 'Sign In'}
+                                    </button>
+
+                                    <p className="text-center text-xs text-text-muted pt-2 flex items-center justify-center gap-1.5">
+                                        <ShieldCheck size={13} className="text-status-success" />
+                                        Secured by CampusCore Enterprise Security
+                                    </p>
+
+                                    <p className="text-center text-xs text-text-muted pt-1">
+                                        Don't have credentials? They are issued by your administrator.
+                                    </p>
+                                </form>
+                            )}
                         </div>
                     )}
                 </div>
