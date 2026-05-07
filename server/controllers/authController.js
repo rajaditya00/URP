@@ -3,21 +3,31 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const sendEmail = require('../utils/sendEmail');
-
-const otpStore = new Map();
+const Otp = require('../models/Otp');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'URP_super_secret_key_123';
 
+// =========================================================
+// SECURE IN-MEMORY OTP STORE (DB-independent)
+// Structure: email -> { otp, createdAt, attempts, locked }
+// =========================================================
+const otpStore = new Map();
+const rateLimiter = new Map(); // email -> lastSentAt (timestamp)
+
+const OTP_EXPIRY_MS = 5 * 60 * 1000;  // 5 minutes
+const COOLDOWN_MS = 60 * 1000;       // 60s between requests
+const MAX_ATTEMPTS = 3;
+
+// =========================================================
+// SIGNUP
+// =========================================================
 const signup = async (req, res) => {
     try {
         const { name, email, password, role, parentUniversityId, parentCollegeId } = req.body;
-        
-        let user = await User.findOne({ email });
-        if (user) {
-            return res.status(400).json({ msg: 'User already exists' });
-        }
 
-        // Password hashing is handled by User model pre-save hook
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ msg: 'User already exists' });
+
         user = new User({
             name, email, password, role,
             university: parentUniversityId || undefined,
@@ -31,32 +41,46 @@ const signup = async (req, res) => {
             if (err) throw err;
             res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email } });
         });
-
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server Error');
     }
 };
 
+// =========================================================
+// LOGIN
+// =========================================================
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        let user = await User.findOne({ email }).populate('university').populate('college');
-        if (!user) {
-            return res.status(400).json({ msg: 'Invalid Credentials' });
+        let user;
+        if (email.includes('@')) {
+            user = await User.findOne({ email }).populate('university').populate('college');
+        } else {
+            const University = require('../models/University');
+            const uni = await University.findOne({ generatedCredential: email });
+            if (uni) {
+                user = await User.findOne({ university: uni._id, role: 'SUPER_ADMIN' }).populate('university').populate('college');
+            } else {
+                const College = require('../models/College');
+                const col = await College.findOne({ generatedCredential: email });
+                if (col) {
+                    user = await User.findOne({ college: col._id, role: 'COLLEGE' }).populate('university').populate('college');
+                }
+            }
         }
 
+        if (!user) return res.status(400).json({ msg: 'Invalid Credentials' });
+
         const isMatch = await user.matchPassword(password);
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Invalid Credentials' });
-        }
+        if (!isMatch) return res.status(400).json({ msg: 'Invalid Credentials' });
 
         const payload = { user: { id: user.id, role: user.role, name: user.name } };
         jwt.sign(payload, JWT_SECRET, { expiresIn: '72h' }, (err, token) => {
             if (err) {
-               console.error('JWT Sign Error:', err);
-               return res.status(500).json({ msg: 'Token generation failed' });
+                console.error('JWT Sign Error:', err);
+                return res.status(500).json({ msg: 'Token generation failed' });
             }
             res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email, university: user.university, college: user.college } });
         });
@@ -66,29 +90,26 @@ const login = async (req, res) => {
     }
 };
 
+// =========================================================
+// CHANGE PASSWORD
+// =========================================================
 const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
-        if (!currentPassword || !newPassword) {
+        if (!currentPassword || !newPassword)
             return res.status(400).json({ msg: 'Please provide current and new password' });
-        }
 
-        if (newPassword.length < 6) {
+        if (newPassword.length < 6)
             return res.status(400).json({ msg: 'New password must be at least 6 characters' });
-        }
 
         const user = await User.findById(req.user._id);
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
+        if (!user) return res.status(404).json({ msg: 'User not found' });
 
         const isMatch = await user.matchPassword(currentPassword);
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Current password is incorrect' });
-        }
+        if (!isMatch) return res.status(400).json({ msg: 'Current password is incorrect' });
 
-        user.password = newPassword; // pre-save hook will hash it
+        user.password = newPassword;
         await user.save();
 
         res.json({ msg: 'Password updated successfully' });
@@ -98,147 +119,182 @@ const changePassword = async (req, res) => {
     }
 };
 
+// =========================================================
+// SEND SYSTEM ADMIN OTP
+// =========================================================
 const sendAdminOtp = async (req, res) => {
     try {
-        const { email } = req.body;
-        
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore.set(email, { otp, expires: Date.now() + 10 * 60 * 1000 });
+        const { email, securityCode } = req.body;
+        if (!email || !securityCode) return res.status(400).json({ msg: 'Email and Security Code are required.' });
 
-        console.log(`[>> SYSTEM ADMIN OTP SENT <<] Email: ${email} | OTP Code: ${otp}`);
+        const adminEmail = process.env.SYSTEM_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com';
+        const adminCode = process.env.SYSTEM_ADMIN_SECURITY_CODE || 'admin123';
 
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.GMAIL_USER || 'dummy@gmail.com',
-                pass: process.env.GMAIL_PASS || 'dummy'
-            }
-        });
-
-        if (process.env.GMAIL_USER) {
-           try {
-               await transporter.sendMail({
-                  from: process.env.GMAIL_USER,
-                  to: email,
-                  subject: 'URP System Admin - Secure Login OTP',
-                  text: `Your robust OTP for the System Admin Dashboard is: ${otp}`
-               });
-           } catch(e) {
-               console.log('Mail configuration invalid. Relying strictly on console printed OTP.');
-           }
+        if (email !== adminEmail || securityCode !== adminCode) {
+            return res.status(401).json({ msg: 'Invalid Administrator Email or Security Code.' });
         }
 
-        res.json({ msg: 'OTP generated successfully. Sent to Email (or printed to backend terminal).' });
+        // --- Rate Limit: 60s cooldown ---
+        const lastSent = rateLimiter.get(email);
+        if (lastSent) {
+            const elapsed = Date.now() - lastSent;
+            if (elapsed < COOLDOWN_MS) {
+                const waitSec = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+                return res.status(429).json({ msg: `Please wait ${waitSec}s before requesting a new OTP.`, cooldown: waitSec });
+            }
+        }
+
+        // Clear any previous locked OTP
+        otpStore.delete(email);
+
+        // Generate OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Store in memory
+        otpStore.set(email, { otp, createdAt: Date.now(), attempts: 0, locked: false });
+        rateLimiter.set(email, Date.now());
+
+        // Print prominently to terminal
+        console.log('\n\x1b[43m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
+        console.log('\x1b[43m\x1b[30m   🔐  SYSTEM ADMIN OTP — CAMPUSCORE URP          \x1b[0m');
+        console.log('\x1b[43m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
+        console.log(`\x1b[1m   📧  Email  : \x1b[36m${email}\x1b[0m`);
+        console.log(`\x1b[1m   🔑  OTP    : \x1b[32m${otp}\x1b[0m`);
+        console.log(`\x1b[1m   ⏱️   Expires: 5 minutes\x1b[0m`);
+        console.log('\x1b[43m\x1b[30m ══════════════════════════════════════════════ \x1b[0m\n');
+
+        // Respond immediately — terminal OTP only (email removed to prevent blocking)
+        res.json({
+            msg: 'OTP generated! Check the backend terminal for your code.',
+            expiresIn: OTP_EXPIRY_MS / 1000,
+            cooldown: COOLDOWN_MS / 1000
+        });
+
     } catch (err) {
-        console.error('OTP Gen Error:', err);
-        res.status(500).json({ msg: 'Server Error generating OTP backend side' });
+        console.error('sendAdminOtp error:', err);
+        res.status(500).json({ msg: 'Server error generating OTP.' });
     }
 };
 
-// Start of verifyAdminOtp (which was already here before my duplicate insertion)
-
+// =========================================================
+// VERIFY SYSTEM ADMIN OTP
+// =========================================================
 const verifyAdminOtp = async (req, res) => {
     try {
         const { email, otp } = req.body;
+        if (!email || !otp) return res.status(400).json({ msg: 'Email and OTP are required.' });
+
         const record = otpStore.get(email);
 
-        if (!record) return res.status(400).json({ msg: 'No active OTP was requested for this email address.' });
-        if (Date.now() > record.expires) {
-            otpStore.delete(email);
-            return res.status(400).json({ msg: 'OTP has expired. Generate a new one.' });
+        if (!record) {
+            return res.status(400).json({ msg: 'No OTP found for this email. Please request one.' });
         }
-        if (record.otp !== otp) return res.status(400).json({ msg: 'Invalid OTP Code Provided' });
 
+        // Brute-force lockout
+        if (record.locked) {
+            return res.status(403).json({ msg: 'Too many failed attempts. Please request a new OTP.', locked: true });
+        }
+
+        // Expiry check
+        if (Date.now() - record.createdAt > OTP_EXPIRY_MS) {
+            otpStore.delete(email);
+            return res.status(400).json({ msg: 'OTP has expired. Please request a new one.', expired: true });
+        }
+
+        // Wrong OTP
+        if (record.otp !== otp) {
+            record.attempts += 1;
+            const remaining = MAX_ATTEMPTS - record.attempts;
+
+            if (remaining <= 0) {
+                record.locked = true;
+                console.log(`\x1b[31m⛔  LOCKOUT: ${email} failed ${MAX_ATTEMPTS} times.\x1b[0m`);
+                return res.status(403).json({ msg: `Locked after ${MAX_ATTEMPTS} wrong attempts. Request a new OTP.`, locked: true });
+            }
+
+            return res.status(400).json({ msg: `Incorrect OTP. ${remaining} attempt(s) remaining.`, attemptsLeft: remaining });
+        }
+
+        // SUCCESS
         otpStore.delete(email);
+        rateLimiter.delete(email);
+        console.log(`\x1b[32m✅  SYSTEM ADMIN AUTHENTICATED: ${email}\x1b[0m\n`);
 
-        const payload = { user: { id: 'admin_' + Date.now().toString(), role: 'SYSTEM_ADMIN', name: 'System Administrator', email } };
+        const payload = {
+            user: { id: `admin_${Date.now()}`, role: 'SYSTEM_ADMIN', name: 'System Administrator', email }
+        };
+
         jwt.sign(payload, JWT_SECRET, { expiresIn: '72h' }, (err, token) => {
-            if (err) return res.status(500).json({ msg: 'Token Error' });
+            if (err) return res.status(500).json({ msg: 'Token generation error.' });
             res.json({ token, user: payload.user });
         });
+
     } catch (err) {
-        console.error('OTP Verify Error:', err);
-        res.status(500).json({ msg: 'Server Error parsing OTP verifier' });
+        console.error('verifyAdminOtp error:', err);
+        res.status(500).json({ msg: 'Server error verifying OTP.' });
     }
 };
 
+// =========================================================
+// FORGOT PASSWORD
+// =========================================================
 const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ email });
 
         if (!user) {
-            return res.status(404).json({ msg: 'If that email addresses exists, an OTP has been sent.' }); // Don't leak user existence
+            return res.status(404).json({ msg: 'If that email exists, an OTP has been sent.' });
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // Store OTP with 10-minute expiry
-        otpStore.set(`reset_${email}`, { otp, expires: Date.now() + 10 * 60 * 1000 });
+        await Otp.findOneAndUpdate(
+            { identifier: `reset_${email}` },
+            { otp, createdAt: Date.now() },
+            { upsert: true, new: true }
+        );
 
-        const message = `Hello,
+        // Print prominently to terminal (bypassing SMTP for reliability)
+        console.log('\n\x1b[45m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
+        console.log('\x1b[45m\x1b[30m   🔑  PASSWORD RESET OTP — CAMPUSCORE URP        \x1b[0m');
+        console.log('\x1b[45m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
+        console.log(`\x1b[1m   📧  Email  : \x1b[36m${email}\x1b[0m`);
+        console.log(`\x1b[1m   🔑  OTP    : \x1b[32m${otp}\x1b[0m`);
+        console.log(`\x1b[1m   ⏱️   Expires: 10 minutes\x1b[0m`);
+        console.log('\x1b[45m\x1b[30m ══════════════════════════════════════════════ \x1b[0m\n');
 
-You recently requested to reset your password for your CampusCore URP account.
-
-Your password reset OTP is: ${otp}
-
-This OTP is valid for 10 minutes. If you did not request a password reset, please ignore this email.
-
-Thanks,
-CampusCore URP Team`;
-
-        await sendEmail({
-            email,
-            subject: 'CampusCore - Password Reset Request',
-            message
-        });
-
-        console.log(`[>> FORGOT PASSWORD OTP SENT <<] Email: ${email} | OTP Code: ${otp}`);
-        
-        res.json({ msg: 'If that email exists, an OTP has been sent.' });
+        res.json({ msg: 'OTP generated! Check the backend terminal for your code.' });
     } catch (err) {
         console.error('Forgot Password Error:', err.message);
         res.status(500).json({ msg: 'Server Error during password reset request' });
     }
 };
 
+// =========================================================
+// RESET PASSWORD
+// =========================================================
 const resetPassword = async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
-        
-        if (!email || !otp || !newPassword) {
+
+        if (!email || !otp || !newPassword)
             return res.status(400).json({ msg: 'Please provide email, OTP, and new password.' });
-        }
 
-        if (newPassword.length < 6) {
+        if (newPassword.length < 6)
             return res.status(400).json({ msg: 'New password must be at least 6 characters' });
-        }
 
-        const record = otpStore.get(`reset_${email}`);
+        const record = await Otp.findOne({ identifier: `reset_${email}` });
 
-        if (!record) {
-            return res.status(400).json({ msg: 'No active password reset request found. Please try again.' });
-        }
-
-        if (Date.now() > record.expires) {
-            otpStore.delete(`reset_${email}`);
-            return res.status(400).json({ msg: 'OTP has expired. Generate a new one.' });
-        }
-
-        if (record.otp !== otp) {
-            return res.status(400).json({ msg: 'Invalid OTP Code Provided' });
-        }
+        if (!record) return res.status(400).json({ msg: 'No active password reset request found.' });
+        if (record.otp !== otp) return res.status(400).json({ msg: 'Invalid OTP Code Provided' });
 
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ msg: 'User not found' });
-        }
+        if (!user) return res.status(400).json({ msg: 'User not found' });
 
-        // OTP is valid, change password
-        user.password = newPassword; // the pre-save hook handles hashing
+        user.password = newPassword;
         await user.save();
-        
-        // Clean up OTP store
-        otpStore.delete(`reset_${email}`);
+
+        await Otp.deleteOne({ identifier: `reset_${email}` });
 
         res.json({ msg: 'Password reset successfully. You can now log in.' });
     } catch (err) {
@@ -247,4 +303,31 @@ const resetPassword = async (req, res) => {
     }
 };
 
-module.exports = { signup, login, changePassword, sendAdminOtp, verifyAdminOtp, forgotPassword, resetPassword };
+// =========================================================
+// SYSTEM ADMIN DIRECT LOGIN (no OTP)
+// =========================================================
+const systemAdminLogin = (req, res) => {
+    const { email, securityCode } = req.body;
+    if (!email || !securityCode)
+        return res.status(400).json({ msg: 'Email and Security Code are required.' });
+
+    const adminEmail = process.env.SYSTEM_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com';
+    const adminCode  = process.env.SYSTEM_ADMIN_SECURITY_CODE || 'admin123';
+
+    if (email !== adminEmail || securityCode !== adminCode) {
+        console.log(`\x1b[31m❌  SYSTEM ADMIN LOGIN FAILED — email: ${email}\x1b[0m`);
+        return res.status(401).json({ msg: 'Invalid Administrator Email or Security Code.' });
+    }
+
+    const payload = {
+        user: { id: `admin_${Date.now()}`, role: 'SYSTEM_ADMIN', name: 'System Administrator', email }
+    };
+
+    jwt.sign(payload, JWT_SECRET, { expiresIn: '72h' }, (err, token) => {
+        if (err) return res.status(500).json({ msg: 'Token generation error.' });
+        console.log(`\x1b[32m✅  SYSTEM ADMIN AUTHENTICATED: ${email}\x1b[0m`);
+        res.json({ token, user: payload.user });
+    });
+};
+
+module.exports = { signup, login, changePassword, sendAdminOtp, verifyAdminOtp, forgotPassword, resetPassword, systemAdminLogin };

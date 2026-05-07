@@ -7,6 +7,17 @@ const universitySchema = new mongoose.Schema({
   country: { type: String },
   state: { type: String },
   address: { type: String },
+  introduction: { type: String },
+  chancellor: {
+    name: { type: String },
+    email: { type: String },
+    message: { type: String }
+  },
+  viceChancellor: {
+    name: { type: String },
+    email: { type: String },
+    message: { type: String }
+  },
   plan: { type: String },
   duration: { type: String },
   status: { type: String, default: 'pending_verification' }, // 'pending_verification', 'active'

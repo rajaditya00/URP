@@ -1,260 +1,18 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import ChangePassword from '../components/ChangePassword';
+import re
 
-type College = {
-    _id: string;
-    name: string;
-    address: string;
-    email: string;
-    phone: string;
-    principalName: string;
-    adminUser?: { email: string; name: string } | null;
-    generatedCredential?: string;
-    generatedPassword?: string;
-    modules: {
-        examination: boolean;
-        addQuestions: boolean;
-        verifyStudentForms: boolean;
-        placement: boolean;
-        grievance: boolean;
-        notices: boolean;
-    };
-};
+with open('src/pages/UniAdminDashboard.tsx', 'r') as f:
+    content = f.read()
 
-const MODULE_LIST = [
-    { key: 'examination', label: 'Examination Controller', desc: 'Access to Examination module' },
-    { key: 'addQuestions', label: 'Add Questions', desc: 'Add questions to question bank' },
-    { key: 'verifyStudentForms', label: 'Verify Student Forms', desc: 'Approve/reject exam enrollment forms' },
-    { key: 'placement', label: 'Placement Module', desc: 'Access to placement drives & listings' },
-    { key: 'grievance', label: 'Grievance Module', desc: 'Handle student complaints' },
-    { key: 'notices', label: 'Notices', desc: 'Post announcements and circulars' },
-];
+# Find the start of the return statement
+return_start = content.find('    return (')
 
-const UniAdminDashboard = () => {
-    const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
-    const [uniData, setUniData] = useState<any>(null);
-    const [colleges, setColleges] = useState<College[]>([]);
-    const [notices, setNotices] = useState<any[]>([]);
-    const [results, setResults] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'leadership' | 'departments' | 'academic' | 'colleges'>('overview');
-    const [editUni, setEditUni] = useState({ introduction: '', phone: '', address: '' });
-    const [editLeadership, setEditLeadership] = useState({
-        chancellor: { name: '', email: '', message: '' },
-        viceChancellor: { name: '', email: '', message: '' }
-    });
-    const [showAddCollege, setShowAddCollege] = useState(false);
-    const [editingCollege, setEditingCollege] = useState<College | null>(null);
-    const [newCollege, setNewCollege] = useState({ name: '', address: '', email: '', phone: '', principalName: '' });
+if return_start == -1:
+    print("Could not find return statement")
+    exit(1)
 
-    const [saving, setSaving] = useState(false);
-    const [toast, setToast] = useState('');
-    const [showChangePassword, setShowChangePassword] = useState(false);
-    const [lastCredentials, setLastCredentials] = useState<{ email: string; password: string; collegeId?: string } | null>(null);
+pre_return = content[:return_start]
 
-    const [newNotice, setNewNotice] = useState({ title: '', description: '' });
-    const [newNoticePdf, setNewNoticePdf] = useState<File | null>(null);
-    const [newResult, setNewResult] = useState({ title: '', semester: '', link: '', description: '' });
-
-    const token = localStorage.getItem('cc_token');
-    const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-
-    const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
-
-    useEffect(() => {
-        const stored = localStorage.getItem('cc_user');
-        if (!stored || !token) { navigate('/university-login'); return; }
-        const u = JSON.parse(stored);
-        if (u.role !== 'SUPER_ADMIN') { navigate('/university-login'); return; }
-        setUser(u);
-        setUniData(u.university);
-        
-        // Initialize form states
-        setEditUni({
-            introduction: u.university?.introduction || '',
-            phone: u.university?.phone || '',
-            address: u.university?.address || ''
-        });
-        setEditLeadership({
-            chancellor: {
-                name: u.university?.chancellor?.name || '',
-                email: u.university?.chancellor?.email || '',
-                message: u.university?.chancellor?.message || ''
-            },
-            viceChancellor: {
-                name: u.university?.viceChancellor?.name || '',
-                email: u.university?.viceChancellor?.email || '',
-                message: u.university?.viceChancellor?.message || ''
-            }
-        });
-
-        loadColleges();
-        loadNotices();
-        loadResults();
-    }, []);
-
-    const handleUpdateDetails = async (type: 'overview' | 'leadership') => {
-        setSaving(true);
-        try {
-            const body = type === 'overview' ? editUni : editLeadership;
-            const res = await fetch(`http://localhost:5000/api/university/${uniData._id}/details`, {
-                method: 'PUT', headers, body: JSON.stringify(body)
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setUniData(data);
-                // Update local storage user object
-                const u = { ...user, university: data };
-                localStorage.setItem('cc_user', JSON.stringify(u));
-                setUser(u);
-                showToast(`${type === 'overview' ? 'University Profile' : 'Leadership Details'} Updated Successfully!`);
-            } else {
-                showToast(data.message || 'Update failed');
-            }
-        } catch { showToast('Server error during update'); } finally { setSaving(false); }
-    };
-
-    const loadNotices = async () => {
-        try {
-            const res = await fetch('http://localhost:5000/api/notice', { headers });
-            const data = await res.json();
-            if (Array.isArray(data)) setNotices(data);
-        } catch (e) { console.error('Failed to load notices', e); }
-    };
-
-    const loadResults = async () => {
-        try {
-            const res = await fetch('http://localhost:5000/api/result', { headers });
-            const data = await res.json();
-            if (Array.isArray(data)) setResults(data);
-        } catch (e) { console.error('Failed to load results', e); }
-    };
-
-    const loadColleges = async () => {
-        try {
-            const res = await fetch('http://localhost:5000/api/college', { headers });
-            const data = await res.json();
-            if (Array.isArray(data)) setColleges(data);
-        } catch (e) { console.error(e); }
-    };
-
-    const handleAddCollege = async () => {
-        if (!newCollege.name || !newCollege.email) {
-            showToast('College name and email are required');
-            return;
-        }
-        setSaving(true);
-        try {
-            const res = await fetch('http://localhost:5000/api/college', {
-                method: 'POST', headers, body: JSON.stringify(newCollege)
-            });
-            const data = await res.json();
-            if (res.ok) {
-                await loadColleges();
-                setNewCollege({ name: '', address: '', email: '', phone: '', principalName: '' });
-                setShowAddCollege(false);
-                // Show the dispatched credentials
-                if (data.credentials) {
-                    setLastCredentials(data.credentials);
-                }
-                showToast('College added & credentials dispatched via email!');
-            } else {
-                showToast(data.error || 'Failed to add college');
-            }
-        } catch { showToast('Server connection failed'); } finally { setSaving(false); }
-    };
-
-    const handleToggleModule = async (college: College, moduleKey: string, val: boolean) => {
-        try {
-            const updated = { ...college, modules: { ...college.modules, [moduleKey]: val } };
-            const res = await fetch(`http://localhost:5000/api/college/${college._id}`, {
-                method: 'PUT', headers, body: JSON.stringify({ modules: updated.modules })
-            });
-            if (res.ok) {
-                setColleges(prev => prev.map(c => c._id === college._id ? { ...c, modules: updated.modules } : c));
-                showToast(`${val ? 'Granted' : 'Revoked'} access`);
-            }
-        } catch { }
-    };
-
-    const handleDeleteCollege = async (id: string) => {
-        if (!window.confirm('Remove this college and its admin account?')) return;
-        await fetch(`http://localhost:5000/api/college/${id}`, { method: 'DELETE', headers });
-        setColleges(prev => prev.filter(c => c._id !== id));
-        showToast('College removed');
-    };
-
-    const handleGenerateCredentials = async (id: string, collegeName: string) => {
-        if (!window.confirm(`Generate new login credentials for ${collegeName} and immediately email them to the college admin?`)) return;
-        setSaving(true);
-        try {
-            const res = await fetch(`http://localhost:5000/api/college/${id}/credentials`, { method: 'POST', headers });
-            const data = await res.json();
-            if (res.ok) {
-                await loadColleges();
-                if (data.credentials) {
-                    setLastCredentials(data.credentials);
-                }
-                showToast('Credentials successfully generated & dispatched!');
-            } else {
-                showToast(data.message || data.error || 'Failed to generate credentials');
-            }
-        } catch { showToast('Server connection failed'); } finally { setSaving(false); }
-    };
-
-    const handleAddNotice = async () => {
-        if (!newNotice.title || !newNotice.description) return showToast('Title and Description are required');
-        setSaving(true);
-        try {
-            const form = new FormData();
-            form.append('title', newNotice.title);
-            form.append('description', newNotice.description);
-            if (newNoticePdf) form.append('noticePdf', newNoticePdf);
-
-            const fetchHeaders = new Headers();
-            fetchHeaders.append('Authorization', `Bearer ${token}`);
-
-            const res = await fetch('http://localhost:5000/api/notice', {
-                method: 'POST', headers: fetchHeaders, body: form
-            });
-            if (res.ok) {
-                await loadNotices();
-                setNewNotice({ title: '', description: '' });
-                setNewNoticePdf(null);
-                showToast('Notice announced!');
-            }
-        } catch { showToast('Server error'); } finally { setSaving(false); }
-    };
-
-    const handleDeleteNotice = async (id: string) => {
-        if (!window.confirm('Delete this notice?')) return;
-        await fetch(`http://localhost:5000/api/notice/${id}`, { method: 'DELETE', headers });
-        await loadNotices(); showToast('Notice deleted');
-    };
-
-    const handleAddResult = async () => {
-        if (!newResult.title || !newResult.semester || !newResult.link) return showToast('Fill all required fields');
-        setSaving(true);
-        try {
-            const res = await fetch('http://localhost:5000/api/result', {
-                method: 'POST', headers, body: JSON.stringify(newResult)
-            });
-            if (res.ok) {
-                await loadResults();
-                setNewResult({ title: '', semester: '', link: '', description: '' });
-                showToast('Result published!');
-            }
-        } catch { showToast('Server error'); } finally { setSaving(false); }
-    };
-
-    const handleDeleteResult = async (id: string) => {
-        if (!window.confirm('Delete this result record?')) return;
-        await fetch(`http://localhost:5000/api/result/${id}`, { method: 'DELETE', headers });
-        await loadResults(); showToast('Result deleted');
-    };
-
-    return (
+new_return = """    return (
         <div className="min-h-screen flex flex-col bg-[#f8fafc] font-body h-screen">
             {/* Toast */}
             {toast && (
@@ -651,13 +409,6 @@ const UniAdminDashboard = () => {
                                                     ) : (
                                                         <p className="text-xs text-red-500">No admin account found.</p>
                                                     )}
-                                                    
-                                                    <div className="mt-6 pt-4 border-t border-slate-100">
-                                                        <a href={`/university-login?university=${encodeURIComponent(uniData?.name || '')}&college=${encodeURIComponent(c.name)}&role=college`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full text-center py-2.5 bg-[#1e3a5f] text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#162d4a] transition-all shadow-sm">
-                                                            <span>Login to Admin Portal</span>
-                                                            <span>↗</span>
-                                                        </a>
-                                                    </div>
                                                 </div>
 
                                                 {/* Module Authority Panel */}
@@ -697,3 +448,11 @@ const UniAdminDashboard = () => {
 };
 
 export default UniAdminDashboard;
+"""
+
+new_content = pre_return + new_return
+
+with open('src/pages/UniAdminDashboard.tsx', 'w') as f:
+    f.write(new_content)
+
+print("Dashboard rewritten successfully!")

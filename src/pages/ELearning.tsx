@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Search, Filter, PlayCircle, BookOpen, Clock, Star, MonitorPlay, X, Plus } from 'lucide-react';
+import { PlayCircle, FileText, CheckCircle2, ChevronRight, Search, Plus, Filter, LayoutGrid, Clock, Users, Star, ArrowRight, Play, Maximize2, X, Download, Shield, BookOpen, User, Building2, Upload, MonitorPlay } from 'lucide-react';
+import { ImageCropperModal } from '../components/Common/ImageCropperModal';
+import { GlorifiedImagePreview } from '../components/Common/GlorifiedImagePreview';
 
 const E_LEARNING_COURSES = [
   {
@@ -113,8 +115,8 @@ const E_LEARNING_COURSES = [
 const ELearning: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  const canUpload = user && ['UNIVERSITY', 'COLLEGE', 'PROFESSOR'].includes(user.role);
+
+  const canUpload = user && ['SUPER_ADMIN', 'COLLEGE', 'PROFESSOR'].includes(user.role);
 
   const [activeTab, setActiveTab] = useState('explore');
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,10 +128,29 @@ const ELearning: React.FC = () => {
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', university: user?.role === 'UNIVERSITY' ? user.name : 'Central University', subject: 'Computer Science', semester: '', instructor: user?.name || 'Faculty Member', duration: '', image: '', description: '', pdfUrl: '',
+    title: '', university: user?.role === 'SUPER_ADMIN' ? user.name : 'Central University', subject: 'Computer Science', semester: '', instructor: user?.name || 'Faculty Member', duration: '', image: '', imageFile: null as File | null, description: '', pdfUrl: '',
     topics: [{ title: '', description: '', videoUrl: '', videoFile: null as File | null }]
   });
+
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState('');
+  const [cropFileName, setCropFileName] = useState('cropped-image.jpg');
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setCropFileName(file.name);
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        setCropImageSrc(reader.result?.toString() || '');
+        setCropperOpen(true);
+      });
+      reader.readAsDataURL(file);
+      e.target.value = ''; // Reset input so same file can be selected again
+    }
+  };
 
   const addTopic = () => {
     setFormData({ ...formData, topics: [...formData.topics, { title: '', description: '', videoUrl: '', videoFile: null }] });
@@ -146,29 +167,52 @@ const ELearning: React.FC = () => {
     setFormData({ ...formData, topics: formData.topics.filter((_, i) => i !== index) });
   };
 
+  const uploadFile = async (file: File) => {
+    const data = new FormData();
+    data.append('file', file);
+    const res = await fetch('http://localhost:5000/api/upload', {
+      method: 'POST',
+      body: data
+    });
+    if (!res.ok) throw new Error('Upload failed');
+    const json = await res.json();
+    return json.url;
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const processedTopics = formData.topics.map(topic => {
-      let finalUrl = topic.videoUrl;
-      if (topic.videoFile) finalUrl = URL.createObjectURL(topic.videoFile);
-      return { title: topic.title, description: topic.description, videoUrl: finalUrl };
-    });
+    setIsUploading(true);
 
     try {
+      let finalImageUrl = formData.image;
+      if (formData.imageFile) {
+        finalImageUrl = await uploadFile(formData.imageFile);
+      }
+
+      const processedTopics = await Promise.all(formData.topics.map(async topic => {
+        let finalUrl = topic.videoUrl;
+        if (topic.videoFile) {
+           finalUrl = await uploadFile(topic.videoFile);
+        }
+        return { title: topic.title, description: topic.description, videoUrl: finalUrl };
+      }));
+
       const response = await fetch('http://localhost:5000/api/elearning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, topics: processedTopics, rating: 0, enrolled: 0, progress: 0 })
+        body: JSON.stringify({ ...formData, image: finalImageUrl, topics: processedTopics, rating: 0, enrolled: 0, progress: 0 })
       });
       if (response.ok) {
         const newCourse = await response.json();
         setCourses([newCourse, ...courses]);
         setIsModalOpen(false);
-        setFormData({ title: '', university: user?.role === 'UNIVERSITY' ? user.name : 'Central University', subject: 'Computer Science', semester: '', instructor: user?.name || 'Faculty Member', duration: '', image: '', description: '', pdfUrl: '', topics: [{ title: '', description: '', videoUrl: '', videoFile: null }] });
+        setFormData({ title: '', university: user?.role === 'SUPER_ADMIN' ? user.name : 'Central University', subject: 'Computer Science', semester: '', instructor: user?.name || 'Faculty Member', duration: '', image: '', imageFile: null, description: '', pdfUrl: '', topics: [{ title: '', description: '', videoUrl: '', videoFile: null }] });
       }
     } catch (err) {
       console.error('Error uploading course:', err);
+      alert('Error uploading course: ' + err);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -212,23 +256,23 @@ const ELearning: React.FC = () => {
             />
           </div>
           <div className="flex items-center gap-3">
-             <select 
-               value={selectedSemester} 
-               onChange={(e) => setSelectedSemester(e.target.value)}
-               className="px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary shadow-sm"
-             >
-               {['All', ...Array.from(new Set(courses.map(c => c.semester)))].map(sem => <option key={sem} value={sem}>{sem}</option>)}
-             </select>
+            <select
+              value={selectedSemester}
+              onChange={(e) => setSelectedSemester(e.target.value)}
+              className="px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary shadow-sm"
+            >
+              {['All', ...Array.from(new Set(courses.map(c => c.semester)))].map(sem => <option key={sem} value={sem}>{sem}</option>)}
+            </select>
 
-             <select 
-               value={selectedBranch} 
-               onChange={(e) => setSelectedBranch(e.target.value)}
-               className="max-w-[150px] px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary shadow-sm"
-             >
-               {['All', ...Array.from(new Set(courses.map(c => c.subject)))].map(branch => <option key={branch} value={branch}>{branch}</option>)}
-             </select>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="max-w-[150px] px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary shadow-sm"
+            >
+              {['All', ...Array.from(new Set(courses.map(c => c.subject)))].map(branch => <option key={branch} value={branch}>{branch}</option>)}
+            </select>
           </div>
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
             className="px-4 py-2 bg-accent-primary text-white rounded-md text-sm font-medium hover:bg-accent-secondary transition-colors duration-200 shadow-sm"
           >
@@ -256,7 +300,7 @@ const ELearning: React.FC = () => {
               My Learning
               {activeTab === 'my-learning' && <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent-primary rounded-t-full"></span>}
             </button>
-             <button
+            <button
               onClick={() => setActiveTab('university')}
               className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'university' ? 'text-accent-primary' : 'text-text-muted hover:text-text-primary'}`}
             >
@@ -268,10 +312,10 @@ const ELearning: React.FC = () => {
           {/* Courses Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {courses.filter(course => {
-                const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || course.instructor.toLowerCase().includes(searchQuery.toLowerCase());
-                const matchesSem = selectedSemester === 'All' || course.semester === selectedSemester;
-                const matchesBranch = selectedBranch === 'All' || course.subject === selectedBranch;
-                return matchesSearch && matchesSem && matchesBranch;
+              const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) || course.instructor.toLowerCase().includes(searchQuery.toLowerCase());
+              const matchesSem = selectedSemester === 'All' || course.semester === selectedSemester;
+              const matchesBranch = selectedBranch === 'All' || course.subject === selectedBranch;
+              return matchesSearch && matchesSem && matchesBranch;
             }).map((course) => (
               <div key={course._id || course.id} className="bg-bg-primary rounded-lg border border-border-color overflow-hidden hover:shadow-md transition-shadow duration-300 group flex flex-col">
                 {/* Course Image */}
@@ -287,14 +331,14 @@ const ELearning: React.FC = () => {
                     </span>
                   </div>
                   {activeTab === 'my-learning' && course.progress > 0 && course.progress < 100 && (
-                     <div className="absolute top-2 right-2 bg-accent-primary text-white backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold shadow-sm flex items-center gap-1">
-                      <PlayCircle size={12}/> In Progress
-                     </div>
+                    <div className="absolute top-2 right-2 bg-accent-primary text-white backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold shadow-sm flex items-center gap-1">
+                      <PlayCircle size={12} /> In Progress
+                    </div>
                   )}
                   {activeTab === 'my-learning' && course.progress === 100 && (
-                     <div className="absolute top-2 right-2 bg-green-500 text-white backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold shadow-sm flex items-center gap-1">
-                      <Star size={12}/> Completed
-                     </div>
+                    <div className="absolute top-2 right-2 bg-green-500 text-white backdrop-blur-sm px-2 py-1 rounded text-xs font-semibold shadow-sm flex items-center gap-1">
+                      <Star size={12} /> Completed
+                    </div>
                   )}
                 </div>
 
@@ -304,7 +348,7 @@ const ELearning: React.FC = () => {
                   <h3 className="text-sm font-bold text-text-primary leading-tight mb-2 line-clamp-2" title={course.title}>
                     {course.title}
                   </h3>
-                  
+
                   <div className="flex items-center gap-2 text-xs text-text-muted mb-3">
                     <BookOpen size={14} className="flex-shrink-0" />
                     <span className="truncate">{course.university}</span>
@@ -313,25 +357,25 @@ const ELearning: React.FC = () => {
                   <div className="flex items-center gap-2 text-xs text-text-muted mb-4">
                     <span className="font-medium text-text-secondary">{course.instructor}</span>
                   </div>
-                  
+
                   <div className="mt-auto">
                     {activeTab === 'my-learning' ? (
-                       <div className="space-y-2">
-                         <div className="flex justify-between text-xs font-medium mb-1">
-                           <span className={course.progress === 100 ? "text-green-600" : "text-text-secondary"}>
-                              {course.progress === 100 ? "Completed" : `${course.progress}% Completed`}
-                           </span>
-                         </div>
-                         <div className="w-full bg-border-color rounded-full h-1.5">
-                           <div 
-                             className={`h-1.5 rounded-full ${course.progress === 100 ? "bg-green-500" : "bg-accent-primary"}`} 
-                             style={{ width: `${course.progress}%` }}
-                           ></div>
-                         </div>
-                         <button className={`w-full py-2 rounded-md text-sm font-medium transition-colors mt-3 ${course.progress === 100 ? 'bg-bg-secondary text-text-secondary hover:bg-gray-200' : 'bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white'}`}>
-                           {course.progress === 100 ? 'Download Certificate' : 'Continue Learning'}
-                         </button>
-                       </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs font-medium mb-1">
+                          <span className={course.progress === 100 ? "text-green-600" : "text-text-secondary"}>
+                            {course.progress === 100 ? "Completed" : `${course.progress}% Completed`}
+                          </span>
+                        </div>
+                        <div className="w-full bg-border-color rounded-full h-1.5">
+                          <div
+                            className={`h-1.5 rounded-full ${course.progress === 100 ? "bg-green-500" : "bg-accent-primary"}`}
+                            style={{ width: `${course.progress}%` }}
+                          ></div>
+                        </div>
+                        <button className={`w-full py-2 rounded-md text-sm font-medium transition-colors mt-3 ${course.progress === 100 ? 'bg-bg-secondary text-text-secondary hover:bg-gray-200' : 'bg-accent-primary/10 text-accent-primary hover:bg-accent-primary hover:text-white'}`}>
+                          {course.progress === 100 ? 'Download Certificate' : 'Continue Learning'}
+                        </button>
+                      </div>
                     ) : (
                       <>
                         <div className="flex items-center justify-between text-xs text-text-muted border-t border-border-color pt-3">
@@ -346,16 +390,15 @@ const ELearning: React.FC = () => {
                         </div>
                       </>
                     )}
-                    <button 
+                    <button
                       onClick={() => navigate(`/e-learning/${course._id || course.id}`)}
-                      className={`w-full py-2 rounded-md text-sm font-bold transition-colors mt-4 shadow-sm ${
-                        activeTab === 'my-learning' && course.progress === 100
+                      className={`w-full py-2 rounded-md text-sm font-bold transition-colors mt-4 shadow-sm ${activeTab === 'my-learning' && course.progress === 100
                           ? 'bg-green-500 text-white hover:bg-green-600'
                           : 'bg-accent-primary text-white hover:bg-accent-secondary'
-                      }`}
+                        }`}
                     >
-                      {activeTab === 'my-learning' 
-                        ? (course.progress === 100 ? 'Download Certificate' : 'Continue Learning') 
+                      {activeTab === 'my-learning'
+                        ? (course.progress === 100 ? 'Download Certificate' : 'Continue Learning')
                         : 'Explore'
                       }
                     </button>
@@ -400,41 +443,60 @@ const ELearning: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Course Title</label>
-                  <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">University</label>
-                  <input required type="text" value={formData.university} onChange={e => setFormData({...formData, university: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.university} onChange={e => setFormData({ ...formData, university: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Subject</label>
-                  <input required type="text" value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Instructor</label>
-                  <input required type="text" value={formData.instructor} onChange={e => setFormData({...formData, instructor: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.instructor} onChange={e => setFormData({ ...formData, instructor: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Semester</label>
-                  <input required type="text" value={formData.semester} onChange={e => setFormData({...formData, semester: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.semester} onChange={e => setFormData({ ...formData, semester: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Duration (e.g., 12 Weeks)</label>
-                  <input required type="text" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <input required type="text" value={formData.duration} onChange={e => setFormData({ ...formData, duration: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-xs font-semibold text-text-secondary mb-1">Course Description</label>
-                  <textarea required rows={3} value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary resize-none" placeholder="Enter course description..."></textarea>
+                  <textarea required rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary resize-none" placeholder="Enter course description..."></textarea>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-text-secondary mb-1">Cover Image URL</label>
-                  <input required type="text" value={formData.image} onChange={e => setFormData({...formData, image: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" />
+                  <label className="block text-xs font-semibold text-text-secondary mb-1">Cover Image</label>
+                  <div className="grid grid-cols-2 gap-3 items-end">
+                    <div>
+                      <label className="block text-[10px] text-text-muted mb-1">Upload Image</label>
+                      {!formData.imageFile ? (
+                        <input type="file" accept="image/*" onChange={handleImageSelect} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-accent-primary/10 file:text-accent-primary cursor-pointer hover:file:bg-accent-primary/20" />
+                      ) : (
+                        <div className="mt-2">
+                          <GlorifiedImagePreview 
+                            file={formData.imageFile} 
+                            onRemove={() => setFormData({...formData, imageFile: null})} 
+                            title="Cover Image Ready"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-text-muted mb-1">OR External URL</label>
+                      <input type="text" disabled={!!formData.imageFile} required={!formData.imageFile} value={formData.image} onChange={e => setFormData({ ...formData, image: e.target.value })} className="w-full px-2 py-1.5 border border-border-color rounded-md text-xs bg-bg-secondary text-text-primary disabled:opacity-50" placeholder="https://..." />
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-text-secondary mb-1">PDF Notes URL</label>
-                  <input type="text" value={formData.pdfUrl} onChange={e => setFormData({...formData, pdfUrl: e.target.value})} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" placeholder="Optional" />
+                  <input type="text" value={formData.pdfUrl} onChange={e => setFormData({ ...formData, pdfUrl: e.target.value })} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-secondary text-text-primary" placeholder="Optional" />
                 </div>
-                
+
                 <div className="col-span-2 mt-4 pt-4 border-t border-border-color">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-sm font-bold text-text-primary">Course Modules ({formData.topics.length})</h3>
@@ -452,7 +514,7 @@ const ELearning: React.FC = () => {
                           </button>
                         )}
                         <h4 className="text-xs font-bold text-text-muted mb-3 uppercase tracking-wider">Module {index + 1}</h4>
-                        
+
                         <div className="space-y-3">
                           <div>
                             <label className="block text-xs font-semibold text-text-secondary mb-1">Module Title</label>
@@ -462,14 +524,14 @@ const ELearning: React.FC = () => {
                             <label className="block text-xs font-semibold text-text-secondary mb-1">Module Description (Optional)</label>
                             <textarea rows={2} value={topic.description} onChange={e => updateTopic(index, 'description', e.target.value)} className="w-full px-3 py-2 border border-border-color rounded-md text-sm focus:outline-none focus:border-accent-primary bg-bg-primary text-text-primary resize-none"></textarea>
                           </div>
-                          
+
                           <div className="pt-2">
                             <label className="block text-[10px] uppercase tracking-wider font-bold text-text-secondary mb-2">Video Source</label>
                             <div className="grid grid-cols-2 gap-3 items-end">
                               <div>
                                 <label className="block text-[10px] text-text-muted mb-1">Upload File (.mp4)</label>
                                 <input type="file" accept="video/mp4,video/*" onChange={e => {
-                                   if(e.target.files?.[0]) updateTopic(index, 'videoFile', e.target.files[0]);
+                                  if (e.target.files?.[0]) updateTopic(index, 'videoFile', e.target.files[0]);
                                 }} className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-accent-primary/10 file:text-accent-primary cursor-pointer hover:file:bg-accent-primary/20" />
                               </div>
                               <div>
@@ -486,12 +548,22 @@ const ELearning: React.FC = () => {
               </div>
               <div className="pt-4 flex justify-end gap-3 border-t border-border-color mt-6">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-text-secondary hover:bg-bg-secondary rounded-md transition-colors">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-accent-primary text-white text-sm font-medium rounded-md hover:bg-accent-secondary transition-colors">Publish Course</button>
+                <button type="submit" disabled={isUploading} className="px-4 py-2 bg-accent-primary text-white text-sm font-medium rounded-md hover:bg-accent-secondary transition-colors disabled:opacity-50">
+                  {isUploading ? 'Uploading...' : 'Publish Course'}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        onClose={() => setCropperOpen(false)}
+        imageSrc={cropImageSrc}
+        onCropComplete={(file) => setFormData({ ...formData, imageFile: file, image: '' })}
+        fileName={cropFileName}
+      />
     </div>
   );
 };

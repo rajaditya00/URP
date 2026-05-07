@@ -13,13 +13,13 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // Connect DB
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campuscore')
-.then(() => console.log('MongoDB Connected to CampusCore DB'))
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/allcampusdigital')
+.then(() => console.log('MongoDB Connected to All Campus Digital DB'))
 .catch(err => console.log('MongoDB Connection Error:', err));
 
 // Basic Routes
 app.get('/', (req, res) => {
-    res.send('CampusCore API running');
+    res.send('All Campus Digital API running');
 });
 
 // Import API routes
@@ -36,7 +36,7 @@ const facilityRoutes = require('./routes/facilitys');
 const grievanceRoutes = require('./routes/grievances');
 const elearningRoutes = require('./routes/elearning');
 const memberRoutes = require('./routes/members');
-
+const uploadRoutes = require('./routes/upload');
 app.use('/api/auth', authRoutes);
 app.use('/api/university', universityRoutes);
 app.use('/api/academic', academicRoutes);
@@ -50,6 +50,6 @@ app.use('/api/facility', facilityRoutes);
 app.use('/api/grievances', grievanceRoutes);
 app.use('/api/elearning', elearningRoutes);
 app.use('/api/members', memberRoutes);
-
+app.use('/api/upload', uploadRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

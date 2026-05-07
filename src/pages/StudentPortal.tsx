@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom';
 import { Card, StatCard } from '../components/UI/Card';
-import { BookOpen, CalendarCheck, Clock, Download, PieChart, CreditCard } from 'lucide-react';
+import { BookOpen, CalendarCheck, Clock, Download, PieChart, CreditCard, FileText } from 'lucide-react';
 
 const subjects = [
   { code: 'CS601', name: 'Computer Networks', attendance: 85, credits: 4, faculty: 'Dr. Alan Turing' },
@@ -66,23 +67,49 @@ const StudentPortal = () => {
           </div>
         </Card>
 
-        <Card className="lg:col-span-1 border-accent-secondary/20">
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold flex items-center gap-2"><Clock size={20} className="text-accent-secondary" /> Today's Schedule</h3>
+        <Card className="lg:col-span-1 border-accent-secondary/20 flex flex-col gap-6">
+          <div>
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold flex items-center gap-2"><Clock size={20} className="text-accent-secondary" /> Today's Schedule</h3>
+            </div>
+            <div className="flex flex-col relative before:absolute before:inset-y-2 before:left-[15px] before:w-[2px] before:bg-bg-tertiary/80">
+              {schedule.map((item, i) => (
+                <div key={i} className="flex gap-4 items-start relative mb-8 last:mb-0 group">
+                  <div className="w-8 h-8 rounded-full bg-accent-secondary/20 border-2 border-accent-secondary/50 flex-center shrink-0 z-10 group-hover:scale-110 transition-transform">
+                    <div className="w-2 h-2 rounded-full bg-accent-secondary"></div>
+                  </div>
+                  <div className="flex flex-col gap-1 -mt-1 pt-0.5">
+                    <span className="text-xs font-bold text-accent-secondary/80 bg-accent-secondary/10 px-2 py-0.5 rounded-full w-fit">{item.time}</span>
+                    <p className="text-[1.05rem] text-text-primary font-semibold mt-1">{item.course}</p>
+                    <span className="text-xs text-text-muted">{item.type} • {item.hall}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-col relative before:absolute before:inset-y-2 before:left-[15px] before:w-[2px] before:bg-bg-tertiary/80">
-            {schedule.map((item, i) => (
-              <div key={i} className="flex gap-4 items-start relative mb-8 last:mb-0 group">
-                <div className="w-8 h-8 rounded-full bg-accent-secondary/20 border-2 border-accent-secondary/50 flex-center shrink-0 z-10 group-hover:scale-110 transition-transform">
-                  <div className="w-2 h-2 rounded-full bg-accent-secondary"></div>
+
+          <div className="mt-auto pt-6 border-t border-border-color">
+            <h3 className="text-lg font-semibold mb-4 text-text-primary">Quick Actions</h3>
+            <div className="flex flex-col gap-3">
+              <Link to="/examination" className="flex items-center gap-3 p-3 rounded-xl border border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors group">
+                <div className="w-10 h-10 rounded-lg bg-accent-primary/20 flex-center text-accent-primary group-hover:scale-110 transition-transform">
+                  <FileText size={20} />
                 </div>
-                <div className="flex flex-col gap-1 -mt-1 pt-0.5">
-                  <span className="text-xs font-bold text-accent-secondary/80 bg-accent-secondary/10 px-2 py-0.5 rounded-full w-fit">{item.time}</span>
-                  <p className="text-[1.05rem] text-text-primary font-semibold mt-1">{item.course}</p>
-                  <span className="text-xs text-text-muted">{item.type} • {item.hall}</span>
+                <div>
+                  <p className="font-semibold text-text-primary text-sm">Semester Exam Form</p>
+                  <p className="text-xs text-text-muted">Fill and submit your exam form</p>
                 </div>
-              </div>
-            ))}
+              </Link>
+              <Link to="/e-learning" className="flex items-center gap-3 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 transition-colors group">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex-center text-blue-600 group-hover:scale-110 transition-transform">
+                  <BookOpen size={20} />
+                </div>
+                <div>
+                  <p className="font-semibold text-text-primary text-sm">E-Learning Hub</p>
+                  <p className="text-xs text-text-muted">Access courses & modules</p>
+                </div>
+              </Link>
+            </div>
           </div>
         </Card>
       </div >

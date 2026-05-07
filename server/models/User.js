@@ -12,6 +12,22 @@ const userSchema = new mongoose.Schema({
   },
   university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' },
   college: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
+  // Additional fields for College members
+  department: { type: String },
+  position: { type: String },
+  specialRole: { type: String },
+  rollNo: { type: String },
+  registrationNo: { type: String },
+  semester: { type: String },
+  programme: { type: String },
+  address: { type: String },
+  fatherName: { type: String },
+  motherName: { type: String },
+  gender: { type: String },
+  dob: { type: String },
+  casteCategory: { type: String },
+  mobile: { type: String },
+  aadharNo: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

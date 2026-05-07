@@ -1,19 +1,60 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, ShieldCheck, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 
 const SystemAdminDashboard = () => {
     const { user, login } = useAuth();
-    
-    const [email, setEmail] = useState('');
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpToken, setOtpToken] = useState('');
-    const [waitMsg, setWaitMsg] = useState('');
 
+    // ── Credential login state ──────────────────────────────
+    const [email, setEmail] = useState('');
+    const [securityCode, setSecurityCode] = useState('');
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+    const isEmailValid  = email === (import.meta.env.VITE_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com');
+    const isCodeValid   = securityCode === (import.meta.env.VITE_ADMIN_SECURITY_CODE || 'admin123');
+
+    // ── Dashboard data state ────────────────────────────────
     const [tab, setTab] = useState<'pending' | 'verified'>('pending');
     const [pendingUnis, setPendingUnis] = useState<any[]>([]);
     const [verifiedUnis, setVerifiedUnis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // ── Direct credential login ─────────────────────────────
+    const handleLogin = useCallback(async () => {
+        if (!email || !securityCode) {
+            setStatusMsg({ text: 'Please enter your email and security code.', type: 'error' });
+            return;
+        }
+        setLoginLoading(true);
+        setStatusMsg(null);
+        try {
+            const res = await fetch('http://localhost:5000/api/auth/system-admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, securityCode }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                login(data.token, data.user);
+            } else {
+                setStatusMsg({ text: data.msg || 'Invalid credentials.', type: 'error' });
+            }
+        } catch {
+            setStatusMsg({ text: 'Cannot connect to server. Is the backend running?', type: 'error' });
+        } finally {
+            setLoginLoading(false);
+        }
+    }, [email, securityCode, login]);
+
+    // ── Auto-login Trigger ──────────────────────────────────
+    useEffect(() => {
+        // If both are valid, and we haven't already shown a status message for this attempt, and we aren't currently loading...
+        if (isEmailValid && isCodeValid && !loginLoading && !statusMsg) {
+            handleLogin();
+        }
+    }, [isEmailValid, isCodeValid, handleLogin, loginLoading, statusMsg]);
+
 
     const fetchAll = async () => {
         setLoading(true);
@@ -38,17 +79,15 @@ const SystemAdminDashboard = () => {
     const handleVerify = async (id: string, name: string) => {
         const confirmCheck = window.confirm(`Verify "${name}" and dispatch credentials to their registered email?`);
         if (!confirmCheck) return;
-
         try {
             const res = await fetch(`http://localhost:5000/api/university/${id}/validate`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' }
             });
-
             if (res.ok) {
                 alert(`✅ "${name}" verified! Credentials dispatched via email.`);
-                await fetchAll(); // Refresh both queues
-                setTab('verified'); // Switch to verified tab
+                await fetchAll();
+                setTab('verified');
             } else {
                 const data = await res.json();
                 alert(data.message || 'Verification error');
@@ -59,62 +98,88 @@ const SystemAdminDashboard = () => {
         }
     };
 
+    // ===================== LOGIN GATE =====================
     if (user?.role !== 'SYSTEM_ADMIN') {
         return (
-            <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center font-body p-4">
-               <div className="bg-white p-8 rounded-xl shadow-lg border border-border-color max-w-md w-full animate-slide-up text-center">
-                  <div className="w-16 h-16 bg-accent-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-accent-primary">
-                     <Lock size={28} />
-                  </div>
-                  <h1 className="text-2xl font-bold text-text-primary mb-2">System Admin Locked</h1>
-                  <p className="text-sm text-text-secondary mb-6">Enter your administrator email to receive a secure OTP code.</p>
-                  
-                  {waitMsg && <p className="text-xs font-bold text-[#16a34a] bg-[#f0fdf4] p-3 rounded-lg border border-[#bbf7d0] mb-4">{waitMsg}</p>}
+            <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center font-body p-4 relative">
+                <div className="relative bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-white px-8 py-7 text-center border-b border-slate-100">
+                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                            <ShieldCheck className="w-7 h-7 text-slate-700" />
+                        </div>
+                        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">System Administration</h1>
+                        <p className="text-slate-500 text-xs font-medium mt-1.5 uppercase tracking-widest">Secure Access Portal</p>
+                    </div>
 
-                  {!otpSent ? (
-                     <div className="space-y-4 text-left">
+                    <div className="p-8 space-y-5">
+                        {/* Status message */}
+                        {statusMsg && (
+                            <div className={`text-xs font-bold p-3 rounded-xl border flex items-center gap-2 ${statusMsg.type === 'error' ? 'text-red-700 bg-red-50 border-red-200' : 'text-green-700 bg-green-50 border-green-200'}`}>
+                                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span>{statusMsg.text}</span>
+                            </div>
+                        )}
+
+                        {/* Email */}
                         <div>
-                          <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Admin Email</label>
-                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-sm" placeholder="admin@system.com" />
+                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Administrator Email</label>
+                            <div className="relative">
+                                <Mail className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                                    placeholder="admin@campuscore.edu"
+                                    className={`w-full pl-11 pr-10 py-3 bg-slate-50 border ${isEmailValid ? 'border-green-400 focus:border-green-400 focus:ring-green-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-4 outline-none transition-all`}
+                                />
+                                {isEmailValid && (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <button onClick={async () => {
-                            if(!email) return alert('Enter email');
-                            const res = await fetch('http://localhost:5000/api/auth/system-admin/send-otp', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email })
-                            });
-                            const data = await res.json();
-                            alert(data.msg);
-                            setOtpSent(true);
-                            setWaitMsg('OTP generated successfully. (If disconnected, look at the running Terminal logs to view the OTP key natively).');
-                        }} className="w-full py-2.5 bg-text-primary hover:bg-black text-white font-bold text-sm rounded-lg transition-colors">
-                           Request OTP Code
-                        </button>
-                     </div>
-                  ) : (
-                     <div className="space-y-4 text-left">
+
+                        {/* Security Code */}
                         <div>
-                          <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Enter 6-Digit OTP</label>
-                          <input type="text" value={otpToken} onChange={e => setOtpToken(e.target.value)} className="w-full px-4 py-2 bg-bg-secondary border border-border-color rounded-lg text-sm tracking-[0.2em] font-mono font-bold text-center" placeholder="• • • • • •" />
+                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Security Code</label>
+                            <div className="relative">
+                                <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                                <input
+                                    type="password"
+                                    value={securityCode}
+                                    onChange={e => setSecurityCode(e.target.value)}
+                                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                                    placeholder="••••••••"
+                                    className={`w-full pl-11 pr-10 py-3 bg-slate-50 border ${isCodeValid ? 'border-green-400 focus:border-green-400 focus:ring-green-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-4 outline-none transition-all`}
+                                />
+                                {isCodeValid && (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <button onClick={async () => {
-                            const res = await fetch('http://localhost:5000/api/auth/system-admin/verify-otp', {
-                                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, otp: otpToken })
-                            });
-                            const data = await res.json();
-                            if(res.ok) {
-                                login(data.token, data.user);
-                            } else {
-                                alert(data.msg);
-                            }
-                        }} className="w-full py-2.5 bg-accent-primary hover:bg-accent-secondary text-white font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-2">
-                           <Mail size={16} /> Verify & Access Dashboard
-                        </button>
-                     </div>
-                  )}
-               </div>
+
+                        {/* Loading Indicator for Auto-Login */}
+                        <div className="h-6 flex items-center justify-center">
+                            {loginLoading ? (
+                                <div className="flex items-center gap-2 text-slate-500 text-xs font-bold animate-pulse">
+                                    <div className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                                    Authenticating...
+                                </div>
+                            ) : (
+                                <p className="text-[10px] text-slate-400">Authorised personnel only. All access is logged.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }
+
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center font-body">
@@ -187,7 +252,7 @@ const SystemAdminDashboard = () => {
                                 <div className="px-6 py-4 border-b border-border-color flex items-center justify-between bg-amber-50">
                                     <div className="flex items-center gap-3">
                                         {uni.logoUrl
-                                            ? <img src={`http://localhost:5000/${uni.logoUrl}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
+                                            ? <img src={`http://localhost:5000/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
                                             : <div className="h-9 w-9 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center font-bold text-sm">{uni.name?.charAt(0)}</div>
                                         }
                                         <div>
@@ -213,7 +278,7 @@ const SystemAdminDashboard = () => {
                                         <div className="flex flex-wrap gap-3">
                                             {uni.affiliationDocUrl ? (
                                                 <a
-                                                    href={`http://localhost:5000/${uni.affiliationDocUrl}`}
+                                                    href={`http://localhost:5000/${uni.affiliationDocUrl?.replace(/^\/+/g, '')}`}
                                                     target="_blank" rel="noreferrer" download
                                                     className="inline-flex items-center gap-2 px-4 py-2 border border-[#3b82f6] text-[#3b82f6] hover:bg-[#eff6ff] rounded-lg text-sm font-semibold transition-colors"
                                                 >
@@ -273,7 +338,7 @@ const SystemAdminDashboard = () => {
                                 <div className="px-6 py-4 border-b border-green-100 flex items-center justify-between bg-green-50">
                                     <div className="flex items-center gap-3">
                                         {uni.logoUrl
-                                            ? <img src={`http://localhost:5000/${uni.logoUrl}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
+                                            ? <img src={`http://localhost:5000/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
                                             : <div className="h-9 w-9 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-sm">{uni.name?.charAt(0)}</div>
                                         }
                                         <div>
@@ -291,10 +356,10 @@ const SystemAdminDashboard = () => {
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Phone</p><p className="font-medium text-text-primary">{uni.phone}</p></div>
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Location</p><p className="font-medium text-text-primary">{uni.state}, {uni.country}</p></div>
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Plan</p><p className="font-medium text-text-primary capitalize">{uni.plan} · {uni.duration}</p></div>
-                                        <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Branded University ID</p><p className="font-mono text-xs text-[#1e3a5f] font-bold break-all">{uni.generatedCredential || 'Not Generated'}</p></div>
+                                        <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Registered Email</p><p className="font-medium text-text-primary">{uni.email}</p></div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Portal Link</p>
-                                            <a href={`/portal/${encodeURIComponent(uni.name)}`} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:underline text-xs font-medium">View Portal</a>
+                                            <a href={`/university-login?university=${encodeURIComponent(uni.name)}`} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:underline text-xs font-medium">View Portal (Login)</a>
                                         </div>
                                     </div>
                                     
@@ -308,8 +373,8 @@ const SystemAdminDashboard = () => {
                                                     <p className="font-semibold text-text-primary">{uni.adminUser.name}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-[10px] font-bold text-green-600 uppercase mb-0.5">Login Email (UserID)</p>
-                                                    <p className="font-semibold text-text-primary break-all">{uni.adminUser.email}</p>
+                                                    <p className="text-[10px] font-bold text-green-600 uppercase mb-0.5">Login ID (Branded Uni ID)</p>
+                                                    <p className="font-semibold text-text-primary break-all">{uni.generatedCredential}</p>
                                                 </div>
                                                 <div className="pt-2 border-t border-green-200 text-[#15803d]">
                                                     <p className="text-[10px] uppercase font-bold tracking-tight mb-1">Login Password</p>

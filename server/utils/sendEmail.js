@@ -16,7 +16,7 @@ const sendEmail = async (options) => {
       });
 
       const message = {
-        from: `${process.env.FROM_NAME || 'CampusCore System'} <${process.env.FROM_EMAIL || 'admin@campuscore.com'}>`,
+        from: `${process.env.FROM_NAME || 'All Campus Digital System'} <${process.env.FROM_EMAIL || 'admin@allcampusdigital.com'}>`,
         to: options.email,
         subject: options.subject,
         text: options.message,

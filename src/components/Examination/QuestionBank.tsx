@@ -8,6 +8,8 @@ import {
     questionBank as initialBank, paperCodes,
     type BankQuestion, type QuestionType, type Difficulty
 } from '../../data/examData';
+import { ImageCropperModal } from '../Common/ImageCropperModal';
+import { GlorifiedImagePreview } from '../Common/GlorifiedImagePreview';
 
 // ── Helpers ───────────────────────────────────────────────────
 const diffBadge = (d: Difficulty) => {
@@ -34,6 +36,10 @@ const UploadQuestions = ({ bank, setBank }: { bank: BankQuestion[]; setBank: (b:
     const [correctSingle, setCorrectSingle] = useState('');
     const [correctMulti, setCorrectMulti] = useState<string[]>([]);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [cropperOpen, setCropperOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState('');
+    const [cropFileName, setCropFileName] = useState('question-image.jpg');
     const [saved, setSaved] = useState(false);
 
     // Filters
@@ -53,6 +59,18 @@ const UploadQuestions = ({ bank, setBank }: { bank: BankQuestion[]; setBank: (b:
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropFileName(file.name);
+        const reader = new FileReader();
+        reader.onload = () => {
+             setCropImageSrc(reader.result as string);
+             setCropperOpen(true);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleCropComplete = (file: File) => {
+        setImageFile(file);
         const reader = new FileReader();
         reader.onload = () => setImagePreview(reader.result as string);
         reader.readAsDataURL(file);
@@ -79,7 +97,7 @@ const UploadQuestions = ({ bank, setBank }: { bank: BankQuestion[]; setBank: (b:
         setBank([...bank, newQ]);
         // reset
         setText(''); setUnit(''); setMarks('1'); setNegEnabled(false); setNegMarks('0.25');
-        setOptions(['', '', '', '']); setCorrectSingle(''); setCorrectMulti([]); setImagePreview(null);
+        setOptions(['', '', '', '']); setCorrectSingle(''); setCorrectMulti([]); setImagePreview(null); setImageFile(null);
         setSaved(true); setTimeout(() => setSaved(false), 2500);
     };
 
@@ -148,11 +166,12 @@ const UploadQuestions = ({ bank, setBank }: { bank: BankQuestion[]; setBank: (b:
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Image <span className="text-text-muted font-normal">(optional)</span></label>
-                            {imagePreview ? (
-                                <div className="relative">
-                                    <img src={imagePreview} alt="Question visual" className="w-full h-32 object-contain border border-border-color rounded-md bg-bg-secondary" />
-                                    <button onClick={() => setImagePreview(null)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"><X size={12} /></button>
-                                </div>
+                            {imageFile ? (
+                                <GlorifiedImagePreview 
+                                    file={imageFile} 
+                                    onRemove={() => { setImageFile(null); setImagePreview(null); }} 
+                                    title="Visual attached" 
+                                />
                             ) : (
                                 <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-border-color rounded-md cursor-pointer hover:border-accent-primary/50 transition-colors bg-bg-secondary">
                                     <Image size={20} className="text-text-muted mb-1" />
@@ -236,6 +255,14 @@ const UploadQuestions = ({ bank, setBank }: { bank: BankQuestion[]; setBank: (b:
                     </div>
                 </div>
             </div>
+
+            <ImageCropperModal
+                isOpen={cropperOpen}
+                onClose={() => setCropperOpen(false)}
+                imageSrc={cropImageSrc}
+                onCropComplete={handleCropComplete}
+                fileName={cropFileName}
+            />
 
             {/* ── Question Bank Table ── */}
             <div className="border border-border-color rounded-lg bg-white overflow-hidden">
@@ -321,7 +348,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
     const [selPaper, setSelPaper] = useState('');
     const [totalMarks, setTotalMarks] = useState('100');
     const [duration, setDuration] = useState('3');
-    const [institute, setInstitute] = useState('CampusCore University');
+    const [institute, setInstitute] = useState('All Campus Digital University');
     const [examTitle, setExamTitle] = useState('');
     const [sectConfig, setSectConfig] = useState<{ type: QuestionType; diff: Difficulty | ''; count: string }[]>([
         { type: 'objective', diff: 'easy', count: '10' },

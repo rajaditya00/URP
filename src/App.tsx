@@ -9,6 +9,8 @@ import UniversityPortal from './pages/UniversityPortal';
 import SystemAdminDashboard from './pages/SystemAdminDashboard';
 import UniversityLogin from './pages/UniversityLogin';
 import UniAdminDashboard from './pages/UniAdminDashboard';
+import CollegeAdminDashboard from './pages/CollegeAdminDashboard';
+import StudentProfilePage from './pages/StudentProfilePage';
 
 import Dashboard from './pages/Dashboard';
 import Academic from './pages/Academic';
@@ -42,6 +44,8 @@ function App() {
       <Route path="/system-admin" element={<SystemAdminDashboard />} />
       <Route path="/university-login" element={<UniversityLogin />} />
       <Route path="/uni-admin/dashboard" element={<UniAdminDashboard />} />
+      <Route path="/college-admin/dashboard" element={<CollegeAdminDashboard />} />
+      <Route path="/college-admin/student/:id" element={<StudentProfilePage />} />
 
       {/* Protected Routes (Require Authentication in Real App) */}
       <Route element={<Layout />}>

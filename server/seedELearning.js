@@ -103,7 +103,7 @@ const E_LEARNING_COURSES = [
   }
 ];
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/campuscore')
+mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/allcampusdigital')
 .then(async () => {
     console.log('MongoDB connected for seeding E-Learning courses...');
     await ELearningCourse.deleteMany({});

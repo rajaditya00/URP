@@ -148,7 +148,7 @@ const navData = {
             {
                 heading: 'Company',
                 items: [
-                    { icon: <Building2 size={16} />, label: 'About CampusCore URP', href: '/dashboard' },
+                    { icon: <Building2 size={16} />, label: 'About All Campus Digital', href: '/dashboard' },
                     { icon: <Briefcase size={16} />, label: 'Careers', href: '/dashboard' },
                     { icon: <Globe size={16} />, label: 'Blog & Case Studies', href: '/dashboard' },
                     { icon: <Phone size={16} />, label: 'Contact Sales', href: '/dashboard' },
@@ -164,20 +164,20 @@ type NavKey = keyof typeof navData;
 const MegaMenu = ({ item }: { item: NavKey }) => {
     const data = navData[item];
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-max max-w-5xl bg-white border border-border-color rounded-xl shadow-2xl p-6"
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 z-50 w-max max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-xl p-8"
             style={{ minWidth: '680px' }}>
             <div className={`grid gap-8`} style={{ gridTemplateColumns: `repeat(${data.sections.length}, 1fr)` }}>
                 {data.sections.map((sec) => (
                     <div key={sec.heading}>
-                        <p className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3 pb-2 border-b border-border-color">{sec.heading}</p>
-                        <ul className="space-y-1">
+                        <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400 mb-4 pb-2 border-b border-slate-100">{sec.heading}</p>
+                        <ul className="space-y-1.5">
                             {sec.items.map((it) => (
                                 <li key={it.label}>
-                                    <Link to={it.href} className="w-full text-left flex items-start gap-2.5 px-2 py-2 rounded-md hover:bg-[#f0f6ff] group transition-colors">
-                                        <span className="text-text-muted group-hover:text-accent-primary mt-0.5 flex-shrink-0 transition-colors">{it.icon}</span>
+                                    <Link to={it.href} className="w-full text-left flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 group transition-all">
+                                        <span className="text-slate-400 group-hover:text-slate-900 mt-0.5 flex-shrink-0 transition-colors">{it.icon}</span>
                                         <div>
-                                            <p className="text-sm font-medium text-text-primary group-hover:text-accent-primary transition-colors leading-tight">{it.label}</p>
-                                            {'desc' in it && <p className="text-xs text-text-muted mt-0.5 leading-tight">{(it as { desc: string }).desc}</p>}
+                                            <p className="text-sm font-bold text-slate-700 group-hover:text-slate-900 transition-colors leading-tight">{it.label}</p>
+                                            {'desc' in it && <p className="text-xs font-medium text-slate-500 mt-1 leading-tight">{(it as { desc: string }).desc}</p>}
                                         </div>
                                     </Link>
                                 </li>
@@ -209,9 +209,9 @@ const NavItem = ({ label }: { label: NavKey }) => {
                 onMouseEnter={() => setOpen(true)}
                 onMouseLeave={() => setOpen(false)}
                 onClick={() => setOpen(o => !o)}
-                className={`text-sm font-medium flex items-center gap-1 px-1 py-2 transition-colors ${open ? 'text-accent-primary' : 'text-text-secondary hover:text-accent-primary'}`}>
+                className={`text-sm font-bold flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${open ? 'text-slate-900 bg-slate-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'}`}>
                 {label}
-                <ChevronDown size={13} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+                <ChevronDown size={14} className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
             </button>
             {open && (
                 <div onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
@@ -224,19 +224,25 @@ const NavItem = ({ label }: { label: NavKey }) => {
 
 // ── Static data for rest of page ─────────────────────────────
 const features = [
-    { icon: <Shield size={22} className="text-accent-primary" />, title: 'Enterprise Security', desc: 'Bank-grade encryption protecting sensitive student and faculty data.' },
-    { icon: <Zap size={22} className="text-accent-primary" />, title: 'Real-Time Sync', desc: 'Instant updates across all departments, faculties, and affiliated colleges.' },
-    { icon: <Database size={22} className="text-accent-primary" />, title: 'Unified Data', desc: 'A single source of truth for academics, finance, and operations.' },
-    { icon: <Globe size={22} className="text-accent-primary" />, title: 'Global Access', desc: 'Manage your entire university ecosystem from anywhere in the world.' },
+    { icon: <Shield size={24} className="text-slate-700" />, title: 'Zero-Trust Security', desc: 'Bank-grade encryption, strict RBAC, and automated compliance auditing to protect institutional data.' },
+    { icon: <Zap size={24} className="text-slate-700" />, title: 'Real-Time Sync', desc: 'Eliminate silos. Instantaneous synchronization across departments, faculties, and global affiliated colleges.' },
+    { icon: <Database size={24} className="text-slate-700" />, title: 'Unified Academic Core', desc: 'A single, immutable source of truth for curriculum mapping, examinations, and operational reporting.' },
+    { icon: <Globe size={24} className="text-slate-700" />, title: 'Borderless Ecosystem', desc: 'Deploy on-premise or in the cloud. Manage multiple affiliated campuses across different regions effortlessly.' },
+];
+
+const stakeholders = [
+    { icon: <Landmark size={28} className="text-slate-800" />, title: 'Chancellors & Admins', desc: 'Attain global visibility with real-time analytics, compliance tracking, and absolute governance across all campuses.' },
+    { icon: <Briefcase size={28} className="text-slate-800" />, title: 'Faculty & Deans', desc: 'Automate grading, streamline curriculum design, and manage student mentorship without administrative friction.' },
+    { icon: <GraduationCap size={28} className="text-slate-800" />, title: 'Students & Alumni', desc: 'Access a deeply personalized portal for grades, classes, e-learning modules, and exclusive placement drives.' }
 ];
 
 const modules = [
-    { icon: <BookOpen size={20} className="text-accent-primary" />, label: 'Academics' },
-    { icon: <Users size={20} className="text-accent-primary" />, label: 'Faculty Directory' },
-    { icon: <BarChart3 size={20} className="text-accent-primary" />, label: 'Placements' },
-    { icon: <FileText size={20} className="text-accent-primary" />, label: 'Examinations' },
-    { icon: <Globe size={20} className="text-accent-primary" />, label: 'Colleges' },
-    { icon: <Shield size={20} className="text-accent-primary" />, label: 'Grievances' },
+    { icon: <BookOpen size={20} className="text-slate-700" />, label: 'Academics & Core' },
+    { icon: <Users size={20} className="text-slate-700" />, label: 'Faculty & HR' },
+    { icon: <BarChart3 size={20} className="text-slate-700" />, label: 'Placements & CR' },
+    { icon: <FileText size={20} className="text-slate-700" />, label: 'Examinations' },
+    { icon: <Globe size={20} className="text-slate-700" />, label: 'College Networks' },
+    { icon: <Shield size={20} className="text-slate-700" />, label: 'Compliance & IQAC' },
 ];
 
 // ── Page ──────────────────────────────────────────────────────
@@ -244,31 +250,35 @@ const LandingPage = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-bg-primary font-body text-text-primary overflow-x-hidden">
+        <div className="min-h-screen bg-white font-body text-slate-900 overflow-x-hidden relative selection:bg-slate-200">
+
             {/* Navbar */}
-            <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-border-color">
+            <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
                 <div className="max-w-7xl mx-auto px-6 lg:px-12 py-3.5 flex items-center justify-between">
                     {/* Logo */}
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-accent-primary flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center">
                             <LibraryBig size={18} color="#ffffff" />
                         </div>
-                        <span className="text-lg font-bold text-text-primary tracking-tight">
-                            CampusCore <span className="text-accent-primary font-medium">URP</span>
+                        <span className="text-xl font-extrabold text-slate-900 tracking-tight">
+                            All Campus Digital
                         </span>
                     </div>
 
                     {/* Nav items */}
-                    <div className="hidden md:flex items-center gap-1">
+                    <div className="hidden md:flex items-center gap-2">
                         {(Object.keys(navData) as NavKey[]).map(item => (
                             <NavItem key={item} label={item} />
                         ))}
                     </div>
 
                     {/* CTA */}
-                    <div className="flex items-center gap-3">
-                        <Link to="/login" className="text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors px-3 py-2">
+                    <div className="flex items-center gap-5">
+                        <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors">
                             Sign In
+                        </Link>
+                        <Link to="/signup" className="text-sm font-bold bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:-translate-y-0.5 transition-transform hidden sm:block">
+                            Get Started
                         </Link>
                     </div>
                 </div>
@@ -276,47 +286,50 @@ const LandingPage = () => {
 
             {/* Hero */}
             <main>
-                <section className="bg-bg-secondary border-b border-border-color">
-                    <div className="max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-28 flex flex-col lg:flex-row items-center gap-16">
-                        <div className="flex-1 max-w-2xl">
-                            <div className="inline-flex items-center gap-2 mb-6 border border-accent-primary/30 bg-accent-primary/5 text-accent-primary text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm">
-                                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary inline-block"></span>
-                                University Resource Planning v2.0
+                <section className="relative pt-20 pb-28 lg:pt-32 lg:pb-40 border-b border-slate-100">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12 flex flex-col lg:flex-row items-center gap-16">
+                        <div className="flex-1 max-w-2xl relative z-10">
+                            <div className="inline-flex items-center gap-2.5 mb-8 border border-slate-200 text-slate-600 text-xs font-extrabold uppercase tracking-widest px-4 py-2 rounded-full">
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-600"></span>
+                                </span>
+                                The Operating System for Higher Education
                             </div>
-                            <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-text-primary leading-tight mb-6">
-                                University resource planning,<br />
-                                <span className="text-accent-primary">mapped to real operations</span>
+                            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-8 tracking-tight">
+                                Unify your entire university.<br />
+                                Scale without limits.
                             </h1>
-                            <p className="text-text-secondary text-lg leading-relaxed mb-10 max-w-xl">
-                                CampusCore URP is structured around the actual sequence of university operations, supporting each stage from student enrollment and planning through examination, quality control, and placement.
+                            <p className="text-slate-600 text-xl font-medium leading-relaxed mb-12 max-w-xl">
+                                All Campus Digital replaces fragmented legacy systems with a single, intelligent platform. Seamlessly orchestrate academics, examinations, faculty administration, and student success—from a single campus to a global institutional network.
                             </p>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <a href="#pricing" className="flex items-center justify-center px-7 py-3 rounded-md bg-accent-primary text-white font-semibold hover:bg-[#1661a3] transition-colors shadow-sm">
+                            <div className="flex flex-col sm:flex-row gap-5">
+                                <a href="#pricing" className="flex items-center justify-center px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:-translate-y-1 transition-transform text-lg">
                                     View Pricing Plans
                                 </a>
-                                <button className="px-7 py-3 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors">
-                                    View demo
-                                </button>
+                                <Link to="/login" className="flex items-center justify-center px-8 py-4 rounded-2xl border-2 border-slate-200 bg-white text-slate-700 font-bold hover:border-slate-300 hover:-translate-y-1 transition-all text-lg">
+                                    View Live Demo
+                                </Link>
                             </div>
-                            <div className="mt-10 flex flex-wrap gap-6">
-                                {['No setup fees', '99.9% uptime SLA', '24/7 Support'].map(item => (
-                                    <div key={item} className="flex items-center gap-2 text-sm text-text-secondary font-medium">
-                                        <CheckCircle2 size={16} className="text-status-success" />{item}
+                            <div className="mt-14 flex flex-wrap gap-8 border-t border-slate-200 pt-8">
+                                {['No setup fees', '99.9% uptime SLA', '24/7 Priority Support'].map(item => (
+                                    <div key={item} className="flex items-center gap-2.5 text-sm text-slate-600 font-extrabold">
+                                        <CheckCircle2 size={18} className="text-slate-900" />{item}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
                         {/* Module grid panel */}
-                        <div className="flex-1 w-full hidden lg:block">
-                            <div className="relative w-full aspect-[4/3] border border-border-color rounded-lg bg-bg-primary shadow-sm p-6 overflow-hidden">
-                                <div className="grid grid-cols-3 gap-4 h-full">
+                        <div className="flex-1 w-full hidden lg:block relative z-10">
+                            <div className="relative w-full aspect-[4/3] border border-slate-200 rounded-[40px] bg-slate-50 p-10 overflow-hidden">
+                                <div className="grid grid-cols-3 gap-6 h-full">
                                     {modules.map((mod, i) => (
-                                        <div key={i} className={`border border-border-color rounded-md p-4 flex flex-col gap-3 items-start ${i === 1 ? 'bg-accent-primary text-white border-accent-primary' : 'bg-bg-primary'}`}>
-                                            <div className={`w-8 h-8 rounded flex items-center justify-center ${i === 1 ? 'bg-white/20' : 'bg-bg-secondary border border-border-color'}`}>
-                                                {i === 1 ? <BookOpen size={16} className="text-white" /> : mod.icon}
+                                        <div key={i} className={`border border-slate-200 rounded-3xl p-6 flex flex-col gap-4 items-start transition-all hover:bg-slate-100 ${i === 1 ? 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800' : 'bg-white'}`}>
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${i === 1 ? 'bg-white/10' : 'bg-slate-50 border border-slate-200 text-slate-900'}`}>
+                                                {i === 1 ? <BookOpen size={24} className="text-white" /> : mod.icon}
                                             </div>
-                                            <span className={`text-xs font-bold ${i === 1 ? 'text-white' : 'text-text-secondary'}`}>{mod.label}</span>
+                                            <span className={`text-sm font-extrabold tracking-tight ${i === 1 ? 'text-white' : 'text-slate-900'}`}>{mod.label}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -325,103 +338,126 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                {/* Features */}
-                <section className="max-w-7xl mx-auto px-6 lg:px-12 py-20 border-b border-border-color">
-                    <div className="text-center mb-14">
-                        <h2 className="text-3xl font-bold text-text-primary mb-4">Everything you need to manage a university</h2>
-                        <p className="text-text-secondary max-w-xl mx-auto">One centralized platform for all departments, role levels, and institutional workflows.</p>
+                {/* Built For Every Stakeholder */}
+                <section className="py-24 bg-slate-50 border-b border-slate-200 relative">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Built for Every Stakeholder</h2>
+                            <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed">
+                                A platform that doesn't just digitize records, but actively enhances the day-to-day experience of everyone on campus.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                            {stakeholders.map((s, i) => (
+                                <div key={i} className="text-center group">
+                                    <div className="w-20 h-20 mx-auto rounded-3xl bg-white border border-slate-200 flex items-center justify-center mb-8 transition-transform duration-300">
+                                        {s.icon}
+                                    </div>
+                                    <h3 className="text-xl font-extrabold text-slate-900 mb-4 tracking-tight">{s.title}</h3>
+                                    <p className="text-slate-600 font-medium leading-relaxed">{s.desc}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                </section>
+
+                {/* Features */}
+                <section className="max-w-7xl mx-auto px-6 lg:px-12 py-32">
+                    <div className="text-center mb-20">
+                        <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Enterprise-Grade Infrastructure</h2>
+                        <p className="text-slate-500 font-medium max-w-2xl mx-auto text-lg leading-relaxed">Architected for security, scale, and interoperability across every institutional workflow.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((f, i) => (
-                            <div key={i} className="p-6 border border-border-color rounded-lg bg-bg-primary hover:border-accent-primary/40 hover:shadow-sm transition-all group">
-                                <div className="w-10 h-10 rounded-md border border-border-color bg-bg-secondary flex items-center justify-center mb-5 group-hover:border-accent-primary/30 transition-colors">
+                            <div key={i} className="p-8 border border-slate-200 rounded-[32px] bg-white hover:border-slate-300 hover:bg-slate-50 transition-all duration-300">
+                                <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mb-8 border border-slate-200">
                                     {f.icon}
                                 </div>
-                                <h3 className="text-base font-bold text-text-primary mb-2">{f.title}</h3>
-                                <p className="text-text-secondary text-sm leading-relaxed">{f.desc}</p>
+                                <h3 className="text-xl font-extrabold text-slate-900 mb-4 tracking-tight">{f.title}</h3>
+                                <p className="text-slate-600 text-sm font-medium leading-relaxed">{f.desc}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 {/* Pricing Section */}
-                <section id="pricing" className="bg-bg-secondary border-b border-border-color py-20">
-                    <div className="max-w-7xl mx-auto px-6 lg:px-12">
-                        <div className="text-center mb-14">
-                            <h2 className="text-3xl font-bold text-text-primary mb-4">Transparent Pricing for Every Institution</h2>
-                            <p className="text-text-secondary max-w-xl mx-auto">Start with a plan that fits your campus size, and upgrade as your student body grows.</p>
+                <section id="pricing" className="py-32 border-t border-slate-200 bg-slate-50">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+                        <div className="text-center mb-20">
+                            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">Scalable Infrastructure</h2>
+                            <p className="text-slate-600 font-medium max-w-2xl mx-auto text-lg leading-relaxed">Start with a robust foundation that fits your current campus footprint, and scale seamlessly as your student body and affiliations grow.</p>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                             {/* Starter Plan */}
-                            <div className="border border-border-color rounded-xl bg-bg-primary p-8 flex flex-col hover:border-accent-primary/40 transition-all">
-                                <h3 className="text-xl font-bold text-text-primary">Starter Plan</h3>
-                                <p className="text-sm text-text-secondary mt-2 mb-6">Ideal for small or emerging colleges.</p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-text-primary">Free</span>
-                                    <span className="text-text-secondary"> /year</span>
+                            <div className="border border-slate-200 rounded-[32px] bg-white p-10 flex flex-col">
+                                <h3 className="text-2xl font-extrabold text-slate-900">Starter Plan</h3>
+                                <p className="text-sm font-medium text-slate-500 mt-3 mb-8 leading-relaxed">Ideal for small or emerging standalone colleges.</p>
+                                <div className="mb-8">
+                                    <span className="text-5xl font-extrabold text-slate-900">Free</span>
+                                    <span className="text-slate-400 font-bold"> /year</span>
                                 </div>
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Up to 1,000 Students</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Core Academic Modules</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Standard Examination Setup</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Email Support</li>
+                                <ul className="space-y-5 mb-12 flex-1">
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Up to 1,000 Students</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Core Academic Modules</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Standard Examination Setup</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Email Support</li>
                                 </ul>
-                                <div className="mt-auto space-y-3">
-                                    <Link to="/signup?plan=starter&duration=yearly" className="w-full block text-center py-2.5 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors text-sm">
+                                <div className="mt-auto space-y-4">
+                                    <Link to="/signup?plan=starter&duration=yearly" className="w-full block text-center py-4 rounded-2xl border-2 border-slate-200 text-slate-900 font-bold hover:bg-slate-50 transition-all text-sm">
                                         Select Yearly
                                     </Link>
-                                    <Link to="/signup?plan=starter&duration=5year" className="w-full block text-center py-2.5 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors text-sm">
+                                    <Link to="/signup?plan=starter&duration=5year" className="w-full block text-center py-4 rounded-2xl border-2 border-slate-200 text-slate-900 font-bold hover:bg-slate-50 transition-all text-sm">
                                         Select 5 Year
                                     </Link>
                                 </div>
                             </div>
-                            
+
                             {/* Autonomous College */}
-                            <div className="border-2 border-accent-primary rounded-xl bg-bg-primary p-8 flex flex-col relative shadow-lg transform md:-translate-y-4">
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-accent-primary text-white text-xs font-bold uppercase tracking-wider px-4 py-1.5 rounded-full">
+                            <div className="border-2 border-slate-900 rounded-[32px] bg-white p-10 flex flex-col relative transform md:-translate-y-6 shadow-xl">
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 text-white text-[11px] font-extrabold uppercase tracking-widest px-5 py-2 rounded-full">
                                     Most Popular
                                 </div>
-                                <h3 className="text-xl font-bold text-accent-primary">Autonomous College</h3>
-                                <p className="text-sm text-text-secondary mt-2 mb-6">For established mid-sized universities.</p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-text-primary">$2,499</span>
-                                    <span className="text-text-secondary"> /year</span>
+                                <h3 className="text-2xl font-extrabold text-slate-900">Autonomous College</h3>
+                                <p className="text-sm font-medium text-slate-500 mt-3 mb-8 leading-relaxed">For established mid-sized universities and institutes.</p>
+                                <div className="mb-8">
+                                    <span className="text-5xl font-extrabold text-slate-900">$2,499</span>
+                                    <span className="text-slate-400 font-bold"> /year</span>
                                 </div>
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Up to 5,000 Students</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> All Core & Advanced Modules</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Placements & Alumni Network</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Analytics Dashboard</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-accent-primary flex-shrink-0" /> Priority 24/7 Support</li>
+                                <ul className="space-y-5 mb-12 flex-1">
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Up to 5,000 Students</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> All Core & Advanced Modules</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Placements & Alumni Network</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Real-time Analytics Dashboard</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Priority 24/7 Support</li>
                                 </ul>
-                                <div className="mt-auto space-y-3">
-                                    <Link to="/signup?plan=autonomous&duration=yearly" className="w-full block text-center py-2.5 rounded-md bg-accent-primary text-white font-semibold hover:bg-[#1661a3] transition-colors shadow-sm text-sm">
+                                <div className="mt-auto space-y-4">
+                                    <Link to="/signup?plan=autonomous&duration=yearly" className="w-full block text-center py-4 rounded-2xl bg-slate-900 text-white font-extrabold hover:bg-slate-800 transition-all text-sm">
                                         Select Yearly
                                     </Link>
-                                    <Link to="/signup?plan=autonomous&duration=5year" className="w-full block text-center py-2.5 rounded-md bg-white text-accent-primary border border-accent-primary font-semibold hover:bg-bg-secondary transition-colors text-sm">
+                                    <Link to="/signup?plan=autonomous&duration=5year" className="w-full block text-center py-4 rounded-2xl border-2 border-slate-200 text-slate-900 font-bold hover:bg-slate-50 transition-all text-sm">
                                         Select 5 Year
                                     </Link>
                                 </div>
                             </div>
 
                             {/* Enterprise Plan */}
-                            <div className="border border-border-color rounded-xl bg-bg-primary p-8 flex flex-col hover:border-accent-primary/40 transition-all">
-                                <h3 className="text-xl font-bold text-text-primary">Enterprises</h3>
-                                <p className="text-sm text-text-secondary mt-2 mb-6">For large multi-campus university systems.</p>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-text-primary">Custom</span>
+                            <div className="border border-slate-200 rounded-[32px] bg-white p-10 flex flex-col">
+                                <h3 className="text-2xl font-extrabold text-slate-900">Enterprises</h3>
+                                <p className="text-sm font-medium text-slate-500 mt-3 mb-8 leading-relaxed">For massive multi-campus university ecosystems.</p>
+                                <div className="mb-8">
+                                    <span className="text-5xl font-extrabold text-slate-900">Custom</span>
                                 </div>
-                                <ul className="space-y-4 mb-8 flex-1">
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Unlimited Students</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Full Suite Access</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Custom API Integrations</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> Dedicated Account Manager</li>
-                                    <li className="flex gap-3 text-sm text-text-secondary"><CheckCircle2 size={18} className="text-status-success flex-shrink-0" /> On-Premise Deployment Option</li>
+                                <ul className="space-y-5 mb-12 flex-1">
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Unlimited Students</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Full Suite Access</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Custom API Integrations</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> Dedicated Account Manager</li>
+                                    <li className="flex gap-4 text-sm font-bold text-slate-700"><CheckCircle2 size={20} className="text-slate-900 flex-shrink-0" /> On-Premise Deployment Option</li>
                                 </ul>
                                 <div className="mt-auto">
-                                    <Link to="/signup?plan=enterprise&duration=custom" className="w-full block text-center py-3 rounded-md border border-border-highlight text-text-primary font-semibold hover:bg-bg-tertiary transition-colors">
-                                        Contact Team
+                                    <Link to="/signup?plan=enterprise&duration=custom" className="w-full block text-center py-4 rounded-2xl bg-white border-2 border-slate-200 text-slate-900 font-extrabold hover:bg-slate-50 transition-all text-sm">
+                                        Contact Sales Team
                                     </Link>
                                 </div>
                             </div>
@@ -430,19 +466,28 @@ const LandingPage = () => {
                 </section>
 
                 {/* CTA */}
-                <section className="bg-accent-primary">
-                    <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 text-center">
-                        <h2 className="text-3xl font-bold text-white mb-4">Ready to digitize your university?</h2>
-                        <p className="text-white/80 mb-8 max-w-lg mx-auto">Join hundreds of institutions already using CampusCore URP to streamline their operations.</p>
-                        <Link to="/signup" className="inline-block px-8 py-3.5 bg-white text-accent-primary font-bold rounded-md hover:bg-bg-secondary transition-colors shadow-sm">
-                            Sign in to your portal
-                        </Link>
+                <section className="bg-slate-900 border-t border-slate-800">
+                    <div className="max-w-7xl mx-auto px-6 lg:px-12 py-32 text-center relative z-10">
+                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-8 tracking-tight">Empower your campus with a unified operating system.</h2>
+                        <p className="text-slate-400 font-medium mb-12 max-w-3xl mx-auto text-xl leading-relaxed">Eliminate data silos, automate administrative workflows, and deliver a frictionless digital experience for your students and faculty. Deploy your entire institutional infrastructure in weeks, not years.</p>
+                        <div className="flex flex-col sm:flex-row justify-center items-center gap-6">
+                            <Link to="/signup" className="inline-block px-12 py-5 bg-white text-slate-900 font-extrabold text-lg rounded-2xl hover:-translate-y-1 transition-transform">
+                                Request Enterprise Access
+                            </Link>
+                            <Link to="/login" className="inline-block px-12 py-5 border border-slate-700 text-white font-extrabold text-lg rounded-2xl hover:bg-slate-800 hover:-translate-y-1 transition-transform">
+                                Sign In to Portal
+                            </Link>
+                        </div>
                     </div>
                 </section>
             </main>
 
-            <footer className="border-t border-border-color bg-bg-primary py-8 text-center text-text-muted text-sm">
-                <p>© {new Date().getFullYear()} CampusCore URP System. All rights reserved.</p>
+            <footer className="bg-white py-12 text-center">
+                <div className="flex items-center justify-center gap-2 mb-6">
+                    <LibraryBig size={20} className="text-slate-400" />
+                    <span className="text-lg font-extrabold text-slate-400 tracking-tight">All Campus Digital</span>
+                </div>
+                <p className="text-slate-500 text-sm font-bold tracking-wide">© {new Date().getFullYear()} All Campus Digital System. All rights reserved.</p>
             </footer>
         </div>
     );

@@ -25,10 +25,26 @@ router.get('/', protect, authorize('COLLEGE'), async (req, res) => {
   }
 });
 
+// GET single member by ID (for Student Profile page)
+router.get('/:id', protect, authorize('COLLEGE'), async (req, res) => {
+  try {
+    const member = await User.findById(req.params.id)
+      .select('-password')
+      .populate('university', 'name')
+      .populate('college', 'name');
+    if (!member || member.college?.toString() !== req.user.college?.toString()) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST - Create a professor
 router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, department, position, specialRole, mobile } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
@@ -46,6 +62,10 @@ router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
       email,
       password: generatedPassword,
       role: 'PROFESSOR',
+      department,
+      position,
+      specialRole,
+      mobile,
       university: req.user.university,
       college: req.user.college
     });
@@ -54,7 +74,7 @@ router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
     // Dispatch credentials via email
     const message = `Hello, ${name}!
 
-You have been registered as a Professor/Faculty on CampusCore URP.
+You have been registered as a Professor/Faculty on All Campus Digital.
 
 ========================================
   YOUR LOGIN CREDENTIALS
@@ -73,11 +93,11 @@ Note:
 - Use the email and password above to sign in.
 - You can change your password after logging in.
 
-CampusCore URP Team`;
+All Campus Digital Team`;
 
     await sendEmail({
       email,
-      subject: 'CampusCore - Your Professor Login Credentials',
+      subject: 'All Campus Digital - Your Professor Login Credentials',
       message
     });
 
@@ -97,7 +117,7 @@ CampusCore URP Team`;
 // POST - Create a student
 router.post('/student', protect, authorize('COLLEGE'), async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, rollNo, registrationNo, department, semester, programme, address, fatherName, motherName, gender, dob, casteCategory, mobile, aadharNo } = req.body;
 
     if (!name || !email) {
       return res.status(400).json({ error: 'Name and email are required' });
@@ -115,6 +135,19 @@ router.post('/student', protect, authorize('COLLEGE'), async (req, res) => {
       email,
       password: generatedPassword,
       role: 'STUDENT',
+      rollNo,
+      registrationNo,
+      department,
+      semester,
+      programme,
+      address,
+      fatherName,
+      motherName,
+      gender,
+      dob,
+      casteCategory,
+      mobile,
+      aadharNo,
       university: req.user.university,
       college: req.user.college
     });
@@ -123,7 +156,7 @@ router.post('/student', protect, authorize('COLLEGE'), async (req, res) => {
     // Dispatch credentials via email
     const message = `Hello, ${name}!
 
-You have been registered as a Student on CampusCore URP.
+You have been registered as a Student on All Campus Digital.
 
 ========================================
   YOUR LOGIN CREDENTIALS
@@ -142,11 +175,11 @@ Note:
 - Use the email and password above to sign in.
 - You can change your password after logging in.
 
-CampusCore URP Team`;
+All Campus Digital Team`;
 
     await sendEmail({
       email,
-      subject: 'CampusCore - Your Student Login Credentials',
+      subject: 'All Campus Digital - Your Student Login Credentials',
       message
     });
 

@@ -46,7 +46,7 @@ router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
 
     // Generate credentials for the college admin
     const generatedPassword = generatePassword('CL');
-    
+
     // Generate College ID (Abbreviation + 3 digits)
     let prefix = name.split(' ').map(w => w[0]).join('').replace(/[^A-Za-z]/g, '').toUpperCase();
     if (!prefix) prefix = 'COL';
@@ -76,7 +76,7 @@ router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
     // Dispatch credentials via email
     const message = `Hello, ${principalName || name}!
 
-Your college has been registered on CampusCore URP by the University Administrator.
+Your college has been registered on All Campus Digital by the University Administrator.
 
 ========================================
   YOUR COLLEGE LOGIN CREDENTIALS
@@ -95,11 +95,11 @@ Note:
 - You can change your password after logging in.
 - Contact your University Admin if you face any issues.
 
-CampusCore URP Team`;
+All Campus Digital Team`;
 
     await sendEmail({
       email,
-      subject: 'CampusCore - Your College Login Credentials',
+      subject: 'All Campus Digital - Your College Login Credentials',
       message
     });
 
@@ -129,7 +129,7 @@ router.post('/:id/credentials', protect, authorize('SUPER_ADMIN'), async (req, r
     // Generate credentials
     const generatedPassword = generatePassword('CL');
     let generatedCredential = college.generatedCredential;
-    
+
     if (!generatedCredential) {
       let prefix = college.name.split(' ').map(w => w[0]).join('').replace(/[^A-Za-z]/g, '').toUpperCase();
       if (!prefix) prefix = 'COL';
@@ -149,7 +149,7 @@ router.post('/:id/credentials', protect, authorize('SUPER_ADMIN'), async (req, r
     // Dispatch email
     const message = `Hello, ${college.principalName || college.name}!
 
-Your college credentials on CampusCore URP have been updated by the University Administrator.
+Your college credentials on All Campus Digital have been updated by the University Administrator.
 
 ========================================
   YOUR NEW COLLEGE LOGIN CREDENTIALS
@@ -162,11 +162,11 @@ Your college credentials on CampusCore URP have been updated by the University A
   Login URL      : http://localhost:5173/login
 ========================================
 
-CampusCore URP Team`;
+All Campus Digital Team`;
 
     await sendEmail({
       email: collegeAdmin.email,
-      subject: 'CampusCore - Your Updated Login Credentials',
+      subject: 'All Campus Digital - Your Updated Login Credentials',
       message
     });
 

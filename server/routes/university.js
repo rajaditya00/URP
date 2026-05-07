@@ -5,7 +5,91 @@ const University = require('../models/University');
 const User = require('../models/User');
 const upload = require('../middleware/upload');
 const { protect, authorize } = require('../middleware/auth');
+const auth = protect; // Alias for consistency across routes
 const sendEmail = require('../utils/sendEmail');
+
+const Otp = require('../models/Otp');
+
+// Send OTPs for Registration (type: 'email' | 'phone' | 'both')
+router.post('/send-otp', async (req, res) => {
+    try {
+        const { email, phone, type = 'both' } = req.body;
+
+        if ((type === 'email' || type === 'both') && email) {
+            const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            await Otp.findOneAndUpdate(
+                { identifier: email },
+                { otp: emailOtp, createdAt: Date.now() },
+                { upsert: true, new: true }
+            );
+
+            console.log(`[>> EMAIL OTP <<] Email: ${email} | OTP: ${emailOtp}`);
+            
+            // Dispatch the actual email (uses Ethereal test account by default in sendEmail.js)
+            try {
+                await sendEmail({
+                    email: email,
+                    subject: 'Verify Your University Registration',
+                    message: `Hello,\n\nYour 6-digit verification code is: ${emailOtp}\n\nThis OTP is valid for 10 minutes.\n\nThank you!`
+                });
+            } catch (err) {
+                console.error("Failed to send OTP email:", err);
+            }
+        }
+
+        if ((type === 'phone' || type === 'both') && phone) {
+            const phoneOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            await Otp.findOneAndUpdate(
+                { identifier: phone },
+                { otp: phoneOtp, createdAt: Date.now() },
+                { upsert: true, new: true }
+            );
+
+            console.log(`[>> PHONE OTP <<] Phone: ${phone} | OTP: ${phoneOtp}`);
+            
+            // Note: In a production environment, you would integrate Twilio, AWS SNS, 
+            // or another SMS gateway here to send the SMS to the user's phone.
+            // For testing, it will just be printed to the terminal above.
+        }
+
+        res.json({ message: 'OTP(s) sent. Check server terminal.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Verify OTP — supports email-only, phone-only, or both
+router.post('/verify-otp', async (req, res) => {
+    try {
+        const { email, emailOtp, phone, phoneOtp } = req.body;
+
+        // Verify email OTP if provided
+        if (email && emailOtp) {
+            const record = await Otp.findOne({ identifier: email });
+            if (!record) return res.status(400).json({ message: 'No active OTP for this email. Please request a new one.' });
+            if (record.otp !== emailOtp) return res.status(400).json({ message: 'Invalid Email OTP.' });
+            
+            await Otp.deleteOne({ identifier: email });
+            // If only email was requested, return success
+            if (!phone || !phoneOtp) return res.json({ message: 'Email verified successfully.' });
+        }
+
+        // Verify phone OTP if provided
+        if (phone && phoneOtp) {
+            const record = await Otp.findOne({ identifier: phone });
+            if (!record) return res.status(400).json({ message: 'No active OTP for this phone. Please request a new one.' });
+            if (record.otp !== phoneOtp) return res.status(400).json({ message: 'Invalid Phone OTP.' });
+            
+            await Otp.deleteOne({ identifier: phone });
+        }
+
+        res.json({ message: 'Verified successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Handle University Application & Form Setup
 router.post('/register', upload.fields([
@@ -14,7 +98,7 @@ router.post('/register', upload.fields([
   { name: 'labs', maxCount: 10 },
   { name: 'sports', maxCount: 10 },
   { name: 'auditorium', maxCount: 10 },
-  { name: 'affiliationDoc', maxCount: 1 }
+  { name: 'affiliationDocs', maxCount: 10 }
 ]), async (req, res) => {
   try {
     const { universityName, email, password, phone, country, state, address, plan, duration } = req.body;
@@ -25,7 +109,7 @@ router.post('/register', upload.fields([
     }
 
     const files = req.files || {};
-    
+
     const uni = new University({
       name: universityName,
       email,
@@ -35,15 +119,15 @@ router.post('/register', upload.fields([
       address,
       plan,
       duration,
-      logoUrl: files.logo ? files.logo[0].path : null,
-      departmentImages: files.departments ? files.departments.map(f => f.path) : [],
-      labImages: files.labs ? files.labs.map(f => f.path) : [],
-      sportsImages: files.sports ? files.sports.map(f => f.path) : [],
-      auditoriumImages: files.auditorium ? files.auditorium.map(f => f.path) : [],
-      affiliationDocUrl: files.affiliationDoc ? files.affiliationDoc[0].path : null,
+      logoUrl: files.logo ? `/uploads/logo/${files.logo[0].filename}` : null,
+      departmentImages: files.departments ? files.departments.map(f => `/uploads/departments/${f.filename}`) : [],
+      labImages: files.labs ? files.labs.map(f => `/uploads/labs/${f.filename}`) : [],
+      sportsImages: files.sports ? files.sports.map(f => `/uploads/sports/${f.filename}`) : [],
+      auditoriumImages: files.auditorium ? files.auditorium.map(f => `/uploads/auditorium/${f.filename}`) : [],
+      affiliationDocUrl: files.affiliationDocs ? `/uploads/affiliationDocs/${files.affiliationDocs[0].filename}` : null,
       affiliationDocBase64: req.body.affiliationDocBase64 || null
     });
-    
+
     await uni.save();
 
     // Create the SUPER_ADMIN user immediately using the signup password
@@ -101,13 +185,13 @@ router.get('/:name', async (req, res) => {
   try {
     const uni = await University.findOne({ name: req.params.name });
     if (!uni) return res.status(404).json({ message: 'Not found' });
-    
+
     // Only return non-sensitive branding info
     res.json({
-        name: uni.name,
-        logoUrl: uni.logoUrl,
-        plan: uni.plan,
-        departmentImages: uni.departmentImages
+      name: uni.name,
+      logoUrl: uni.logoUrl,
+      plan: uni.plan,
+      departmentImages: uni.departmentImages
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -120,7 +204,7 @@ router.put('/:id/validate', async (req, res) => {
   try {
     const uni = await University.findById(req.params.id);
     if (!uni) return res.status(404).json({ message: 'University not found' });
-    
+
     if (uni.status === 'active') return res.status(400).json({ message: 'University is already active' });
 
     uni.status = 'active';
@@ -163,12 +247,12 @@ router.put('/:id/validate', async (req, res) => {
 
     const message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🎓 Welcome to CampusCore URP!
+  🎓 Welcome to All Campus Digital!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Hello, ${uni.name}!
 
-Congratulations! Your university has been successfully verified and approved on CampusCore URP — the unified platform for managing your entire academic ecosystem.
+Congratulations! Your university has been successfully verified and approved on All Campus Digital — the unified platform for managing your entire academic ecosystem.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   YOUR UNIVERSITY LOGIN CREDENTIALS
@@ -202,12 +286,12 @@ Congratulations! Your university has been successfully verified and approved on 
 - You can change your password after logging in for security.
 
 Welcome aboard! 🚀
-— The CampusCore URP Team
+— The All Campus Digital Team
 `;
 
     await sendEmail({
       email: uni.email,
-      subject: '🎓 Welcome to CampusCore URP — Your University Credentials',
+      subject: '🎓 Welcome to All Campus Digital — Your University Credentials',
       message: message
     });
 
@@ -225,6 +309,36 @@ Welcome aboard! 🚀
       credentials: { universityId, email: uni.email, password: loginPassword, portalUrl }
     });
 
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update university details (Introduction, Address, Phone, Leadership) - FIXED
+router.put('/:id/details', protect, async (req, res) => {
+  try {
+    const { introduction, address, phone, chancellor, viceChancellor } = req.body;
+    const uni = await University.findById(req.params.id);
+    if (!uni) return res.status(404).json({ message: 'University not found' });
+    
+    // Only SUPER_ADMIN can update their own university
+    if (req.user.role !== 'SUPER_ADMIN' || req.user.university.toString() !== uni._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to update these details' });
+    }
+
+    if (introduction !== undefined) uni.introduction = introduction;
+    if (address !== undefined) uni.address = address;
+    if (phone !== undefined) uni.phone = phone;
+    
+    if (chancellor) {
+      uni.chancellor = { ...uni.chancellor, ...chancellor };
+    }
+    if (viceChancellor) {
+      uni.viceChancellor = { ...uni.viceChancellor, ...viceChancellor };
+    }
+
+    await uni.save();
+    res.json(uni);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
