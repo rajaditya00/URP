@@ -24,9 +24,9 @@ const UniversityPortal = () => {
             <p className="text-slate-500 font-medium tracking-wide">Establishing Secure Connection...</p>
         </div>
     );
-    
+
     const uniName = uniData?.name ? uniData.name.charAt(0).toUpperCase() + uniData.name.slice(1) : '';
-    
+
     if (!uniData) return (
         <div className="min-h-screen flex flex-col items-center justify-center font-body text-center p-6 bg-slate-50">
             <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mb-6 shadow-inner">
@@ -94,30 +94,30 @@ const UniversityPortal = () => {
             <section className="relative w-full bg-slate-900 text-white overflow-hidden py-24 lg:py-32">
                 <div className="absolute inset-0 bg-gradient-to-r from-[#1e3a8a]/40 to-slate-900/90 mix-blend-multiply"></div>
                 <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')] opacity-10"></div>
-                
+
                 <div className="max-w-4xl mx-auto px-6 relative z-10 flex flex-col items-center text-center animate-slide-up">
                     {uniData.logoUrl && (
                         <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-xl p-3 shadow-2xl mb-8 border border-slate-200">
                             <img src={`http://localhost:5000/${uniData.logoUrl?.replace(/^\/+/g, '')}`} alt="Institutional Crest" className="w-full h-full object-contain" />
                         </div>
                     )}
-                    
+
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-md bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium mb-6 text-slate-100">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
                         <span className="tracking-wide">Officially Verified Institution</span>
                     </div>
-                    
+
                     <h2 className="text-3xl sm:text-5xl md:text-5xl font-bold mb-6 tracking-tight drop-shadow-md leading-tight text-white">
                         {uniName}
                     </h2>
-                    
+
                     <p className="text-lg sm:text-xl text-slate-300 max-w-3xl leading-relaxed mb-10 font-medium">
                         Welcome to the official digital gateway of {uniName}. This unified portal provides students, faculty, and administrative staff with secure access to academic records, institutional notices, and comprehensive campus resources.
                     </p>
-                    
+
                     <div className="flex flex-wrap items-center justify-center gap-3 text-sm font-semibold text-slate-200">
                         <span className="px-4 py-2 bg-slate-800/60 backdrop-blur-md rounded-md border border-slate-700 uppercase tracking-widest">{uniData.plan || 'Standard'} Accreditation</span>
-                        <span className="px-4 py-2 bg-slate-800/60 backdrop-blur-md rounded-md border border-slate-700 flex items-center gap-2"><MapPin className="w-4 h-4 text-slate-400"/> {uniData.state}, {uniData.country}</span>
+                        <span className="px-4 py-2 bg-slate-800/60 backdrop-blur-md rounded-md border border-slate-700 flex items-center gap-2"><MapPin className="w-4 h-4 text-slate-400" /> {uniData.state}, {uniData.country}</span>
                     </div>
                 </div>
             </section>
@@ -135,7 +135,7 @@ const UniversityPortal = () => {
                             <p className="text-sm text-slate-600 mt-1">{uniData.state}, {uniData.country}</p>
                         </div>
                     </div>
-                    
+
                     <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-4">
                         <div className="w-10 h-10 rounded-md bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
                             <Mail className="w-5 h-5" />
@@ -175,11 +175,10 @@ const UniversityPortal = () => {
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${
-                                        activeTab === tab.id
+                                    className={`px-5 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === tab.id
                                             ? 'bg-slate-900 text-white shadow-md'
                                             : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                    }`}
+                                        }`}
                                 >
                                     {tab.label} <span className="ml-2 px-2 py-0.5 rounded bg-slate-200/50 text-xs font-bold text-inherit">{tab.count}</span>
                                 </button>
@@ -191,10 +190,10 @@ const UniversityPortal = () => {
                             {getActiveImages().map((img: string, i: number) => (
                                 <div key={i} className="group relative overflow-hidden rounded-xl shadow-sm border border-slate-200 bg-white cursor-pointer">
                                     <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100">
-                                        <img 
-                                            src={`http://localhost:5000/${img?.replace(/^\/+/g, '')}`} 
-                                            alt={`Facility ${i + 1}`} 
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out" 
+                                        <img
+                                            src={`http://localhost:5000/${img?.replace(/^\/+/g, '')}`}
+                                            alt={`Facility ${i + 1}`}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
                                             loading="lazy"
                                         />
                                     </div>

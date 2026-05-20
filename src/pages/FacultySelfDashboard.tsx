@@ -48,35 +48,27 @@ const FacultySelfDashboard = () => {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8">
-                
-                {/* SIDE NAVIGATION */}
-                <div className="lg:col-span-1 space-y-4">
-                    <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xl shadow-slate-200/50 p-2">
-                        <button 
-                            onClick={() => setActiveTab('profile')}
-                            className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'profile' ? 'bg-[#1e3a5f] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
-                        >
-                            <User size={18} /> My Official Profile
-                        </button>
-                        <button 
-                            onClick={() => setActiveTab('questionbank')}
-                            className={`w-full flex items-center gap-3 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${activeTab === 'questionbank' ? 'bg-[#1e3a5f] text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50'}`}
-                        >
-                            <Layers size={18} /> Question Bank
-                        </button>
-                    </div>
-
-                    <div className="bg-gradient-to-br from-[#1e3a5f] to-indigo-900 rounded-3xl p-8 text-white shadow-xl shadow-blue-200/50 relative overflow-hidden">
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-                        <h3 className="text-sm font-black uppercase tracking-widest mb-4 relative z-10">Administrative Note</h3>
-                        <p className="text-white/80 text-[10px] font-bold leading-relaxed mb-6 relative z-10">
-                            Your official record is managed by the College EMS Office. For changes to your designation or department, please contact the administration.
-                        </p>
+            {/* HORIZONTAL NAVIGATION */}
+            <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="flex space-x-1 overflow-x-auto no-scrollbar">
+                        {[
+                            { id: 'profile', label: 'My Official Profile', icon: <User className="w-4 h-4" /> },
+                            { id: 'questionbank', label: 'Question Bank', icon: <Layers className="w-4 h-4" /> },
+                        ].map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                                {tab.icon}
+                                <span>{tab.label}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
+            </div>
 
-                <div className="lg:col-span-3 space-y-8">
+            <main className="max-w-7xl mx-auto px-6 py-8">
+                
+                <div className="space-y-8">
                     {activeTab === 'profile' ? (
                         <div className="animate-fade-in space-y-8">
                             <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-200">

@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthModal from './components/AuthModal';
 import Layout from './components/Layout/Layout';
 import LandingPage from './pages/LandingPage';
-import LoginPortal from './pages/LoginPortal';
 import Signup from './pages/Signup';
 import UniversityPortal from './pages/UniversityPortal';
 import SystemAdminDashboard from './pages/SystemAdminDashboard';
@@ -39,11 +38,10 @@ function App() {
       <Routes>
       {/* Public Routes */}
       <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<LoginPortal />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/portal/:uniSlug" element={<UniversityPortal />} />
       <Route path="/system-admin" element={<SystemAdminDashboard />} />
-      <Route path="/university-login" element={<Navigate to="/login" replace />} />
+      <Route path="/university-login" element={<Navigate to="/" replace />} />
       <Route path="/uni-admin/dashboard" element={<UniAdminDashboard />} />
       <Route path="/college-admin/dashboard" element={<CollegeAdminDashboard />} />
       <Route path="/faculty-dashboard" element={<FacultySelfDashboard />} />

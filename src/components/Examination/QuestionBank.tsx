@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import {
     Plus, Search, Filter, Trash2, Eye, FileText, Download,
     Image, CheckSquare, AlignLeft, List, Zap, BookOpen,
-    ChevronDown, X, AlertCircle, CheckCircle2, Printer, Sparkles, Award, History
+    ChevronDown, X, AlertCircle, CheckCircle2, Printer, Sparkles, Award, History,
+    Lock, Unlock
 } from 'lucide-react';
 import {
     questionBank as initialBank, paperCodes,
@@ -33,8 +34,9 @@ const typeBadge = (t: QuestionType) => {
 const typeLabel = (t: QuestionType) => ({ objective: 'Objective', subjective: 'Subjective', 'multiple-answer': 'Multi-Answer' }[t]);
 
 // ── Upload Questions Sub-tab ──────────────────────────────────
-const UploadQuestions = ({ bank, setBank, role = 'COLLEGE', facultyName = 'Admin User', facultyProfileUrl = '' }: {
+const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyName = 'Admin User', facultyProfileUrl = '' }: {
     bank: BankQuestion[];
+    fullBank?: BankQuestion[];
     setBank: (b: BankQuestion[]) => void;
     role?: string;
     facultyName?: string;
@@ -70,10 +72,11 @@ const UploadQuestions = ({ bank, setBank, role = 'COLLEGE', facultyName = 'Admin
 
     // Register active bank questions in the ML vector space whenever database content changes
     useEffect(() => {
-        if (bank.length > 0) {
-            mlClassifier.registerReferences(bank);
+        const refBank = fullBank || bank;
+        if (refBank.length > 0) {
+            mlClassifier.registerReferences(refBank);
         }
-    }, [bank]);
+    }, [bank, fullBank]);
 
     const updateOption = (i: number, val: string) => setOptions(prev => prev.map((o, idx) => idx === i ? val : o));
     const toggleMulti = (opt: string) => setCorrectMulti(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
@@ -431,8 +434,9 @@ const UploadQuestions = ({ bank, setBank, role = 'COLLEGE', facultyName = 'Admin
                                 <CheckCircle2 size={16} /> Question Uploaded and Verified!
                             </span>
                         )}
-                        <button type="button" onClick={handleSave} disabled={!paperCode || !text.trim()}
-                            className="px-6 py-2.5 bg-[#1e3a5f] hover:bg-[#162d4a] disabled:bg-slate-200 disabled:text-text-muted text-white text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors shadow-sm">
+                        <button type="button" onClick={handleSave} disabled={!paperCode || !text.trim() || !isReverified}
+                            className="px-6 py-2.5 bg-[#1e3a5f] hover:bg-[#162d4a] disabled:bg-slate-200 disabled:text-text-muted text-white text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
+                            title={!isReverified ? "Please Verify Question Model before adding" : ""}>
                             Add Question to Bank
                         </button>
                     </div>
@@ -605,11 +609,16 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
                 setApiError('');
                 try {
                     const token = localStorage.getItem('urp_token');
-                    const res = await fetch('http://localhost:5000/api/questions', {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2500);
+                    
+                    const res = await fetch('http://127.0.0.1:5000/api/questions', {
+                        signal: controller.signal,
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
+                    clearTimeout(timeoutId);
                     const data = await res.json();
                     if (data.success && data.data) {
                         setApiQuestions(data.data.map((q: any) => ({
@@ -687,7 +696,39 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
         }
     };
 
-    const activeDataset = getDataset();
+    // Combine selected dataset source with all current questions in the master question bank, deduplicated by text
+    const getCombinedTrainingDataset = (): { text: string; label: 'novel' | 'repeat'; department?: string; sourceUniversity?: string }[] => {
+        const selectedDataset = getDataset();
+        const masterQuestions = bank.map(q => ({
+            text: q.text,
+            label: q.creditLevel && q.creditLevel >= 4 ? 'novel' as const : 'repeat' as const,
+            department: q.unit || 'Master Question Bank',
+            sourceUniversity: q.addedBy || 'Campus URP Database'
+        }));
+        
+        const seen = new Set<string>();
+        const combined: typeof selectedDataset = [];
+        
+        selectedDataset.forEach(item => {
+            const normalized = item.text.trim().toLowerCase();
+            if (!seen.has(normalized)) {
+                seen.add(normalized);
+                combined.push(item);
+            }
+        });
+        
+        masterQuestions.forEach(item => {
+            const normalized = item.text.trim().toLowerCase();
+            if (!seen.has(normalized)) {
+                seen.add(normalized);
+                combined.push(item);
+            }
+        });
+        
+        return combined;
+    };
+
+    const activeDataset = getCombinedTrainingDataset();
 
     // Unique words count calculation
     const getUniqueWordsCount = () => {
@@ -714,15 +755,31 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
 
     return (
         <div className="space-y-6">
-            <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-sm">
-                <div className="px-5 py-4 bg-indigo-950 border-b border-indigo-900 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Sparkles size={16} className="text-indigo-400 animate-pulse" />
-                        <h3 className="text-sm font-bold text-white">Brainwave AI Training Console</h3>
+            <div className="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-md transition-all duration-300 hover:shadow-lg">
+                <div className="px-6 py-5 bg-gradient-to-r from-[#0f172a] via-[#1e1b4b] to-[#2e1065] border-b border-indigo-950 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 shadow-inner">
+                            <Sparkles size={16} className="text-indigo-400 animate-pulse animate-spin-slow" />
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500"></span>
+                        </div>
+                        <div>
+                            <h3 className="text-sm font-black tracking-tight text-white flex items-center gap-1.5 uppercase">
+                                Brainwave AI Training Console
+                            </h3>
+                            <p className="text-[9px] font-semibold text-indigo-300/80 tracking-wider">High-performance vector space optimization</p>
+                        </div>
                     </div>
-                    <span className="bg-indigo-800 text-indigo-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded border border-indigo-700">
-                        Model: local_sgd_nlp_v1
-                    </span>
+                    
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-1 bg-[#10b981]/10 text-emerald-400 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border border-emerald-500/20 shadow-[0_0_12px_rgba(16,185,129,0.1)]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Active Engine
+                        </span>
+                        <span className="bg-indigo-950/70 text-indigo-200 text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border border-indigo-500/20">
+                            Model: local_sgd_nlp_v1
+                        </span>
+                    </div>
                 </div>
                 <div className="p-6 space-y-6">
                     {/* Dataset Source Selection */}
@@ -808,9 +865,30 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
                         </div>
                         
                         {isLoadingApi ? (
-                            <div className="h-32 border border-slate-200 rounded-xl flex items-center justify-center bg-slate-50 text-xs font-bold text-slate-500 gap-2">
-                                <div className="w-4 h-4 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin"></div>
-                                Querying overall questions API across all departments...
+                            <div className="relative overflow-hidden h-36 border border-indigo-100 rounded-2xl flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50/20 via-white to-purple-50/15 p-6 text-center space-y-3 shadow-inner">
+                                {/* Glowing ambient backdrop */}
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-indigo-200/10 rounded-full blur-3xl pointer-events-none"></div>
+                                
+                                {/* Loader animation */}
+                                <div className="relative w-9 h-9 flex items-center justify-center">
+                                    <div className="absolute inset-0 rounded-full border-2 border-indigo-500/10"></div>
+                                    <div className="absolute inset-0 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin"></div>
+                                    <Sparkles size={14} className="text-indigo-600 animate-pulse animate-spin-slow" />
+                                </div>
+                                
+                                <div className="space-y-1 z-10">
+                                    <p className="text-xs font-black text-slate-800 tracking-tight flex items-center justify-center gap-1.5">
+                                        Querying overall questions API across all departments
+                                        <span className="flex gap-0.5">
+                                            <span className="w-1 h-1 rounded-full bg-indigo-600 animate-bounce delay-100"></span>
+                                            <span className="w-1 h-1 rounded-full bg-indigo-600 animate-bounce delay-200"></span>
+                                            <span className="w-1 h-1 rounded-full bg-indigo-600 animate-bounce delay-300"></span>
+                                        </span>
+                                    </p>
+                                    <p className="text-[10px] text-indigo-600/70 font-semibold tracking-wide uppercase animate-pulse">
+                                        Compiling high-dimensional TF-IDF vector embeddings...
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <div className="border border-slate-200 rounded-xl bg-slate-50/50 max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
@@ -881,50 +959,278 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
 };
 
 // ── Generate Paper Sub-tab ────────────────────────────────────
+const DEPARTMENTS = [
+    'Computer Science & Engineering',
+    'Electrical Engineering',
+    'Mechanical Engineering',
+    'Civil Engineering'
+];
+
+const SEMESTERS = [
+    'Semester I',
+    'Semester II',
+    'Semester III',
+    'Semester IV',
+    'Semester V',
+    'Semester VI',
+    'Semester VII',
+    'Semester VIII'
+];
+
+const departmentSemestersSubjects: Record<string, Record<string, { code: string; name: string }[]>> = {
+    'Computer Science & Engineering': {
+        'Semester I': [
+            { code: 'GE-101', name: 'Engineering Physics' },
+            { code: 'GE-102', name: 'Engineering Mathematics - I' }
+        ],
+        'Semester II': [
+            { code: 'GE-201', name: 'Engineering Chemistry' },
+            { code: 'GE-202', name: 'Engineering Mathematics - II' }
+        ],
+        'Semester III': [
+            { code: 'CS-301', name: 'Data Structures & Algorithms' },
+            { code: 'CS-302', name: 'Discrete Mathematics' },
+            { code: 'CS-303', name: 'Digital Logic Design' }
+        ],
+        'Semester IV': [
+            { code: 'CS-402', name: 'Computer Organization & Architecture' },
+            { code: 'CS-403', name: 'Object Oriented Programming' }
+        ],
+        'Semester V': [
+            { code: 'CS-352', name: 'Theory of Computation' }
+        ],
+        'Semester VI': [
+            { code: 'CS601', name: 'Computer Networks' },
+            { code: 'CS602', name: 'Database Management Systems' },
+            { code: 'CS603', name: 'Operating Systems' },
+            { code: 'CS604', name: 'Software Engineering & Project Mgmt' },
+            { code: 'CS605', name: 'Artificial Intelligence & ML' }
+        ]
+    },
+    'Electrical Engineering': {
+        'Semester I': [
+            { code: 'EE-101', name: 'Basic Electrical Engineering' },
+            { code: 'EE-102', name: 'Electrical Engineering Materials' }
+        ],
+        'Semester II': [
+            { code: 'EE-202', name: 'Electromagnetic Field Theory' },
+            { code: 'EE-205', name: 'Network Analysis & Synthesis' }
+        ],
+        'Semester III': [
+            { code: 'EE-302', name: 'Electrical Machines - I' },
+            { code: 'EE-303', name: 'Electronic Devices & Circuits' },
+            { code: 'EE-311', name: 'Electrical Measurements' }
+        ],
+        'Semester IV': [
+            { code: 'EE-401', name: 'Analog Electronics' }
+        ]
+    },
+    'Mechanical Engineering': {
+        'Semester I': [
+            { code: 'ME-102', name: 'Engineering Mechanics' }
+        ],
+        'Semester II': [
+            { code: 'ME-201', name: 'Thermodynamics' },
+            { code: 'ME-202', name: 'Materials Science' }
+        ],
+        'Semester III': [
+            { code: 'ME-301', name: 'Fluid Mechanics' },
+            { code: 'ME-302', name: 'Kinematics of Machinery' }
+        ],
+        'Semester IV': [
+            { code: 'ME-401', name: 'Manufacturing Processes' },
+            { code: 'ME-404', name: 'Strength of Materials' },
+            { code: 'ME-405', name: 'Machine Drawing' }
+        ]
+    },
+    'Civil Engineering': {
+        'Semester I': [
+            { code: 'CE-101', name: 'Engineering Graphics' }
+        ],
+        'Semester II': [
+            { code: 'CE-201', name: 'Surveying - I' },
+            { code: 'CE-202', name: 'Building Materials' },
+            { code: 'CE-204', name: 'Strength of Materials' },
+            { code: 'CE-205', name: 'Concrete Technology' }
+        ],
+        'Semester III': [
+            { code: 'CE-303', name: 'Structural Analysis - I' },
+            { code: 'CE-305', name: 'Environmental Engineering - I' }
+        ],
+        'Semester IV': [
+            { code: 'CE-401', name: 'Fluid Mechanics' }
+        ]
+    }
+};
+
+const getFilteredSubjects = (dept: string, sem: string) => {
+    const list = departmentSemestersSubjects[dept]?.[sem] || [];
+    if (list.length > 0) return list;
+    const deptPrefix = dept.includes('Computer') ? 'CS' :
+                       dept.includes('Electrical') ? 'EE' :
+                       dept.includes('Mechanical') ? 'ME' :
+                       dept.includes('Civil') ? 'CE' : 'GE';
+    const semIndex = sem.split(' ')[1] || 'I';
+    const num = semIndex === 'I' ? 101 : semIndex === 'II' ? 201 : semIndex === 'III' ? 301 :
+                semIndex === 'IV' ? 401 : semIndex === 'V' ? 501 : semIndex === 'VI' ? 601 :
+                semIndex === 'VII' ? 701 : 801;
+    return [
+        { code: `${deptPrefix}-${num}`, name: `${dept} Core Course` },
+        { code: `${deptPrefix}-${num + 1}`, name: `${dept} Core Lab` }
+    ];
+};
+
 interface SectionConfig {
+    name: string;
     questionsCount: number;
     marksPerQuestion: number;
     difficulty: Difficulty | 'any';
     creditLevel: number | 'any';
+    questionType?: QuestionType | 'any';
+    mode: 'auto' | 'manual';
+    manualQuestions: BankQuestion[];
+    searchQuery?: string;
+    description: string;
+    presentationType?: 'standard' | 'subquestions' | 'or_alternatives';
 }
 
 const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
     const [paperCode, setPaperCode] = useState('');
-    const [title, setTitle] = useState('End Semester Examination');
-    const [duration, setDuration] = useState('3 Hours');
-    const [maxMarks, setMaxMarks] = useState(100);
-    const [showPreview, setShowPreview] = useState(false);
-    const [sections, setSections] = useState<{ [sec: string]: SectionConfig }>({
-        A: { questionsCount: 5, marksPerQuestion: 2, difficulty: 'easy', creditLevel: 'any' },
-        B: { questionsCount: 4, marksPerQuestion: 5, difficulty: 'medium', creditLevel: 3 },
-        C: { questionsCount: 2, marksPerQuestion: 15, difficulty: 'hard', creditLevel: 5 }
+    const [department, setDepartment] = useState('Computer Science & Engineering');
+    const [semester, setSemester] = useState('Semester VI');
+    const [title, setTitle] = useState('');
+    const [collegeName, setCollegeName] = useState(() => {
+        try {
+            const storedUser = localStorage.getItem('urp_user');
+            if (storedUser) {
+                const userObj = JSON.parse(storedUser);
+                if (userObj.college && userObj.college.name) {
+                    return userObj.college.name;
+                }
+                if (userObj.university && userObj.university.name) {
+                    return userObj.university.name;
+                }
+            }
+        } catch (e) {
+            console.error('Error reading college from user storage', e);
+        }
+        return 'All Campus Digital College';
     });
+    const [logoUrl, setLogoUrl] = useState(() => {
+        try {
+            const storedUser = localStorage.getItem('urp_user');
+            if (storedUser) {
+                const userObj = JSON.parse(storedUser);
+                if (userObj.university && userObj.university.logoUrl) {
+                    const cleanPath = userObj.university.logoUrl.replace(/^\/+/g, '');
+                    return `http://localhost:5000/${cleanPath}`;
+                }
+            }
+        } catch (e) {
+            console.error('Error reading logo from user storage', e);
+        }
+        return '';
+    });
+    const [duration, setDuration] = useState('3 Hours');
+    const [examDate, setExamDate] = useState(() => {
+        return new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    });
+    const [showPreview, setShowPreview] = useState(false);
+    const [sectionsList, setSectionsList] = useState<SectionConfig[]>([
+        { name: 'A', questionsCount: 5, marksPerQuestion: 2, difficulty: 'easy', creditLevel: 'any', questionType: 'any', mode: 'auto', manualQuestions: [], description: '', presentationType: 'standard' },
+        { name: 'B', questionsCount: 4, marksPerQuestion: 5, difficulty: 'medium', creditLevel: 3, questionType: 'any', mode: 'auto', manualQuestions: [], description: '', presentationType: 'standard' },
+        { name: 'C', questionsCount: 2, marksPerQuestion: 15, difficulty: 'hard', creditLevel: 5, questionType: 'any', mode: 'auto', manualQuestions: [], description: '', presentationType: 'standard' }
+    ]);
     const [generatedPaper, setGeneratedPaper] = useState<{ [sec: string]: BankQuestion[] } | null>(null);
 
-    const updateSec = (sec: string, key: keyof SectionConfig, val: any) => {
-        setSections(prev => ({
-            ...prev,
-            [sec]: { ...prev[sec], [key]: val }
+    const filteredSubjects = getFilteredSubjects(department, semester);
+    const selectedPaperObj = paperCodes.find(p => p.code === paperCode);
+    const paperName = selectedPaperObj ? selectedPaperObj.name : '';
+
+    const updateSec = (index: number, key: keyof SectionConfig, val: any) => {
+        setSectionsList(prev => prev.map((sec, idx) => {
+            if (idx === index) {
+                const updated = { ...sec, [key]: val };
+                if (key === 'manualQuestions') {
+                    updated.questionsCount = (val as any[]).length;
+                }
+                return updated;
+            }
+            return sec;
         }));
     };
+
+    const addSection = () => {
+        const nextChar = String.fromCharCode(65 + sectionsList.length);
+        setSectionsList(prev => [
+            ...prev,
+            { name: nextChar, questionsCount: 2, marksPerQuestion: 5, difficulty: 'medium', creditLevel: 'any', questionType: 'any', mode: 'auto', manualQuestions: [], description: '', presentationType: 'standard' }
+        ]);
+    };
+
+    const removeSection = () => {
+        if (sectionsList.length > 1) {
+            setSectionsList(prev => prev.slice(0, -1));
+        }
+    };
+
+    const getSectionTotalMarks = (conf: SectionConfig) => {
+        if (generatedPaper && generatedPaper[conf.name]) {
+            return generatedPaper[conf.name].reduce((sum, q) => sum + (q.marks || 0), 0);
+        }
+        if (conf.mode === 'manual') {
+            return conf.manualQuestions.reduce((sum, q) => sum + (q.marks || 0), 0);
+        }
+        return conf.questionsCount * conf.marksPerQuestion;
+    };
+
+    const calculatedMaxMarks = sectionsList.reduce((sum, conf) => {
+        return sum + getSectionTotalMarks(conf);
+    }, 0);
 
     const handleGenerate = () => {
         if (!paperCode) return;
         const res: { [sec: string]: BankQuestion[] } = {};
         
-        Object.entries(sections).forEach(([secName, conf]) => {
-            let pool = bank.filter(q => q.paperCode === paperCode);
-            
-            if (conf.difficulty !== 'any') {
-                pool = pool.filter(q => q.difficulty === conf.difficulty);
-            }
-            if (conf.creditLevel !== 'any') {
-                pool = pool.filter(q => q.creditLevel === conf.creditLevel);
-            }
+        sectionsList.forEach((conf) => {
+            if (conf.mode === 'manual') {
+                res[conf.name] = conf.manualQuestions;
+            } else {
+                let pool = bank.filter(q => q.paperCode === paperCode);
+                
+                // If pool is empty, fall back to matching department keywords
+                if (pool.length === 0) {
+                    const deptKeyword = department.split(' ')[0]?.toLowerCase();
+                    pool = bank.filter(q => q.unit?.toLowerCase().includes(deptKeyword) || q.text.toLowerCase().includes(deptKeyword));
+                }
+                
+                if (pool.length === 0) {
+                    pool = bank;
+                }
 
-            // Shuffle pool
-            const shuffled = [...pool].sort(() => Math.random() - 0.5);
-            res[secName] = shuffled.slice(0, conf.questionsCount);
+                if (conf.difficulty !== 'any') {
+                    pool = pool.filter(q => q.difficulty === conf.difficulty);
+                }
+                if (conf.creditLevel !== 'any') {
+                    pool = pool.filter(q => q.creditLevel === conf.creditLevel);
+                }
+                if (conf.questionType && conf.questionType !== 'any') {
+                    pool = pool.filter(q => q.type === conf.questionType);
+                }
+
+                if (pool.length === 0) {
+                    pool = bank.filter(q => q.paperCode === paperCode);
+                    if (pool.length === 0) pool = bank;
+                }
+
+                // Shuffle pool
+                const shuffled = [...pool].sort(() => Math.random() - 0.5);
+                res[conf.name] = shuffled.slice(0, conf.questionsCount);
+            }
         });
 
         setGeneratedPaper(res);
@@ -951,18 +1257,44 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
     const handlePrint = () => {
         const printContent = document.getElementById('printable-question-paper')?.innerHTML;
         if (!printContent) return;
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const formattedTime = now.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        const watermarkText = `GENERATED: ${formattedDate} AT ${formattedTime}`;
+
         const printWindow = window.open('', '_blank');
         if (printWindow) {
             printWindow.document.write(`
                 <html>
                     <head>
-                        <title>Print Question Paper</title>
+                        <title>${title || 'Question Paper'}${paperCode ? ' - ' + paperCode : ''}</title>
                         <style>
                             body {
                                 font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
                                 padding: 40px;
                                 color: #1e293b;
                                 line-height: 1.5;
+                                background-color: #ffffff;
+                            }
+                            .no-print { display: none !important; }
+                            .paper-sheet {
+                                background-color: #ffffff;
+                                max-width: 800px;
+                                margin: 0 auto;
+                                padding: 40px;
+                                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+                                border: 1px solid #e2e8f0;
+                                border-radius: 8px;
+                                position: relative;
                             }
                             .text-center { text-align: center; }
                             .space-y-1 > * + * { margin-top: 0.25rem; }
@@ -978,6 +1310,9 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                             .tracking-wide { letter-spacing: 0.025em; }
                             .tracking-widest { letter-spacing: 0.1em; }
                             .flex { display: flex; }
+                            .flex-1 { flex: 1 1 0%; }
+                            .min-w-\\[24px\\] { min-width: 24px; }
+                            .list-none { list-style-type: none; }
                             .justify-center { justify-content: center; }
                             .justify-between { justify-content: space-between; }
                             .items-center { align-items: center; }
@@ -1004,20 +1339,63 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                             .ml-auto { margin-left: auto; }
                             .italic { font-style: italic; }
                             .text-red-500 { color: #ef4444; }
+                            .text-slate-500 { color: #64748b; }
+                            .leading-relaxed { line-height: 1.625; }
+                            .text-text-primary { color: #0f172a; }
+                            .text-text-secondary { color: #334155; }
+                            .text-text-muted { color: #64748b; }
                             .font-mono { font-family: monospace; }
+                            .absolute-watermark { display: none !important; }
+                            .watermark {
+                                position: fixed;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%) rotate(-30deg);
+                                font-size: 26px;
+                                color: rgba(14, 165, 233, 0.15) !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                                font-weight: 900;
+                                letter-spacing: 0.18em;
+                                text-transform: uppercase;
+                                white-space: nowrap;
+                                pointer-events: none;
+                                z-index: -1000;
+                                user-select: none;
+                                filter: blur(0.5px);
+                            }
                             @media print {
-                                body { padding: 0; }
+                                body {
+                                    padding: 0 !important;
+                                    margin: 0 !important;
+                                    background-color: #ffffff !important;
+                                }
+                                .no-print { display: none !important; }
+                                .paper-sheet {
+                                    box-shadow: none !important;
+                                    border: none !important;
+                                    border-radius: 0 !important;
+                                    padding: 0 !important;
+                                    margin: 0 !important;
+                                    max-width: 100% !important;
+                                }
                             }
                         </style>
                     </head>
                     <body>
-                        <div class="space-y-8">
-                            \${printContent}
+                        <div class="watermark">${watermarkText}</div>
+                        <div class="paper-sheet">
+                            <div class="space-y-8">
+                                ${printContent}
+                            </div>
                         </div>
                         <script>
                             window.onload = function() {
-                                window.print();
-                                window.close();
+                                window.focus();
+                                setTimeout(function() {
+                                    window.print();
+                                    window.close();
+                                }, 300);
                             };
                         </script>
                     </body>
@@ -1028,8 +1406,62 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
     };
 
     const handleExportPDF = () => {
-        alert('Preparing document vector layouts... Click OK to export Save-as-PDF output.');
-        handlePrint();
+        const element = document.getElementById('printable-question-paper');
+        if (!element) return;
+
+        // Clone the element so we can adjust it for the PDF export
+        const clone = element.cloneNode(true) as HTMLElement;
+        
+        // Remove style: none from absolute watermark and update text to EXPORTED
+        const watermarkEl = clone.querySelector('.absolute-watermark') as HTMLElement;
+        if (watermarkEl) {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            watermarkEl.innerText = `EXPORTED: ${dateStr} AT ${timeStr}`;
+            
+            // Apply absolute watermark styles explicitly for html2pdf conversion
+            watermarkEl.style.display = 'block';
+            watermarkEl.style.position = 'absolute';
+            watermarkEl.style.top = '50%';
+            watermarkEl.style.left = '50%';
+            watermarkEl.style.transform = 'translate(-50%, -50%) rotate(-30deg)';
+            watermarkEl.style.fontSize = '20px';
+            watermarkEl.style.color = 'rgba(14, 165, 233, 0.15)';
+            watermarkEl.style.fontWeight = '900';
+            watermarkEl.style.letterSpacing = '0.18em';
+            watermarkEl.style.textTransform = 'uppercase';
+            watermarkEl.style.whiteSpace = 'nowrap';
+            watermarkEl.style.zIndex = '0';
+            watermarkEl.style.filter = 'blur(0.5px)';
+            watermarkEl.style.textAlign = 'center';
+            watermarkEl.style.fontFamily = 'sans-serif';
+            watermarkEl.style.pointerEvents = 'none';
+            watermarkEl.style.userSelect = 'none';
+        }
+
+        const runExport = () => {
+            const opt = {
+                margin:       10,
+                filename:     `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${paperCode || 'paper'}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            (window as any).html2pdf().from(clone).set(opt).save();
+        };
+
+        if ((window as any).html2pdf) {
+            runExport();
+        } else {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+            script.crossOrigin = 'anonymous';
+            script.onload = () => {
+                runExport();
+            };
+            document.body.appendChild(script);
+        }
     };
 
     return (
@@ -1041,84 +1473,322 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                         <h3 className="text-sm font-bold text-text-primary">Configure Examination Paper</h3>
                     </div>
                     <div className="p-6 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Subject Paper <span className="text-red-500">*</span></label>
-                                <select value={paperCode} onChange={e => setPaperCode(e.target.value)}
-                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary">
-                                    <option value="">Select Paper</option>
-                                    {paperCodes.map(p => <option key={p.code} value={p.code}>{p.code} — {p.name}</option>)}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Department <span className="text-red-500">*</span></label>
+                                <select value={department} onChange={e => {
+                                    setDepartment(e.target.value);
+                                    setPaperCode('');
+                                }}
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold">
+                                    {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Exam Title</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Semester <span className="text-red-500">*</span></label>
+                                <select value={semester} onChange={e => {
+                                    setSemester(e.target.value);
+                                    setPaperCode('');
+                                }}
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold">
+                                    {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            <div className="md:col-span-4">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Subject Paper <span className="text-red-500">*</span></label>
+                                <select value={paperCode} onChange={e => setPaperCode(e.target.value)}
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold">
+                                    <option value="">Select Paper</option>
+                                    {filteredSubjects.map(p => <option key={p.code} value={p.code}>{p.code} — {p.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">College Name</label>
+                                <input value={collegeName} readOnly
+                                    placeholder="Enter College Name"
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-slate-50 text-slate-500 focus:outline-none cursor-not-allowed font-semibold" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Exam Title</label>
                                 <input value={title} onChange={e => setTitle(e.target.value)}
-                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary" />
+                                    placeholder="Enter Exam Title"
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold" />
                             </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Duration</label>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Exam Date</label>
+                                <input value={examDate} onChange={e => setExamDate(e.target.value)}
+                                    placeholder="e.g. May 20, 2026"
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold" />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5 font-bold">Duration</label>
                                 <input value={duration} onChange={e => setDuration(e.target.value)}
-                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Max Marks</label>
-                                <input type="number" value={maxMarks} onChange={e => setMaxMarks(Number(e.target.value))}
-                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary" />
+                                    placeholder="e.g. 3 Hours"
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold" />
                             </div>
                         </div>
 
                         {/* Sections Configuration */}
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Section Specifications</h4>
-                            <div className="grid grid-cols-1 gap-4">
-                                {Object.entries(sections).map(([secName, conf]) => (
-                                    <div key={secName} className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="w-8 h-8 rounded-full bg-accent-primary text-white text-sm font-black flex items-center justify-center">
-                                                {secName}
-                                            </span>
-                                            <div>
-                                                <p className="text-xs font-bold text-text-primary">Section {secName} Details</p>
-                                                <p className="text-[10px] text-text-muted">Set question targets and scoring criteria</p>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 flex-1 max-w-2xl">
-                                            <div>
-                                                <label className="block text-[9px] font-bold text-text-muted uppercase tracking-wider mb-1">Total Questions</label>
-                                                <input type="number" value={conf.questionsCount} onChange={e => updateSec(secName, 'questionsCount', Number(e.target.value))}
-                                                    className="w-full h-8 px-2 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[9px] font-bold text-text-muted uppercase tracking-wider mb-1">Marks/Question</label>
-                                                <input type="number" value={conf.marksPerQuestion} onChange={e => updateSec(secName, 'marksPerQuestion', Number(e.target.value))}
-                                                    className="w-full h-8 px-2 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-[9px] font-bold text-text-muted uppercase tracking-wider mb-1">Difficulty Target</label>
-                                                <select value={conf.difficulty} onChange={e => updateSec(secName, 'difficulty', e.target.value)}
-                                                    className="w-full h-8 px-1 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none">
-                                                    <option value="any">Any Difficulty</option>
-                                                    <option value="easy">Easy</option>
-                                                    <option value="medium">Medium</option>
-                                                    <option value="hard">Hard</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[9px] font-bold text-text-muted uppercase tracking-wider mb-1">AI Novelty Credit</label>
-                                                <select value={conf.creditLevel} onChange={e => updateSec(secName, 'creditLevel', e.target.value === 'any' ? 'any' : Number(e.target.value))}
-                                                    className="w-full h-8 px-1 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none">
-                                                    <option value="any">Any Credit (Mixed)</option>
-                                                    <option value="1">1 Credit (PYQ Repeated)</option>
-                                                    <option value="2">2 Credits (PYQ Variant)</option>
-                                                    <option value="3">3 Credits (Standard)</option>
-                                                    <option value="4">4 Credits (Highly Novel)</option>
-                                                    <option value="5">5 Credits (Research novel)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                            <div className="flex items-center justify-between">
+                                <h4 className="text-xs font-black text-text-secondary uppercase tracking-wider">Section Specifications</h4>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={removeSection}
+                                        disabled={sectionsList.length <= 1}
+                                        className="px-3 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-all disabled:opacity-50"
+                                    >
+                                        - Remove Section
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={addSection}
+                                        className="px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold rounded-lg transition-all"
+                                    >
+                                        + Add Section
+                                    </button>
+                                </div>
                             </div>
+
+                            {!paperCode ? (
+                                <div className="p-8 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                                    <BookOpen size={28} className="text-slate-400 mx-auto mb-2 animate-bounce" />
+                                    <h5 className="text-xs font-black uppercase text-slate-700 tracking-wider">Select Subject Paper First</h5>
+                                    <p className="text-[11px] text-slate-400 font-semibold mt-1">Please select a Department, Semester, and Subject Paper above to load questions and configure sections.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {sectionsList.map((conf, index) => (
+                                        <div key={conf.name} className="p-5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-4">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="w-8 h-8 rounded-full bg-accent-primary text-white text-sm font-black flex items-center justify-center">
+                                                        {conf.name}
+                                                    </span>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-xs font-bold text-text-primary">Section {conf.name} Details</p>
+                                                            <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black rounded-full shadow-sm">
+                                                                {getSectionTotalMarks(conf)} Marks
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-text-muted">Configure Section {conf.name} questions and scoring</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-1.5 bg-slate-200/50 p-1 rounded-lg">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateSec(index, 'mode', 'auto')}
+                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${conf.mode === 'auto' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Auto-Generate
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => updateSec(index, 'mode', 'manual')}
+                                                        className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${conf.mode === 'manual' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                                                    >
+                                                        Manual Selection
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-[10px] font-black uppercase text-text-secondary tracking-wider mb-1.5">Section Description / Instructions</label>
+                                                    <input
+                                                        type="text"
+                                                        value={conf.description || ''}
+                                                        onChange={e => updateSec(index, 'description', e.target.value)}
+                                                        placeholder="e.g. Answer all questions. All questions carry equal marks."
+                                                        className="w-full h-9 px-3 border border-slate-200 rounded-md text-xs bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold shadow-sm"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-1">
+                                                    <label className="block text-[10px] font-black uppercase text-text-secondary tracking-wider mb-1.5">Display Format</label>
+                                                    <select
+                                                        value={conf.presentationType || 'standard'}
+                                                        onChange={e => updateSec(index, 'presentationType', e.target.value)}
+                                                        className="w-full h-9 px-3 border border-slate-200 rounded-md text-xs bg-white text-text-primary focus:outline-none focus:border-accent-primary font-semibold shadow-sm"
+                                                    >
+                                                        <option value="standard">Standard (1, 2, 3...)</option>
+                                                        <option value="subquestions">Subquestions (1a, 1b...)</option>
+                                                        <option value="or_alternatives">Internal Choice (1 OR 2)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+
+                                            {conf.mode === 'auto' ? (
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 bg-white p-4 rounded-lg border border-slate-200/70">
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Total Questions</label>
+                                                        <input type="number" min="0" value={conf.questionsCount} onChange={e => updateSec(index, 'questionsCount', Math.max(0, Number(e.target.value)))}
+                                                            className="w-full h-9 px-3 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Marks/Question</label>
+                                                        <input type="number" value={conf.marksPerQuestion} onChange={e => updateSec(index, 'marksPerQuestion', Math.max(0, Number(e.target.value)))}
+                                                            className="w-full h-9 px-3 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none" />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Difficulty Target</label>
+                                                        <select value={conf.difficulty} onChange={e => updateSec(index, 'difficulty', e.target.value)}
+                                                            className="w-full h-9 px-2 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none">
+                                                            <option value="any">Any Difficulty</option>
+                                                            <option value="easy">Easy</option>
+                                                            <option value="medium">Medium</option>
+                                                            <option value="hard">Hard</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Question Type</label>
+                                                        <select value={conf.questionType || 'any'} onChange={e => updateSec(index, 'questionType', e.target.value)}
+                                                            className="w-full h-9 px-2 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none">
+                                                            <option value="any">Any Type</option>
+                                                            <option value="subjective">Subjective</option>
+                                                            <option value="objective">Objective</option>
+                                                            <option value="multiple-answer">Multi-Answer</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">AI Novelty Credit</label>
+                                                        <select value={conf.creditLevel} onChange={e => updateSec(index, 'creditLevel', e.target.value === 'any' ? 'any' : Number(e.target.value))}
+                                                            className="w-full h-9 px-2 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none">
+                                                            <option value="any">Any Credit (Mixed)</option>
+                                                            <option value="1">1 Credit (PYQ Repeated)</option>
+                                                            <option value="2">2 Credits (PYQ Variant)</option>
+                                                            <option value="3">3 Credits (Standard)</option>
+                                                            <option value="4">4 Credits (Highly Novel)</option>
+                                                            <option value="5">5 Credits (Research novel)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="bg-white p-4 rounded-lg border border-slate-200/70 space-y-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Marks/Question</label>
+                                                            <input type="number" value={conf.marksPerQuestion} onChange={e => updateSec(index, 'marksPerQuestion', Math.max(0, Number(e.target.value)))}
+                                                                className="w-full h-9 px-3 border border-slate-200 rounded text-xs bg-white text-text-primary focus:outline-none" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1.5">Selected Count (Calculated)</label>
+                                                            <div className="w-full h-9 px-3 border border-slate-100 rounded text-xs bg-slate-50 text-slate-700 flex items-center font-bold">
+                                                                {conf.manualQuestions.length} Questions Selected
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Selected questions list */}
+                                                    <div>
+                                                        <label className="block text-[10px] font-black uppercase text-text-secondary tracking-wider mb-1.5">Selected Questions</label>
+                                                        {conf.manualQuestions.length > 0 ? (
+                                                            <div className="space-y-2 max-h-48 overflow-y-auto border border-indigo-100 rounded-lg p-2.5 bg-indigo-50/10">
+                                                                {conf.manualQuestions.map(q => (
+                                                                    <div key={q.id} className="flex justify-between items-start gap-2 bg-white p-2 rounded border border-slate-200 shadow-sm">
+                                                                        <div className="text-xs text-text-primary">
+                                                                            <p className="font-semibold text-slate-800 leading-snug">{q.text}</p>
+                                                                            <span className="text-[9px] text-text-muted font-mono mt-0.5 block">{q.code} · Marks: {q.marks} · {q.difficulty} · {q.creditLevel} Credits</span>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                const updated = conf.manualQuestions.filter(mq => mq.id !== q.id);
+                                                                                updateSec(index, 'manualQuestions', updated);
+                                                                            }}
+                                                                            className="text-[10px] text-red-500 hover:text-red-700 font-bold uppercase tracking-wider shrink-0 mt-0.5"
+                                                                        >
+                                                                            ✕ Remove
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-[11px] text-slate-400 italic">No questions selected yet. Search and add questions below.</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Keyword search panel */}
+                                                    <div className="pt-3 border-t border-slate-100">
+                                                        <label className="block text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">Search and Add Questions</label>
+                                                        <div className="flex gap-2 mb-2">
+                                                            <div className="relative flex-1">
+                                                                <Search className="absolute left-2.5 top-2.5 text-slate-400" size={14} />
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Search question bank by words..."
+                                                                    value={conf.searchQuery || ''}
+                                                                    onChange={e => updateSec(index, 'searchQuery', e.target.value)}
+                                                                    className="w-full h-9 pl-8 pr-3 border border-slate-200 rounded-md text-xs bg-white text-text-primary focus:outline-none focus:border-accent-primary"
+                                                                />
+                                                            </div>
+                                                            {conf.searchQuery && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => updateSec(index, 'searchQuery', '')}
+                                                                    className="px-3 h-9 bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs rounded-md font-bold transition-all"
+                                                                >
+                                                                    Clear
+                                                                </button>
+                                                            )}
+                                                        </div>
+
+                                                        {(() => {
+                                                            const query = (conf.searchQuery || '').toLowerCase().trim();
+                                                            let searchPool = bank.filter(q => q.paperCode === paperCode);
+                                                            if (query) {
+                                                                searchPool = searchPool.filter(q => q.text.toLowerCase().includes(query));
+                                                            } else {
+                                                                searchPool = searchPool.slice(0, 5);
+                                                            }
+                                                            
+                                                            const selectedIds = new Set(conf.manualQuestions.map(q => q.id));
+                                                            const filteredSearch = searchPool.filter(q => !selectedIds.has(q.id));
+
+                                                            if (filteredSearch.length === 0) {
+                                                                return (
+                                                                    <div className="p-4 bg-slate-50 text-center rounded-lg border border-dashed border-slate-200">
+                                                                        <p className="text-[11px] text-slate-400 italic">
+                                                                            {query ? 'No matching questions found in this paper.' : 'No other questions available in this paper.'}
+                                                                        </p>
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <div className="space-y-1.5 max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-2 bg-slate-50/50">
+                                                                    {filteredSearch.map(q => (
+                                                                        <div
+                                                                            key={q.id}
+                                                                            className="bg-white p-2.5 rounded border border-slate-200 flex items-start justify-between gap-3 shadow-sm hover:border-indigo-300 transition-colors"
+                                                                        >
+                                                                            <div className="text-[11px] text-slate-700 flex-1">
+                                                                                <p className="font-semibold text-slate-800 leading-relaxed">{q.text}</p>
+                                                                                <span className="text-[9px] text-slate-400 font-mono mt-1 block">{q.code} · Marks: {q.marks} · {q.difficulty} · {q.creditLevel} Credits</span>
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    updateSec(index, 'manualQuestions', [...conf.manualQuestions, q]);
+                                                                                }}
+                                                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-wider shrink-0 mt-0.5 border border-indigo-200 bg-indigo-50/30 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
+                                                                            >
+                                                                                + Add
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="flex justify-end pt-4 border-t border-slate-100">
@@ -1169,82 +1839,170 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                                     className="px-3 py-1.5 border border-slate-200 text-text-secondary rounded hover:bg-slate-50 text-xs font-bold transition-all">
                                     ← Reconfigure
                                 </button>
-                                <button type="button" onClick={handleExportPDF} className="px-3 py-1.5 border border-slate-200 text-text-secondary rounded hover:bg-slate-50 text-xs font-bold transition-all flex items-center gap-1">
+                                <button type="button" onClick={handleExportPDF} className="px-3 py-1.5 bg-accent-primary text-white rounded hover:bg-[#162d4a] text-xs font-bold transition-all flex items-center gap-1">
                                     <Download size={12} /> Export PDF
-                                </button>
-                                <button type="button" onClick={handlePrint} className="px-3 py-1.5 bg-accent-primary text-white rounded hover:bg-[#162d4a] text-xs font-bold transition-all flex items-center gap-1">
-                                    <Printer size={12} /> Print
                                 </button>
                             </div>
                         </div>
-                        <div id="printable-question-paper" className="p-8 max-w-[800px] mx-auto space-y-8 bg-white border border-slate-100 shadow-md my-6 rounded-lg font-body">
-                            {/* Exam Sheet Header */}
-                            <div className="text-center space-y-1">
-                                <h2 className="text-lg font-black text-text-primary tracking-wide uppercase">ALL CAMPUS DIGITAL UNIVERSITY</h2>
-                                <h3 className="text-xs font-bold text-text-secondary tracking-widest uppercase">{title}</h3>
-                                <div className="flex justify-center gap-4 text-xs text-text-secondary font-semibold pt-1">
-                                    <span>Paper Code: <strong>{paperCode}</strong></span>
-                                    <span>Max. Marks: <strong>{maxMarks}</strong></span>
-                                    <span>Duration: <strong>{duration}</strong></span>
+                        <div id="printable-question-paper" className="relative overflow-hidden pt-3 pb-8 px-8 max-w-[800px] mx-auto bg-white border border-slate-100 shadow-md my-6 rounded-lg font-body">
+                            {/* Watermark on screen preview */}
+                            <div className="absolute-watermark pointer-events-none select-none" style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%) rotate(-30deg)',
+                                fontSize: '20px',
+                                color: 'rgba(14, 165, 233, 0.15)',
+                                fontWeight: 900,
+                                letterSpacing: '0.18em',
+                                textTransform: 'uppercase',
+                                whiteSpace: 'nowrap',
+                                zIndex: 0,
+                                filter: 'blur(0.5px)',
+                                textAlign: 'center',
+                                fontFamily: 'sans-serif'
+                            }}>
+                                GENERATED: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} AT {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })}
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Exam Sheet Header */}
+                                <div className="relative z-10 space-y-3">
+                                    <div className="flex items-center justify-between gap-4">
+                                        {logoUrl && (
+                                            <img 
+                                                src={logoUrl} 
+                                                alt="Logo" 
+                                                style={{ height: '48px', width: '48px', objectFit: 'contain' }} 
+                                            />
+                                        )}
+                                        <div className="flex-1 text-center space-y-1">
+                                            {collegeName && <h2 className="text-lg font-black text-text-primary tracking-wide uppercase">{collegeName}</h2>}
+                                            <h3 className="text-sm font-bold text-text-secondary tracking-widest uppercase">{title}</h3>
+                                            {department && <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide">Department of {department}</h4>}
+                                        </div>
+                                        {logoUrl && <div style={{ width: '48px', height: '48px' }} />}
+                                    </div>
+                                    <div className="text-center space-y-1">
+                                        <div className="flex justify-center gap-4 text-xs text-text-secondary font-semibold pt-1">
+                                            <span>Paper: <strong>{paperName}{paperCode ? ` (${paperCode})` : ''}</strong></span>
+                                            <span>Max. Marks: <strong>{calculatedMaxMarks}</strong></span>
+                                            <span>Duration: <strong>{duration}</strong></span>
+                                        </div>
+                                        <div className="flex justify-center gap-6 text-[10px] text-text-muted font-bold pt-1 uppercase">
+                                            <span>Exam Date: <strong>{examDate}</strong></span>
+                                            <span>Seat No.: ________________</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex justify-center gap-4 text-[10px] text-text-muted font-bold pt-1">
-                                    <span>Date: _________</span>
-                                    <span>Seat No.: ___________</span>
+                                <div className="relative z-10 h-px bg-slate-900" />
+
+                                {/* Render Sections */}
+                                <div className="relative z-10 space-y-8">
+                                    {(() => {
+                                        let globalQuestionCounter = 1;
+                                        return generatedPaper && Object.entries(generatedPaper).map(([secName, qs]) => {
+                                            const sectionConf = sectionsList.find(s => s.name === secName);
+                                            return (
+                                            <div key={secName} className="space-y-4">
+                                                <div className="border-b border-slate-200 pb-1.5">
+                                                    <div className="flex items-center justify-between">
+                                                        <h4 className="text-sm font-black text-text-primary tracking-wide">
+                                                            SECTION {secName} ({qs.reduce((sum, q) => sum + (q.marks || 0), 0)} Marks)
+                                                        </h4>
+                                                        <span className="text-xs text-text-muted font-semibold">[{qs.length} questions]</span>
+                                                    </div>
+                                                    {sectionConf?.description && (
+                                                        <p className="text-xs text-slate-500 font-bold mt-1 italic leading-relaxed">
+                                                            Note: {sectionConf.description}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {qs.length === 0 ? (
+                                                    <p className="text-xs text-red-500 italic">No questions in the database match this section's credit/difficulty parameters.</p>
+                                                ) : (
+                                                    <div className="space-y-6 font-normal text-text-primary">
+                                                        {(() => {
+                                                            const pType = sectionConf?.presentationType || 'standard';
+                                                            
+                                                            const renderQuestionContent = (q: BankQuestion, indexLabel: string) => (
+                                                                <div key={q.id} className="flex gap-3">
+                                                                    <span className="text-sm font-semibold min-w-[24px]">{indexLabel}</span>
+                                                                    <div className="flex-1">
+                                                                        <div className="flex items-start justify-between gap-2">
+                                                                            <p className="text-sm">{q.text}</p>
+                                                                            <span className="text-xs font-semibold text-text-muted whitespace-nowrap">[{q.marks} M{q.negativeMarks ? `, -${q.negativeMarks}` : ''}]</span>
+                                                                        </div>
+                                                                        {q.image && <img src={q.image} alt="" className="mt-2 max-h-32 border border-slate-200 rounded" />}
+                                                                        {q.options && (
+                                                                            <div className="grid grid-cols-2 gap-x-6 gap-y-1 mt-2 font-normal">
+                                                                                {q.options.map((opt, oi) => (
+                                                                                    <p key={oi} className="text-sm text-text-secondary">({String.fromCharCode(97 + oi)}) {opt}</p>
+                                                                                ))}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+
+                                                            if (pType === 'subquestions') {
+                                                                const grouped = [];
+                                                                for (let i = 0; i < qs.length; i += 2) {
+                                                                    grouped.push(qs.slice(i, i + 2));
+                                                                }
+                                                                return grouped.map((group, gi) => {
+                                                                    const mainQNum = globalQuestionCounter++;
+                                                                    return (
+                                                                        <div key={gi} className="space-y-3">
+                                                                            <div className="text-sm font-bold">{mainQNum}. Answer the following:</div>
+                                                                            <div className="pl-4 space-y-4">
+                                                                                {group.map((q, qsi) => renderQuestionContent(q, `(${String.fromCharCode(97 + qsi)})`))}
+                                                                            </div>
+                                                                        </div>
+                                                                    );
+                                                                });
+                                                            }
+
+                                                            if (pType === 'or_alternatives') {
+                                                                const grouped = [];
+                                                                for (let i = 0; i < qs.length; i += 2) {
+                                                                    grouped.push(qs.slice(i, i + 2));
+                                                                }
+                                                                return grouped.map((group, gi) => {
+                                                                    const mainQNum = globalQuestionCounter++;
+                                                                    return (
+                                                                        <div key={gi} className="space-y-4">
+                                                                            {renderQuestionContent(group[0], `${mainQNum}.`)}
+                                                                            {group.length > 1 && (
+                                                                                <>
+                                                                                    <div className="text-center font-black text-sm my-2 uppercase tracking-widest text-slate-400">OR</div>
+                                                                                    {renderQuestionContent(group[1], "")}
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                });
+                                                            }
+
+                                                            // standard
+                                                            return (
+                                                                <div className="space-y-4">
+                                                                    {qs.map((q) => {
+                                                                        const mainQNum = globalQuestionCounter++;
+                                                                        return renderQuestionContent(q, `${mainQNum}.`);
+                                                                    })}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })})()}
+                                    <div className="pt-4 border-t border-slate-200 text-center text-xs text-text-muted">— End of Paper —</div>
                                 </div>
                             </div>
-                            <div className="h-px bg-slate-900" />
-
-                            {/* Render Sections */}
-                            {generatedPaper && Object.entries(generatedPaper).map(([secName, qs]) => (
-                                <div key={secName} className="space-y-4">
-                                    <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5">
-                                        <h4 className="text-sm font-black text-text-primary tracking-wide">SECTION {secName}</h4>
-                                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-semibold rounded border border-blue-200 capitalize">
-                                            {sections[secName].difficulty}
-                                        </span>
-                                        <span className="ml-auto text-xs text-text-muted font-semibold">[{qs.length} questions]</span>
-                                    </div>
-
-                                    {qs.length === 0 ? (
-                                        <p className="text-xs text-red-500 italic">No questions in the database match this section's credit/difficulty parameters.</p>
-                                    ) : (
-                                        <ol className="space-y-4 list-none">
-                                            {qs.map((q, qi) => (
-                                                <li key={q.id} className="flex gap-3">
-                                                    <span className="text-sm font-semibold text-text-primary min-w-[24px]">{qi + 1}.</span>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <p className="text-sm text-text-primary">{q.text}</p>
-                                                            <span className="text-xs font-semibold text-text-muted whitespace-nowrap">[{q.marks} M{q.negativeMarks ? `, -${q.negativeMarks}` : ''}]</span>
-                                                        </div>
-                                                        {q.image && <img src={q.image} alt="" className="mt-2 max-h-32 border border-slate-200 rounded" />}
-                                                        {q.options && (
-                                                            <div className="grid grid-cols-2 gap-x-6 gap-y-1 mt-2">
-                                                                {q.options.map((opt, oi) => (
-                                                                     <p key={oi} className="text-sm text-text-secondary">({String.fromCharCode(97 + oi)}) {opt}</p>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        <div className="flex gap-3 items-center mt-2 text-[10px] flex-wrap">
-                                                            <span className="text-text-muted font-mono">{q.code}</span>
-                                                            <span className="text-slate-300">|</span>
-                                                            <div className="flex items-center gap-1">
-                                                                <div className="w-3.5 h-3.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-[8px] font-black uppercase shrink-0">
-                                                                    {q.addedBy ? q.addedBy.replace('Dr. ', '').replace('Prof. ', '').charAt(0) : 'U'}
-                                                                </div>
-                                                                <span className="text-text-muted">
-                                                                    Author: <a href={q.addedByProfileLink || '#/faculty-profile'} className="text-indigo-600 hover:underline font-semibold">{q.addedBy || 'University Exam Controller'}</a>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    )}
-                                </div>
-                            ))}
-                            <div className="pt-4 border-t border-slate-200 text-center text-xs text-text-muted">— End of Paper —</div>
                         </div>
                     </div>
                 </div>
@@ -1307,6 +2065,54 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
             };
         });
     });
+
+    // Synchronize multi-department engineering questions from backend database API on mount
+    useEffect(() => {
+        const syncQuestionsFromApi = async () => {
+            try {
+                const token = localStorage.getItem('urp_token');
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                
+                const res = await fetch('http://127.0.0.1:5000/api/questions', {
+                    signal: controller.signal,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                clearTimeout(timeoutId);
+                const data = await res.json();
+                if (data.success && data.data && data.data.length > 0) {
+                    const formatted = data.data.map((q: any) => ({
+                        id: q._id || `API-${Math.random()}`,
+                        code: q.code,
+                        paperCode: q.code,
+                        text: q.text,
+                        type: q.type as QuestionType,
+                        difficulty: q.difficulty as Difficulty,
+                        marks: q.marks,
+                        unit: q.department,
+                        addedBy: q.addedBy || 'University Exam Controller',
+                        addedOn: q.addedOn || '2026-05-20',
+                        creditLevel: q.creditLevel || 3,
+                        isRepeated: q.creditLevel && q.creditLevel < 4,
+                        aiConfidence: 0.96,
+                        sentToUniversity: true,
+                        approvedByUniversity: true
+                    }));
+                    
+                    setBank(prev => {
+                        const existingCodes = new Set(prev.map(p => p.code));
+                        const newQuestions = formatted.filter((q: any) => !existingCodes.has(q.code));
+                        return [...prev, ...newQuestions];
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to sync questions from database API:', err);
+            }
+        };
+        syncQuestionsFromApi();
+    }, []);
 
     // Reactive, derived pending inbox array (highly optimized reactive state pattern)
     const pendingInbox = isUniAdmin
@@ -1378,6 +2184,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
             )}
             <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto">
                 {(['upload', 'directory', 'train', 'generate'] as QBSubTab[])
+                    .filter(t => t !== 'upload' || isFaculty)
                     .map(t => (
                         <button key={t} type="button" onClick={() => setSubTab(t)}
                             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex items-center gap-1.5 ${subTab === t ? 'border-accent-primary text-accent-primary' : 'border-transparent text-text-secondary hover:text-text-primary'}`}>
@@ -1414,7 +2221,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                 </span>
             </div>
 
-            {subTab === 'upload' && <UploadQuestions bank={displayBank} setBank={setBank} role={role} facultyName={facultyName} facultyProfileUrl={facultyProfileUrl} />}
+            {subTab === 'upload' && <UploadQuestions bank={displayBank} fullBank={bank} setBank={setBank} role={role} facultyName={facultyName} facultyProfileUrl={facultyProfileUrl} />}
             {subTab === 'directory' && <QuestionDirectory bank={displayBank} setBank={setBank} />}
             {subTab === 'train' && <TrainModel bank={displayBank} />}
             {subTab === 'generate' && <GeneratePaper bank={displayBank} />}

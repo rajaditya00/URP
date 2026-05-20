@@ -50,7 +50,7 @@ const Signup = () => {
     const [phoneOtpSent, setPhoneOtpSent] = useState(false);
     const [phoneOtpVerified, setPhoneOtpVerified] = useState(false);
     const [phoneOtpValue, setPhoneOtpValue] = useState('');
-    const [otpLoading, setOtpLoading] = useState<'email'|'phone'|null>(null);
+    const [otpLoading, setOtpLoading] = useState<'email' | 'phone' | null>(null);
     const [otpError, setOtpError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -646,11 +646,10 @@ const Signup = () => {
                                                 type={showConfirm ? 'text' : 'password'}
                                                 value={formData.confirmPassword}
                                                 onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                                className={`w-full h-12 pl-10 pr-11 bg-slate-50 border rounded-xl outline-none focus:ring-2 text-[15px] transition-all ${
-                                                    formData.confirmPassword && formData.password !== formData.confirmPassword
+                                                className={`w-full h-12 pl-10 pr-11 bg-slate-50 border rounded-xl outline-none focus:ring-2 text-[15px] transition-all ${formData.confirmPassword && formData.password !== formData.confirmPassword
                                                         ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                                                         : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/20'
-                                                }`}
+                                                    }`}
                                                 placeholder="Re-enter your password"
                                             />
                                             <button type="button" onClick={() => setShowConfirm(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">

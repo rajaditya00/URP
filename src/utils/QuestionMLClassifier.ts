@@ -179,24 +179,47 @@ export class QuestionMLClassifier {
             }
         });
 
-        // Mapping Cosine Similarity [0, 1] to Credit Level [1, 5]
-        // Higher similarity (repeat) -> lower credits
-        // Lower similarity (novel) -> higher credits
-        let creditLevel = 5;
+        // Cognitive complexity check using token analysis (Bloom's Taxonomy)
+        const lowercaseText = newQuestionText.toLowerCase();
+        let cognitiveLevel = 2; // Default to basic comprehension/knowledge
+        
+        // High-level cognitive keywords (Synthesis, Creation, Mathematical derivation, Architecture design)
+        if (/\b(design|derive|formulate|architect|synthesize|optimize|prove|turing machine|raft|consensus|cryptography|cryptographic|navier-stokes|quantum|compiler|distributed)\b/.test(lowercaseText)) {
+            cognitiveLevel = 5;
+        } 
+        // Analysis / Complex application keywords
+        else if (/\b(analyze|compare|differentiate|implement|calculate|solve|derive|evaluate|investigate)\b/.test(lowercaseText)) {
+            cognitiveLevel = 4;
+        }
+        // General comprehension keywords
+        else if (/\b(explain|describe|discuss|illustrate|explain the difference)\b/.test(lowercaseText)) {
+            cognitiveLevel = 3;
+        }
+        // Basic knowledge keywords
+        else if (/\b(what is|state|define|list|identify|name|which)\b/.test(lowercaseText)) {
+            cognitiveLevel = 2;
+        }
+        
+        // Short questions have lower default cognitive difficulty
+        if (lowercaseText.split(/\s+/).length < 8) {
+            cognitiveLevel = Math.min(cognitiveLevel, 2);
+        }
+        
+        // Combine semantic novelty and cognitive complexity to determine the final credit level
+        // Similarity acts as a penalty/cap to ensure that repeated questions get low credits even if their cognitive level is high!
+        let creditLevel = cognitiveLevel;
         if (maxSimilarity > 0.8) {
-            creditLevel = 1; // High match (almost identical PYQ copy)
+            creditLevel = 1; // Direct copy penalty
         } else if (maxSimilarity > 0.6) {
-            creditLevel = 2; // Moderate Match (repeated PYQ variant)
+            creditLevel = Math.min(creditLevel, 2); // Heavy overlap penalty
         } else if (maxSimilarity > 0.4) {
-            creditLevel = 3; // Basic overlap (some repeated terminology)
-        } else if (maxSimilarity > 0.15) {
-            creditLevel = 4; // Low overlap (novel subject adaptation)
-        } else {
-            creditLevel = 5; // Distinct novelty (brand new research question)
+            creditLevel = Math.min(creditLevel, 3); // Moderate overlap penalty
+        } else if (maxSimilarity > 0.2) {
+            creditLevel = Math.max(1, Math.min(creditLevel, 4)); // Minor overlap penalty
         }
 
         const isRepeated = maxSimilarity > 0.45;
-        const confidence = 0.85 + (maxSimilarity * 0.12) + (Math.random() * 0.03); // Simulated neural accuracy scaling
+        const confidence = 0.88 + (maxSimilarity * 0.09) + (Math.random() * 0.02); // Simulated neural accuracy scaling
 
         const details = [
             `Vocabulary dimension: ${this.vocabulary.length} features analyzed.`,

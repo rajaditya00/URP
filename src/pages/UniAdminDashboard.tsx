@@ -324,29 +324,28 @@ const UniAdminDashboard = () => {
                 </div>
             </header>
 
-            <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden">
-                {/* SIDEBAR NAVIGATION */}
-                <div className="w-64 bg-white border-r border-border-color flex-shrink-0 py-6 flex flex-col overflow-y-auto shadow-[4px_0_10px_rgba(0,0,0,0.02)] z-10">
-                    <div className="px-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Examination</div>
-                    <button onClick={() => setActiveTab('questionbank')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'questionbank' ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-600' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>🧠 Master Question Bank</span>
-                        <span className="ml-auto bg-indigo-100 text-indigo-700 text-[9px] px-1.5 py-0.5 rounded font-bold">AI</span>
-                    </button>
-
-                    <div className="px-6 pt-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Academic</div>
-                    <button onClick={() => setActiveTab('notices')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'notices' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>📢 Notices</span>
-                    </button>
-                    <button onClick={() => setActiveTab('results')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'results' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>📊 Results</span>
-                    </button>
-
-                    <div className="px-6 pt-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Affiliations</div>
-                    <button onClick={() => setActiveTab('colleges')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'colleges' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>🏛 Colleges & Authority</span>
-                    </button>
+            {/* HORIZONTAL NAVIGATION */}
+            <div className="bg-white border-b border-border-color sticky top-16 z-30 shadow-sm">
+                <div className="max-w-[1600px] mx-auto px-6">
+                    <div className="flex space-x-1 overflow-x-auto no-scrollbar">
+                        <button onClick={() => setActiveTab('questionbank')} className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'questionbank' ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>
+                            <span>🧠 Master Question Bank</span>
+                            <span className="ml-2 bg-indigo-100 text-indigo-700 text-[9px] px-1.5 py-0.5 rounded font-bold">AI</span>
+                        </button>
+                        <button onClick={() => setActiveTab('notices')} className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'notices' ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>
+                            <span>📢 Notices</span>
+                        </button>
+                        <button onClick={() => setActiveTab('results')} className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'results' ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>
+                            <span>📊 Results</span>
+                        </button>
+                        <button onClick={() => setActiveTab('colleges')} className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === 'colleges' ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-text-secondary hover:text-text-primary hover:border-gray-300'}`}>
+                            <span>🏛 Colleges & Authority</span>
+                        </button>
+                    </div>
                 </div>
+            </div>
 
+            <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden">
                 {/* MAIN CONTENT AREA */}
                 <div className="flex-1 overflow-y-auto p-8 relative">
 

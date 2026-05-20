@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
-import { Users, GraduationCap, Building, LayoutDashboard, CheckCircle, Search, Plus, X, MoreVertical, Layers } from 'lucide-react';
+import { Users, GraduationCap, Building, LayoutDashboard, CheckCircle, Search, Plus, X, MoreVertical, Layers, Megaphone, Bell } from 'lucide-react';
 import QuestionBank from '../components/Examination/QuestionBank';
 
 const DEPARTMENTS = ['Computer Science', 'Mechanical Engineering', 'Electrical Engineering', 'Civil Engineering', 'Business Administration'];
@@ -32,6 +32,43 @@ const CollegeAdminDashboard = () => {
     const [studentSearch, setStudentSearch] = useState('');
     const [filterBatch, setFilterBatch] = useState('All');
     const [filterSemester, setFilterSemester] = useState('All');
+
+    // Notices State
+    const [notices, setNotices] = useState<any[]>(() => {
+        const stored = localStorage.getItem('urp_notices');
+        return stored ? JSON.parse(stored) : [];
+    });
+    const [newNoticeTitle, setNewNoticeTitle] = useState('');
+    const [newNoticeDesc, setNewNoticeDesc] = useState('');
+    const [newNoticePdf, setNewNoticePdf] = useState<{ name: string; dataUrl: string } | null>(null);
+    const [noticePdfLoading, setNoticePdfLoading] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('urp_notices', JSON.stringify(notices));
+    }, [notices]);
+
+    const handleNoticePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (file.type !== 'application/pdf') return showToastMsg('Only PDF files are allowed.');
+        setNoticePdfLoading(true);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            setNewNoticePdf({ name: file.name, dataUrl: ev.target?.result as string });
+            setNoticePdfLoading(false);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handlePublishNotice = () => {
+        if (!newNoticeTitle || !newNoticeDesc) return showToastMsg('Title and description are required.');
+        const newNotice = { id: Date.now().toString(), title: newNoticeTitle, desc: newNoticeDesc, date: new Date().toLocaleDateString(), type: 'General', pdfName: newNoticePdf?.name || null, pdfDataUrl: newNoticePdf?.dataUrl || null };
+        setNotices([newNotice, ...notices]);
+        setNewNoticeTitle('');
+        setNewNoticeDesc('');
+        setNewNoticePdf(null);
+        showToastMsg('Notice published to student portals!');
+    };
 
     const loadMembers = async () => {
         try {
@@ -178,57 +215,116 @@ const CollegeAdminDashboard = () => {
                 </div>
             </header>
 
-            <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden bg-white mt-4 sm:rounded-t-2xl shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] border border-slate-200">
-                {/* SIDEBAR NAVIGATION */}
-                <div className="w-64 bg-[#f8fafc] border-r border-slate-200 flex-shrink-0 py-6 flex flex-col overflow-y-auto z-10">
-                    <div className="px-6 pb-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Main Menu</div>
-
-                    {[
-                        { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
-                        { id: 'faculty', label: 'Faculty & Staff', icon: <Users className="w-4 h-4" /> },
-                        { id: 'students', label: 'Student Directory', icon: <GraduationCap className="w-4 h-4" /> },
-                        { id: 'departments', label: 'Departments', icon: <Building className="w-4 h-4" /> },
-                        { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
-                    ].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
-                            className={`w-full text-left px-6 py-3 text-sm font-bold transition-all flex items-center gap-3 ${activeTab === tab.id ? 'bg-white text-[#1e3a5f] border-r-4 border-[#1e3a5f] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
-                            {tab.icon}
-                            <span>{tab.label}</span>
-                        </button>
-                    ))}
+            {/* HORIZONTAL NAVIGATION */}
+            <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+                <div className="max-w-[1600px] mx-auto px-6">
+                    <div className="flex space-x-1 overflow-x-auto no-scrollbar">
+                        {[
+                            { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+                            { id: 'faculty', label: 'Faculty & Staff', icon: <Users className="w-4 h-4" /> },
+                            { id: 'students', label: 'Student Directory', icon: <GraduationCap className="w-4 h-4" /> },
+                            { id: 'departments', label: 'Departments', icon: <Building className="w-4 h-4" /> },
+                            { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
+                        ].map(tab => (
+                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+                                className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                                {tab.icon}
+                                <span>{tab.label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
+            </div>
 
+            <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden bg-white mt-4 sm:rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 mb-12">
                 {/* MAIN CONTENT AREA */}
-                <div className="flex-1 overflow-y-auto p-8 relative bg-white">
+                <div className="flex-1 overflow-y-auto p-8 relative bg-white min-h-[500px]">
 
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
-                        <div className="animate-fade-in space-y-6">
-                            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-6">College Overview</h2>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 shadow-sm">
-                                    <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4"><Users className="w-6 h-6" /></div>
-                                    <p className="text-3xl font-extrabold text-slate-800">{faculties.length}</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Total Faculty</p>
-                                </div>
-                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl p-6 shadow-sm">
-                                    <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mb-4"><GraduationCap className="w-6 h-6" /></div>
-                                    <p className="text-3xl font-extrabold text-slate-800">{students.length}</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Total Students</p>
-                                </div>
-                                <div className="bg-gradient-to-br from-purple-50 to-fuchsia-50 border border-purple-100 rounded-2xl p-6 shadow-sm">
-                                    <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4"><Building className="w-6 h-6" /></div>
-                                    <p className="text-3xl font-extrabold text-slate-800">{DEPARTMENTS.length}</p>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Active Departments</p>
+                        <div className="animate-fade-in">
+                            <div className="bg-gradient-to-br from-[#1e3a5f] to-indigo-900 rounded-3xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                                <div className="absolute -right-20 -top-20 w-[300px] h-[300px] bg-white opacity-5 rounded-full blur-3xl pointer-events-none"></div>
+                                <div className="relative z-10 max-w-3xl">
+                                    <h2 className="text-3xl font-black tracking-tight mb-3 text-white">Welcome to your Management Portal</h2>
+                                    <p className="text-blue-100/90 text-base leading-relaxed">
+                                        College Overview Dashboard. View key metrics including faculty strength, student enrollment, and active departments at a glance to manage your institutional data effortlessly.
+                                    </p>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center max-w-3xl shadow-sm">
-                                <h3 className="font-bold text-slate-800 text-lg mb-2">Welcome to your Management Portal</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed max-w-xl mx-auto">
-                                    Manage your institutional data seamlessly. Add faculty members, assign special roles like Examination Controller, organize students by department, and track your college's academic metrics.
-                                </p>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-110"></div>
+                                    <div className="relative z-10">
+                                        <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm"><Users className="w-7 h-7" /></div>
+                                        <p className="text-5xl font-black text-slate-900 mb-2">{faculties.length}</p>
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Faculty</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-bl-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-110"></div>
+                                    <div className="relative z-10">
+                                        <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm"><GraduationCap className="w-7 h-7" /></div>
+                                        <p className="text-5xl font-black text-slate-900 mb-2">{students.length}</p>
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Total Students</p>
+                                    </div>
+                                </div>
+                                <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-bl-full -mr-10 -mt-10 transition-transform duration-500 group-hover:scale-110"></div>
+                                    <div className="relative z-10">
+                                        <div className="w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm"><Building className="w-7 h-7" /></div>
+                                        <p className="text-5xl font-black text-slate-900 mb-2">{DEPARTMENTS.length}</p>
+                                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Departments</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 bg-white border border-slate-200 rounded-3xl p-8 shadow-sm relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center"><Megaphone className="w-5 h-5" /></div>
+                                    <div>
+                                        <h3 className="font-black text-lg text-slate-900">Publish Notice</h3>
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Broadcast to all students</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="md:col-span-1 space-y-4">
+                                        <div>
+                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Notice Title *</label>
+                                            <input value={newNoticeTitle} onChange={e => setNewNoticeTitle(e.target.value)} placeholder="E.g., Semester Exam Schedule" className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10 outline-none transition-all" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">PDF Attachment <span className="text-slate-400 normal-case font-semibold tracking-normal">(optional)</span></label>
+                                            <label className={`flex items-center gap-3 h-11 px-4 rounded-xl border cursor-pointer transition-all text-sm font-semibold ${
+                                                newNoticePdf ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-300 hover:bg-rose-50/50'
+                                            }`}>
+                                                <input type="file" accept="application/pdf" className="hidden" onChange={handleNoticePdfUpload} />
+                                                {noticePdfLoading ? (
+                                                    <span className="text-xs text-slate-400">Reading…</span>
+                                                ) : newNoticePdf ? (
+                                                    <span className="truncate text-xs">{newNoticePdf.name}</span>
+                                                ) : (
+                                                    <span className="text-xs">Upload PDF notice…</span>
+                                                )}
+                                            </label>
+                                            {newNoticePdf && (
+                                                <button onClick={() => setNewNoticePdf(null)} className="mt-1 text-[10px] text-rose-500 hover:text-rose-700 font-bold">✕ Remove PDF</button>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <button onClick={handlePublishNotice} className="w-full h-11 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center justify-center gap-2">
+                                                <Bell className="w-4 h-4" /> Broadcast Notice
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Detailed Description *</label>
+                                        <textarea value={newNoticeDesc} onChange={e => setNewNoticeDesc(e.target.value)} placeholder="Type the full notice announcement here..." className="w-full h-[148px] p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/10 outline-none transition-all resize-none"></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}

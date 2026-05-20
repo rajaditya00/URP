@@ -59,6 +59,13 @@ const StudentSelfDashboard = () => {
     const [expandedSem, setExpandedSem] = useState<string | null>('Semester 6');
     const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
+    // Notices State
+    const [notices, setNotices] = useState<any[]>(() => {
+        const stored = localStorage.getItem('urp_notices');
+        return stored ? JSON.parse(stored) : [];
+    });
+    const [showAllNotices, setShowAllNotices] = useState(false);
+
     // Target Grades State for GPA Predictor
     const [targetGrades, setTargetGrades] = useState<Record<string, number>>({
         CS601: 10, // Computer Networks (O - 10)
@@ -135,6 +142,10 @@ const StudentSelfDashboard = () => {
             const storedProjs = localStorage.getItem('urp_student_projects');
             if (storedProjs) {
                 setProjects(JSON.parse(storedProjs));
+            }
+            const storedNotices = localStorage.getItem('urp_notices');
+            if (storedNotices) {
+                setNotices(JSON.parse(storedNotices));
             }
         };
         window.addEventListener('storage', handleStorageUpdate);
@@ -352,6 +363,24 @@ const StudentSelfDashboard = () => {
                     </div>
                 </div>
             </header>
+
+            {notices.length > 0 && (
+                <div className="bg-rose-600 text-white px-6 py-2.5 flex items-center gap-4 text-xs font-bold w-full shadow-sm z-40 relative border-b border-rose-700">
+                    <div className="bg-rose-800 text-rose-100 px-2.5 py-1 rounded-md uppercase tracking-widest text-[9px] shrink-0 font-black flex items-center gap-1.5 shadow-inner">
+                        <div className="w-1.5 h-1.5 bg-rose-400 rounded-full animate-ping"></div>
+                        Notice
+                    </div>
+                    <div className="flex-1 overflow-hidden text-[12px] uppercase tracking-wider font-semibold opacity-90">
+                        {/* eslint-disable-next-line jsx-a11y/no-distracting-elements */}
+                        <marquee behavior="scroll" direction="left" scrollamount="5">
+                            {notices.map((n: any) => `[${n.date}] ${n.title}: ${n.desc}`).join(' ✦✦✦ ')}
+                        </marquee>
+                    </div>
+                    <button onClick={() => setShowAllNotices(true)} className="shrink-0 text-[9px] bg-rose-700 hover:bg-rose-800 px-3 py-1.5 rounded-lg uppercase tracking-wider transition-colors border border-rose-500 shadow-sm flex items-center gap-1.5">
+                        Show More <ArrowRight size={12} />
+                    </button>
+                </div>
+            )}
 
             {/* MOBILE NAVIGATION BAR (Shown on small screens) */}
             <div className="xl:hidden bg-white border-b-[1px] border-slate-100 px-6 py-3 flex gap-2 overflow-x-auto">
@@ -1059,6 +1088,35 @@ const StudentSelfDashboard = () => {
                 )}
 
             </main>
+            {showAllNotices && (
+                <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+                    <div className="bg-white rounded-[32px] p-8 max-w-2xl w-full shadow-2xl relative animate-scale-in max-h-[85vh] flex flex-col">
+                        <button onClick={() => setShowAllNotices(false)} className="absolute top-6 right-6 w-8 h-8 bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 rounded-full flex items-center justify-center transition-colors"><X size={16} /></button>
+                        <div className="flex items-center gap-3 mb-6 shrink-0">
+                            <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center"><Megaphone size={24} /></div>
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 tracking-tight">Campus Notices</h2>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Official Broadcasts</p>
+                            </div>
+                        </div>
+                        <div className="overflow-y-auto pr-2 space-y-4 flex-1">
+                            {notices.map((n: any) => (
+                                <div key={n.id} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 hover:border-slate-300 transition-colors">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[9px] font-black uppercase tracking-wider rounded border border-rose-200">{n.type || 'Notice'}</span>
+                                        <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1"><Calendar size={10} /> {n.date}</span>
+                                    </div>
+                                    <h3 className="text-sm font-black text-slate-900 mb-1.5">{n.title}</h3>
+                                    <p className="text-xs text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{n.desc}</p>
+                                </div>
+                            ))}
+                            {notices.length === 0 && (
+                                <p className="text-center text-slate-500 text-sm font-medium py-10">No notices currently published.</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
