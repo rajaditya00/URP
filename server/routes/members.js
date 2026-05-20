@@ -32,8 +32,15 @@ router.get('/:id', protect, authorize('COLLEGE'), async (req, res) => {
       .select('-password')
       .populate('university', 'name')
       .populate('college', 'name');
-    if (!member || member.college?.toString() !== req.user.college?.toString()) {
-      return res.status(404).json({ error: 'Student not found' });
+
+    if (!member) return res.status(404).json({ error: 'Member not found' });
+
+    // Compare college IDs correctly (member.college is populated, so it's an object)
+    const memberCollegeId = member.college?._id?.toString() || member.college?.toString();
+    const userCollegeId = req.user.college?.toString();
+
+    if (memberCollegeId !== userCollegeId) {
+      return res.status(404).json({ error: 'Member not found in your college' });
     }
     res.json(member);
   } catch (err) {
@@ -67,7 +74,8 @@ router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
       specialRole,
       mobile,
       university: req.user.university,
-      college: req.user.college
+      college: req.user.college,
+      mustChangePassword: true
     });
     await professor.save();
 
@@ -149,7 +157,8 @@ router.post('/student', protect, authorize('COLLEGE'), async (req, res) => {
       mobile,
       aadharNo,
       university: req.user.university,
-      college: req.user.college
+      college: req.user.college,
+      mustChangePassword: true
     });
     await student.save();
 
@@ -195,6 +204,80 @@ All Campus Digital Team`;
     res.status(500).json({ error: err.message });
   }
 });
+
+// POST - Create a staff member
+router.post('/staff', protect, authorize('COLLEGE'), async (req, res) => {
+  try {
+    const { name, email, department, position, mobile } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ error: 'A user with this email already exists' });
+    }
+
+    const generatedPassword = generatePassword('SF');
+
+    const staff = new User({
+      name,
+      email,
+      password: generatedPassword,
+      role: 'STAFF',
+      department,
+      position,
+      mobile,
+      university: req.user.university,
+      college: req.user.college,
+      mustChangePassword: true
+    });
+    await staff.save();
+
+    // Dispatch credentials via email
+    const message = `Hello, ${name}!
+
+You have been registered as a Staff member on All Campus Digital.
+
+========================================
+  YOUR LOGIN CREDENTIALS
+========================================
+
+  Name           : ${name}
+  Login Email    : ${email}
+  Password       : ${generatedPassword}
+  Role           : Staff
+
+  Login URL      : http://localhost:5173/login
+
+========================================
+
+Note:
+- Use the email and password above to sign in.
+- You can change your password after logging in.
+
+All Campus Digital Team`;
+
+    await sendEmail({
+      email,
+      subject: 'All Campus Digital - Your Staff Login Credentials',
+      message
+    });
+
+    console.log(`[>> STAFF CREDENTIALS DISPATCHED <<] Email: ${email} | Password: ${generatedPassword}`);
+
+    res.status(201).json({
+      member: { id: staff.id, name, email, role: 'STAFF' },
+      credentials: { email, password: generatedPassword },
+      msg: 'Staff member created and credentials dispatched via email'
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // DELETE a member (professor or student)
 router.delete('/:id', protect, authorize('COLLEGE'), async (req, res) => {

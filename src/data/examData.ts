@@ -203,6 +203,14 @@ export interface BankQuestion {
     unit?: string;                       // unit/topic tag
     addedBy?: string;
     addedOn?: string;
+    creditLevel?: number;                // 1 to 5 credit rating based on novelty (4-5) or repetition (1-2)
+    isRepeated?: boolean;                // repeated question flag
+    aiConfidence?: number;               // simulated ML model accuracy score (0.0 to 1.0)
+    addedByProfileLink?: string;         // New: Link to faculty profile
+    addedByRole?: string;                // New: 'FACULTY' | 'COLLEGE' | 'UNIVERSITY'
+    sentToUniversity?: boolean;          // New: College-to-University workflow sending status
+    approvedByUniversity?: boolean;      // New: University approvals workflow
+    collegeId?: string;                  // New: College ID scoping
 }
 
 // Dummy question bank data ────────────────────────────────────
@@ -216,6 +224,7 @@ export const questionBank: BankQuestion[] = [
         options: ['Network Layer', 'Transport Layer', 'Session Layer', 'Data Link Layer'],
         correctAnswer: 'Transport Layer',
         unit: 'OSI Model', addedBy: 'Dr. B. Nair', addedOn: '2026-01-10',
+        creditLevel: 1, isRepeated: true, aiConfidence: 0.98
     },
     {
         id: 'Q0002', code: 'CS601-Q002', paperCode: 'CS601',
@@ -224,6 +233,7 @@ export const questionBank: BankQuestion[] = [
         options: ['Two-way', 'Three-way handshake', 'Four-way', 'One-way'],
         correctAnswer: 'Three-way handshake',
         unit: 'TCP/IP', addedBy: 'Dr. B. Nair', addedOn: '2026-01-10',
+        creditLevel: 2, isRepeated: true, aiConfidence: 0.95
     },
     {
         id: 'Q0003', code: 'CS601-Q003', paperCode: 'CS601',
@@ -232,18 +242,21 @@ export const questionBank: BankQuestion[] = [
         options: ['TCP', 'UDP', 'HTTP/2 over QUIC', 'SCTP'],
         correctAnswer: ['TCP', 'SCTP'],
         unit: 'Transport Layer', addedBy: 'Dr. B. Nair', addedOn: '2026-01-11',
+        creditLevel: 4, isRepeated: false, aiConfidence: 0.89
     },
     {
         id: 'Q0004', code: 'CS601-Q004', paperCode: 'CS601',
         text: 'Explain the concept of subnetting and calculate the number of usable hosts in a /26 subnet.',
         type: 'subjective', difficulty: 'hard', marks: 8,
         unit: 'IP Addressing', addedBy: 'Dr. B. Nair', addedOn: '2026-01-12',
+        creditLevel: 2, isRepeated: true, aiConfidence: 0.94
     },
     {
         id: 'Q0005', code: 'CS601-Q005', paperCode: 'CS601',
         text: 'What is the difference between circuit switching and packet switching? Explain with a diagram.',
         type: 'subjective', difficulty: 'medium', marks: 6,
         unit: 'Network Fundamentals', addedBy: 'Prof. C. Iyer', addedOn: '2026-01-15',
+        creditLevel: 2, isRepeated: true, aiConfidence: 0.97
     },
     // CS602 — Database Management Systems
     {
@@ -253,6 +266,7 @@ export const questionBank: BankQuestion[] = [
         options: ['1NF', '2NF', '3NF', 'BCNF'],
         correctAnswer: '3NF',
         unit: 'Normalization', addedBy: 'Prof. C. Iyer', addedOn: '2026-01-14',
+        creditLevel: 3, isRepeated: false, aiConfidence: 0.92
     },
     {
         id: 'Q0007', code: 'CS602-Q002', paperCode: 'CS602',
@@ -261,6 +275,7 @@ export const questionBank: BankQuestion[] = [
         options: ['insert', 'update', 'retrieve', 'delete'],
         correctAnswer: 'retrieve',
         unit: 'SQL', addedBy: 'Prof. C. Iyer', addedOn: '2026-01-14',
+        creditLevel: 1, isRepeated: true, aiConfidence: 0.99
     },
     {
         id: 'Q0008', code: 'CS602-Q003', paperCode: 'CS602',
@@ -269,12 +284,14 @@ export const questionBank: BankQuestion[] = [
         options: ['Atomicity', 'Consistency', 'Durability', 'Distributability'],
         correctAnswer: ['Atomicity', 'Consistency', 'Durability'],
         unit: 'Transactions', addedBy: 'Prof. C. Iyer', addedOn: '2026-01-15',
+        creditLevel: 2, isRepeated: true, aiConfidence: 0.96
     },
     {
         id: 'Q0009', code: 'CS602-Q004', paperCode: 'CS602',
         text: 'Describe the steps involved in query processing and optimization in a DBMS.',
         type: 'subjective', difficulty: 'hard', marks: 10,
         unit: 'Query Processing', addedBy: 'Dr. A. Deshmukh', addedOn: '2026-01-17',
+        creditLevel: 5, isRepeated: false, aiConfidence: 0.93
     },
     // CS603 — Operating Systems
     {
@@ -284,6 +301,7 @@ export const questionBank: BankQuestion[] = [
         options: ['FCFS', 'Round Robin', 'SJF', 'Priority'],
         correctAnswer: 'SJF',
         unit: 'CPU Scheduling', addedBy: 'Dr. M. Singh', addedOn: '2026-01-20',
+        creditLevel: 2, isRepeated: true, aiConfidence: 0.98
     },
     {
         id: 'Q0011', code: 'CS603-Q002', paperCode: 'CS603',
@@ -292,12 +310,14 @@ export const questionBank: BankQuestion[] = [
         options: ['Mutual Exclusion', 'Hold and Wait', 'No Preemption', 'Circular Wait'],
         correctAnswer: ['Hold and Wait', 'No Preemption', 'Circular Wait'],
         unit: 'Deadlock', addedBy: 'Dr. M. Singh', addedOn: '2026-01-21',
+        creditLevel: 4, isRepeated: false, aiConfidence: 0.88
     },
     {
         id: 'Q0012', code: 'CS603-Q003', paperCode: 'CS603',
         text: 'With a suitable diagram, explain the concept of virtual memory and demand paging.',
         type: 'subjective', difficulty: 'hard', marks: 10,
         unit: 'Memory Management', addedBy: 'Dr. M. Singh', addedOn: '2026-01-22',
+        creditLevel: 3, isRepeated: true, aiConfidence: 0.91
     },
     // CS605 — AI & ML
     {
@@ -307,12 +327,14 @@ export const questionBank: BankQuestion[] = [
         options: ['DFS', 'BFS', 'A*', 'Hill Climbing'],
         correctAnswer: 'A*',
         unit: 'Search', addedBy: 'Dr. A. Kumar', addedOn: '2026-01-25',
+        creditLevel: 3, isRepeated: true, aiConfidence: 0.94
     },
     {
         id: 'Q0014', code: 'CS605-Q002', paperCode: 'CS605',
         text: 'Explain the working of the backpropagation algorithm in neural networks with an example.',
         type: 'subjective', difficulty: 'hard', marks: 10,
         unit: 'Neural Networks', addedBy: 'Dr. A. Kumar', addedOn: '2026-01-26',
+        creditLevel: 5, isRepeated: false, aiConfidence: 0.95
     },
 ];
 

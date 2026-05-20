@@ -1,46 +1,48 @@
+import { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
-  GraduationCap,
-  Building2,
-  Rocket,
-  Briefcase,
   FileText,
-  BellRing,
   LibraryBig,
-  UserCheck,
-  SearchCheck,
-  Microscope,
-  CalendarCheck,
-  AlertTriangle,
-  ChevronRight,
   BookOpen,
-  LogOut
+  LogOut,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-const coreNav = [
-  { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-  { path: '/academic', label: 'Academic Dept', icon: <GraduationCap size={18} /> },
-  { path: '/non-academic', label: 'Non-Academic', icon: <Building2 size={18} /> },
-  { path: '/internships-startups', label: 'Internships & Startups', icon: <Rocket size={18} /> },
-  { path: '/placement', label: 'Placement', icon: <Briefcase size={18} /> },
-  { path: '/examination', label: 'Examination Control', icon: <FileText size={18} /> },
-  { path: '/notices', label: 'Notices & Announcements', icon: <BellRing size={18} /> },
-  { path: '/colleges', label: 'Affiliated Colleges', icon: <LibraryBig size={18} /> },
-];
-
-const featureNav = [
-  { path: '/student-portal', label: 'Student Portal', icon: <UserCheck size={18} /> },
-  { path: '/faculty-directory', label: 'Faculty Directory', icon: <SearchCheck size={18} /> },
-  { path: '/research-hub', label: 'Research Hub', icon: <Microscope size={18} /> },
-  { path: '/facilities', label: 'Book Facilities', icon: <CalendarCheck size={18} /> },
-  { path: '/grievance', label: 'Grievances', icon: <AlertTriangle size={18} /> },
-  { path: '/e-learning', label: 'E-Learning', icon: <BookOpen size={18} /> },
-];
-
 const Sidebar = () => {
   const { user, logout } = useAuth();
+
+  const coreNav: { path: string; label: string; icon: ReactNode }[] = [];
+  const featureNav: { path: string; label: string; icon: ReactNode }[] = [];
+
+  const role = user?.role || '';
+
+  if (role === 'SUPER_ADMIN') {
+    coreNav.push(
+      { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+      { path: '/examination', label: 'Examination Control', icon: <FileText size={18} /> },
+      { path: '/colleges', label: 'Affiliated Colleges', icon: <LibraryBig size={18} /> }
+    );
+  } else if (role === 'COLLEGE') {
+    coreNav.push(
+      { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+      { path: '/examination', label: 'Examination Control', icon: <FileText size={18} /> }
+    );
+  } else if (role === 'PROFESSOR') {
+    coreNav.push(
+      { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+      { path: '/examination', label: 'Examination Control', icon: <FileText size={18} /> }
+    );
+  } else {
+    // Default Student/Guest routing
+    coreNav.push(
+      { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> }
+    );
+    featureNav.push(
+      { path: '/e-learning', label: 'E-Learning', icon: <BookOpen size={18} /> }
+    );
+  }
 
   return (
     <aside className="w-64 h-screen flex flex-col border-r border-border-color bg-bg-primary flex-shrink-0 overflow-hidden">
@@ -85,34 +87,36 @@ const Sidebar = () => {
           </nav>
         </div>
 
-        <div>
-          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-2">Features</p>
-          <nav className="space-y-0.5">
-            {featureNav.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-150 group
-                  ${isActive
-                    ? 'bg-accent-primary text-white font-semibold'
-                    : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-accent-primary'} transition-colors`}>
-                      {item.icon}
-                    </span>
-                    <span className="whitespace-nowrap flex-1">{item.label}</span>
-                    {isActive && <ChevronRight size={14} className="text-white/70 flex-shrink-0" />}
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+        {featureNav.length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2 px-2">Features</p>
+            <nav className="space-y-0.5">
+              {featureNav.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all duration-150 group
+                    ${isActive
+                      ? 'bg-accent-primary text-white font-semibold'
+                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary'
+                    }`
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-accent-primary'} transition-colors`}>
+                        {item.icon}
+                      </span>
+                      <span className="whitespace-nowrap flex-1">{item.label}</span>
+                      {isActive && <ChevronRight size={14} className="text-white/70 flex-shrink-0" />}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* User Footer */}

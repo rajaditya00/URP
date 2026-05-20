@@ -12,83 +12,83 @@ const Otp = require('../models/Otp');
 
 // Send OTPs for Registration (type: 'email' | 'phone' | 'both')
 router.post('/send-otp', async (req, res) => {
-    try {
-        const { email, phone, type = 'both' } = req.body;
+  try {
+    const { email, phone, type = 'both' } = req.body;
 
-        if ((type === 'email' || type === 'both') && email) {
-            const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            await Otp.findOneAndUpdate(
-                { identifier: email },
-                { otp: emailOtp, createdAt: Date.now() },
-                { upsert: true, new: true }
-            );
+    if ((type === 'email' || type === 'both') && email) {
+      const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-            console.log(`[>> EMAIL OTP <<] Email: ${email} | OTP: ${emailOtp}`);
-            
-            // Dispatch the actual email (uses Ethereal test account by default in sendEmail.js)
-            try {
-                await sendEmail({
-                    email: email,
-                    subject: 'Verify Your University Registration',
-                    message: `Hello,\n\nYour 6-digit verification code is: ${emailOtp}\n\nThis OTP is valid for 10 minutes.\n\nThank you!`
-                });
-            } catch (err) {
-                console.error("Failed to send OTP email:", err);
-            }
-        }
+      await Otp.findOneAndUpdate(
+        { identifier: email },
+        { otp: emailOtp, createdAt: Date.now() },
+        { upsert: true, new: true }
+      );
 
-        if ((type === 'phone' || type === 'both') && phone) {
-            const phoneOtp = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            await Otp.findOneAndUpdate(
-                { identifier: phone },
-                { otp: phoneOtp, createdAt: Date.now() },
-                { upsert: true, new: true }
-            );
+      console.log(`[>> EMAIL OTP <<] Email: ${email} | OTP: ${emailOtp}`);
 
-            console.log(`[>> PHONE OTP <<] Phone: ${phone} | OTP: ${phoneOtp}`);
-            
-            // Note: In a production environment, you would integrate Twilio, AWS SNS, 
-            // or another SMS gateway here to send the SMS to the user's phone.
-            // For testing, it will just be printed to the terminal above.
-        }
-
-        res.json({ message: 'OTP(s) sent. Check server terminal.' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+      // Dispatch the actual email (uses Ethereal test account by default in sendEmail.js)
+      try {
+        await sendEmail({
+          email: email,
+          subject: 'Verify Your University Registration',
+          message: `Hello,\n\nYour 6-digit verification code is: ${emailOtp}\n\nThis OTP is valid for 10 minutes.\n\nThank you!`
+        });
+      } catch (err) {
+        console.error("Failed to send OTP email:", err);
+      }
     }
+
+    if ((type === 'phone' || type === 'both') && phone) {
+      const phoneOtp = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await Otp.findOneAndUpdate(
+        { identifier: phone },
+        { otp: phoneOtp, createdAt: Date.now() },
+        { upsert: true, new: true }
+      );
+
+      console.log(`[>> PHONE OTP <<] Phone: ${phone} | OTP: ${phoneOtp}`);
+
+      // Note: In a production environment, you would integrate Twilio, AWS SNS, 
+      // or another SMS gateway here to send the SMS to the user's phone.
+      // For testing, it will just be printed to the terminal above.
+    }
+
+    res.json({ message: 'OTP(s) sent. Check server terminal.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Verify OTP — supports email-only, phone-only, or both
 router.post('/verify-otp', async (req, res) => {
-    try {
-        const { email, emailOtp, phone, phoneOtp } = req.body;
+  try {
+    const { email, emailOtp, phone, phoneOtp } = req.body;
 
-        // Verify email OTP if provided
-        if (email && emailOtp) {
-            const record = await Otp.findOne({ identifier: email });
-            if (!record) return res.status(400).json({ message: 'No active OTP for this email. Please request a new one.' });
-            if (record.otp !== emailOtp) return res.status(400).json({ message: 'Invalid Email OTP.' });
-            
-            await Otp.deleteOne({ identifier: email });
-            // If only email was requested, return success
-            if (!phone || !phoneOtp) return res.json({ message: 'Email verified successfully.' });
-        }
+    // Verify email OTP if provided
+    if (email && emailOtp) {
+      const record = await Otp.findOne({ identifier: email });
+      if (!record) return res.status(400).json({ message: 'No active OTP for this email. Please request a new one.' });
+      if (record.otp !== emailOtp) return res.status(400).json({ message: 'Invalid Email OTP.' });
 
-        // Verify phone OTP if provided
-        if (phone && phoneOtp) {
-            const record = await Otp.findOne({ identifier: phone });
-            if (!record) return res.status(400).json({ message: 'No active OTP for this phone. Please request a new one.' });
-            if (record.otp !== phoneOtp) return res.status(400).json({ message: 'Invalid Phone OTP.' });
-            
-            await Otp.deleteOne({ identifier: phone });
-        }
-
-        res.json({ message: 'Verified successfully.' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+      await Otp.deleteOne({ identifier: email });
+      // If only email was requested, return success
+      if (!phone || !phoneOtp) return res.json({ message: 'Email verified successfully.' });
     }
+
+    // Verify phone OTP if provided
+    if (phone && phoneOtp) {
+      const record = await Otp.findOne({ identifier: phone });
+      if (!record) return res.status(400).json({ message: 'No active OTP for this phone. Please request a new one.' });
+      if (record.otp !== phoneOtp) return res.status(400).json({ message: 'Invalid Phone OTP.' });
+
+      await Otp.deleteOne({ identifier: phone });
+    }
+
+    res.json({ message: 'Verified successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Handle University Application & Form Setup
@@ -320,7 +320,7 @@ router.put('/:id/details', protect, async (req, res) => {
     const { introduction, address, phone, chancellor, viceChancellor } = req.body;
     const uni = await University.findById(req.params.id);
     if (!uni) return res.status(404).json({ message: 'University not found' });
-    
+
     // Only SUPER_ADMIN can update their own university
     if (req.user.role !== 'SUPER_ADMIN' || req.user.university.toString() !== uni._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to update these details' });
@@ -329,7 +329,7 @@ router.put('/:id/details', protect, async (req, res) => {
     if (introduction !== undefined) uni.introduction = introduction;
     if (address !== undefined) uni.address = address;
     if (phone !== undefined) uni.phone = phone;
-    
+
     if (chancellor) {
       uni.chancellor = { ...uni.chancellor, ...chancellor };
     }

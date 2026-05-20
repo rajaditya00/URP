@@ -82,7 +82,7 @@ const login = async (req, res) => {
                 console.error('JWT Sign Error:', err);
                 return res.status(500).json({ msg: 'Token generation failed' });
             }
-            res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email, university: user.university, college: user.college } });
+            res.json({ token, user: { id: user.id, name: user.name, role: user.role, email: user.email, university: user.university, college: user.college, mustChangePassword: user.mustChangePassword } });
         });
     } catch (err) {
         console.error(err.message);
@@ -110,6 +110,7 @@ const changePassword = async (req, res) => {
         if (!isMatch) return res.status(400).json({ msg: 'Current password is incorrect' });
 
         user.password = newPassword;
+        user.mustChangePassword = false;
         await user.save();
 
         res.json({ msg: 'Password updated successfully' });
@@ -312,7 +313,7 @@ const systemAdminLogin = (req, res) => {
         return res.status(400).json({ msg: 'Email and Security Code are required.' });
 
     const adminEmail = process.env.SYSTEM_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com';
-    const adminCode  = process.env.SYSTEM_ADMIN_SECURITY_CODE || 'admin123';
+    const adminCode = process.env.SYSTEM_ADMIN_SECURITY_CODE || 'admin123';
 
     if (email !== adminEmail || securityCode !== adminCode) {
         console.log(`\x1b[31m❌  SYSTEM ADMIN LOGIN FAILED — email: ${email}\x1b[0m`);

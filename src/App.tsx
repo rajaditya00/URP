@@ -7,10 +7,12 @@ import LoginPortal from './pages/LoginPortal';
 import Signup from './pages/Signup';
 import UniversityPortal from './pages/UniversityPortal';
 import SystemAdminDashboard from './pages/SystemAdminDashboard';
-import UniversityLogin from './pages/UniversityLogin';
+
 import UniAdminDashboard from './pages/UniAdminDashboard';
 import CollegeAdminDashboard from './pages/CollegeAdminDashboard';
-import StudentProfilePage from './pages/StudentProfilePage';
+import FacultySelfDashboard from './pages/FacultySelfDashboard';
+import StudentSelfDashboard from './pages/StudentSelfDashboard';
+import MemberProfilePage from './pages/MemberProfilePage';
 
 import Dashboard from './pages/Dashboard';
 import Academic from './pages/Academic';
@@ -22,7 +24,6 @@ import Notices from './pages/Notices';
 import Colleges from './pages/Colleges';
 
 // New Features
-import StudentPortal from './pages/StudentPortal';
 import FacultyDirectory from './pages/FacultyDirectory';
 import ResearchHub from './pages/ResearchHub';
 import Facilities from './pages/Facilities';
@@ -42,10 +43,13 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/portal/:uniSlug" element={<UniversityPortal />} />
       <Route path="/system-admin" element={<SystemAdminDashboard />} />
-      <Route path="/university-login" element={<UniversityLogin />} />
+      <Route path="/university-login" element={<Navigate to="/login" replace />} />
       <Route path="/uni-admin/dashboard" element={<UniAdminDashboard />} />
       <Route path="/college-admin/dashboard" element={<CollegeAdminDashboard />} />
-      <Route path="/college-admin/student/:id" element={<StudentProfilePage />} />
+      <Route path="/faculty-dashboard" element={<FacultySelfDashboard />} />
+      <Route path="/student-portal" element={<StudentSelfDashboard />} />
+      <Route path="/college-admin/student/:id" element={<MemberProfilePage />} />
+      <Route path="/college-admin/faculty/:id" element={<MemberProfilePage />} />
 
       {/* Protected Routes (Require Authentication in Real App) */}
       <Route element={<Layout />}>
@@ -59,7 +63,6 @@ function App() {
         <Route path="/colleges" element={<Colleges />} />
 
         {/* New Feature Routes */}
-        <Route path="/student-portal" element={<StudentPortal />} />
         <Route path="/faculty-directory" element={<FacultyDirectory />} />
         <Route path="/research-hub" element={<ResearchHub />} />
         <Route path="/facilities" element={<Facilities />} />

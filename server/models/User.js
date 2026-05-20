@@ -7,9 +7,11 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['SYSTEM_ADMIN', 'SUPER_ADMIN', 'COLLEGE', 'PROFESSOR', 'STUDENT'],
+    // Roles: SYSTEM_ADMIN (Portal Owner), SUPER_ADMIN (University), COLLEGE (College), PROFESSOR (Faculty), STAFF, STUDENT
+    enum: ['SYSTEM_ADMIN', 'SUPER_ADMIN', 'COLLEGE', 'PROFESSOR', 'STAFF', 'STUDENT'],
     required: true
   },
+  mustChangePassword: { type: Boolean, default: false },
   university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' },
   college: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
   // Additional fields for College members

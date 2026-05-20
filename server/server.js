@@ -14,8 +14,8 @@ app.use('/uploads', express.static('uploads'));
 
 // Connect DB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/allcampusdigital')
-.then(() => console.log('MongoDB Connected to All Campus Digital DB'))
-.catch(err => console.log('MongoDB Connection Error:', err));
+    .then(() => console.log('MongoDB Connected to All Campus Digital DB'))
+    .catch(err => console.log('MongoDB Connection Error:', err));
 
 // Basic Routes
 app.get('/', (req, res) => {
@@ -37,6 +37,7 @@ const grievanceRoutes = require('./routes/grievances');
 const elearningRoutes = require('./routes/elearning');
 const memberRoutes = require('./routes/members');
 const uploadRoutes = require('./routes/upload');
+const questionsRoutes = require('./routes/questions');
 app.use('/api/auth', authRoutes);
 app.use('/api/university', universityRoutes);
 app.use('/api/academic', academicRoutes);
@@ -51,5 +52,6 @@ app.use('/api/grievances', grievanceRoutes);
 app.use('/api/elearning', elearningRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/questions', questionsRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

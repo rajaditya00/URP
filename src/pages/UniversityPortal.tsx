@@ -74,14 +74,14 @@ const UniversityPortal = () => {
                     </div>
                     <div className="flex gap-3 sm:gap-4 flex-shrink-0">
                         {/* Professional Student Login Button */}
-                        <Link to={`/university-login?university=${uniData.name}&role=student`} className="group flex items-center gap-2 px-4 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-md transition-all duration-200 text-sm shadow-sm border border-[#1e3a8a]">
+                        <Link to={`/login`} className="group flex items-center gap-2 px-4 py-1.5 bg-[#1e3a8a] hover:bg-[#1e40af] text-white font-semibold rounded-md transition-all duration-200 text-sm shadow-sm border border-[#1e3a8a]">
                             <GraduationCap className="w-4 h-4 text-blue-200 group-hover:text-white transition-colors" />
                             <span className="hidden sm:inline">Student Portal</span>
                             <span className="sm:hidden">Student</span>
                         </Link>
 
                         {/* Professional Faculty Login Button */}
-                        <Link to={`/university-login?university=${uniData.name}&role=faculty`} className="group flex items-center gap-2 px-4 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-md transition-all duration-200 text-sm shadow-sm border border-slate-300 hover:border-slate-400">
+                        <Link to={`/login`} className="group flex items-center gap-2 px-4 py-1.5 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-md transition-all duration-200 text-sm shadow-sm border border-slate-300 hover:border-slate-400">
                             <Users className="w-4 h-4 text-indigo-600 group-hover:text-indigo-700 transition-colors" />
                             <span className="hidden sm:inline">Faculty Portal</span>
                             <span className="sm:hidden">Faculty</span>

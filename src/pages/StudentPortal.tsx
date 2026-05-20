@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, StatCard } from '../components/UI/Card';
-import { BookOpen, CalendarCheck, Clock, Download, PieChart, CreditCard, FileText } from 'lucide-react';
+import { BookOpen, CalendarCheck, Clock, Download, PieChart, CreditCard, FileText, ArrowLeft } from 'lucide-react';
+import ExamForm from '../components/Examination/ExamForm';
 
 const subjects = [
   { code: 'CS601', name: 'Computer Networks', attendance: 85, credits: 4, faculty: 'Dr. Alan Turing' },
@@ -15,6 +17,23 @@ const schedule = [
 ];
 
 const StudentPortal = () => {
+  const [showExamForm, setShowExamForm] = useState(false);
+
+  // Parse student data from localStorage
+  const storedUser = localStorage.getItem('urp_user');
+  const studentData = storedUser ? JSON.parse(storedUser) : null;
+
+  if (showExamForm) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <button onClick={() => setShowExamForm(false)} className="flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-accent-primary transition-colors">
+          <ArrowLeft size={16} /> Back to Dashboard
+        </button>
+        <ExamForm studentData={studentData} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-12 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -23,8 +42,8 @@ const StudentPortal = () => {
              <img src="https://ui-avatars.com/api/?name=Alex+Johnson&background=random" alt="Student" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h1 className="text-4xl tracking-tight mb-1 text-gradient">Alex Johnson</h1>
-            <p className="text-lg text-text-secondary">#STU-2024-0891 • B.Tech Computer Science (Sem 6)</p>
+            <h1 className="text-4xl tracking-tight mb-1 text-gradient">{studentData?.name || 'Alex Johnson'}</h1>
+            <p className="text-lg text-text-secondary">{studentData?.prn || '#STU-2024-0891'} • B.Tech {studentData?.department || 'Computer Science'} (Sem 6)</p>
           </div>
         </div>
         <button className="secondary-btn flex-center gap-2 shrink-0"><Download size={18} /> Download ID</button>
@@ -91,7 +110,7 @@ const StudentPortal = () => {
           <div className="mt-auto pt-6 border-t border-border-color">
             <h3 className="text-lg font-semibold mb-4 text-text-primary">Quick Actions</h3>
             <div className="flex flex-col gap-3">
-              <Link to="/examination" className="flex items-center gap-3 p-3 rounded-xl border border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors group">
+              <button onClick={() => setShowExamForm(true)} className="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors group">
                 <div className="w-10 h-10 rounded-lg bg-accent-primary/20 flex-center text-accent-primary group-hover:scale-110 transition-transform">
                   <FileText size={20} />
                 </div>
@@ -99,7 +118,7 @@ const StudentPortal = () => {
                   <p className="font-semibold text-text-primary text-sm">Semester Exam Form</p>
                   <p className="text-xs text-text-muted">Fill and submit your exam form</p>
                 </div>
-              </Link>
+              </button>
               <Link to="/e-learning" className="flex items-center gap-3 p-3 rounded-xl border border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 transition-colors group">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex-center text-blue-600 group-hover:scale-110 transition-transform">
                   <BookOpen size={20} />

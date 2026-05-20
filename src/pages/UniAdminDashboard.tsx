@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
+import QuestionBank from '../components/Examination/QuestionBank';
 
 type College = {
     _id: string;
@@ -38,7 +39,7 @@ const UniAdminDashboard = () => {
     const [colleges, setColleges] = useState<College[]>([]);
     const [notices, setNotices] = useState<any[]>([]);
     const [results, setResults] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'overview' | 'leadership' | 'departments' | 'academic' | 'colleges'>('overview');
+    const [activeTab, setActiveTab] = useState<'colleges' | 'questionbank' | 'notices' | 'results'>('questionbank');
     const [editUni, setEditUni] = useState({ introduction: '', phone: '', address: '' });
     const [editLeadership, setEditLeadership] = useState({
         chancellor: { name: '', email: '', message: '' },
@@ -57,19 +58,19 @@ const UniAdminDashboard = () => {
     const [newNoticePdf, setNewNoticePdf] = useState<File | null>(null);
     const [newResult, setNewResult] = useState({ title: '', semester: '', link: '', description: '' });
 
-    const token = localStorage.getItem('cc_token');
+    const token = localStorage.getItem('urp_token');
     const headers: Record<string, string> = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
     useEffect(() => {
-        const stored = localStorage.getItem('cc_user');
-        if (!stored || !token) { navigate('/university-login'); return; }
+        const stored = localStorage.getItem('urp_user');
+        if (!stored || !token) { navigate('/login'); return; }
         const u = JSON.parse(stored);
-        if (u.role !== 'SUPER_ADMIN') { navigate('/university-login'); return; }
+        if (u.role !== 'SUPER_ADMIN') { navigate('/login'); return; }
         setUser(u);
         setUniData(u.university);
-        
+
         // Initialize form states
         setEditUni({
             introduction: u.university?.introduction || '',
@@ -106,7 +107,7 @@ const UniAdminDashboard = () => {
                 setUniData(data);
                 // Update local storage user object
                 const u = { ...user, university: data };
-                localStorage.setItem('cc_user', JSON.stringify(u));
+                localStorage.setItem('urp_user', JSON.stringify(u));
                 setUser(u);
                 showToast(`${type === 'overview' ? 'University Profile' : 'Leadership Details'} Updated Successfully!`);
             } else {
@@ -318,7 +319,7 @@ const UniAdminDashboard = () => {
                     <div className="flex items-center gap-4">
                         <Link to={`/portal/${encodeURIComponent(uniData?.name || '')}`} target="_blank" className="text-xs text-[#3b82f6] hover:underline font-medium">View Portal</Link>
                         <button onClick={() => setShowChangePassword(true)} className="text-xs text-text-muted hover:text-accent-primary font-medium">Change Password</button>
-                        <button onClick={() => { localStorage.clear(); navigate('/university-login'); }} className="text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 font-bold transition-colors">Logout</button>
+                        <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 font-bold transition-colors">Logout</button>
                     </div>
                 </div>
             </header>
@@ -326,149 +327,33 @@ const UniAdminDashboard = () => {
             <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden">
                 {/* SIDEBAR NAVIGATION */}
                 <div className="w-64 bg-white border-r border-border-color flex-shrink-0 py-6 flex flex-col overflow-y-auto shadow-[4px_0_10px_rgba(0,0,0,0.02)] z-10">
-                    <div className="px-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Institution Profile</div>
-                    <button onClick={() => setActiveTab('overview')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'overview' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>Overview & Settings</span>
-                    </button>
-                    <button onClick={() => setActiveTab('leadership')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'leadership' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>Leadership Team</span>
-                    </button>
-                    
-                    <div className="px-6 pt-8 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">HR & Departments</div>
-                    <button onClick={() => setActiveTab('departments')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'departments' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>Departments & Faculty</span>
-                        <span className="ml-auto bg-green-100 text-green-700 text-[9px] px-1.5 py-0.5 rounded font-bold">NEW</span>
-                    </button>
-                    
-                    <div className="px-6 pt-8 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Academic Ops</div>
-                    <button onClick={() => setActiveTab('academic')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'academic' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>Notices & Results</span>
+                    <div className="px-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Examination</div>
+                    <button onClick={() => setActiveTab('questionbank')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'questionbank' ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-600' : 'text-text-secondary hover:bg-gray-50'}`}>
+                        <span>🧠 Master Question Bank</span>
+                        <span className="ml-auto bg-indigo-100 text-indigo-700 text-[9px] px-1.5 py-0.5 rounded font-bold">AI</span>
                     </button>
 
-                    <div className="px-6 pt-8 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Affiliations</div>
+                    <div className="px-6 pt-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Academic</div>
+                    <button onClick={() => setActiveTab('notices')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'notices' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
+                        <span>📢 Notices</span>
+                    </button>
+                    <button onClick={() => setActiveTab('results')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'results' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
+                        <span>📊 Results</span>
+                    </button>
+
+                    <div className="px-6 pt-6 pb-2 text-[10px] font-bold text-text-muted uppercase tracking-widest">Affiliations</div>
                     <button onClick={() => setActiveTab('colleges')} className={`w-full text-left px-6 py-2.5 text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === 'colleges' ? 'bg-blue-50 text-[#1e3a5f] border-r-4 border-[#1e3a5f]' : 'text-text-secondary hover:bg-gray-50'}`}>
-                        <span>Colleges & Authority</span>
+                        <span>🏛 Colleges & Authority</span>
                     </button>
                 </div>
 
                 {/* MAIN CONTENT AREA */}
                 <div className="flex-1 overflow-y-auto p-8 relative">
-                    
-                    {/* OVERVIEW TAB */}
-                    {activeTab === 'overview' && (
-                        <div className="max-w-4xl animate-fade-in space-y-6">
-                            {/* Subscription Banner Mini */}
-                            <div className="bg-gradient-to-r from-[#1e3a5f] to-[#2a4d7c] rounded-xl border border-[#162d4a] p-5 shadow-md flex items-center justify-between text-white">
-                                <div>
-                                    <p className="text-blue-200 text-[10px] uppercase tracking-widest font-bold mb-1">Active Subscription Plan</p>
-                                    <h2 className="text-xl font-bold capitalize flex items-center gap-2">
-                                        <span className="text-yellow-400">★</span>
-                                        <span className="text-yellow-400"> {uniData?.plan || 'Pending'}</span>
-                                    </h2>
-                                </div>
-                                <div className="text-right bg-white/10 px-4 py-2 rounded-lg border border-white/20 backdrop-blur-sm">
-                                    <p className="text-blue-100 text-[10px] uppercase tracking-widest font-bold">Validity</p>
-                                    <p className="text-sm font-bold capitalize">{uniData?.duration || '-'}</p>
-                                </div>
-                            </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-border-color p-6">
-                                <h2 className="text-lg font-bold text-text-primary mb-4">University Details</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Address</label>
-                                        <textarea value={editUni.address} onChange={e => setEditUni({...editUni, address: e.target.value})} className="w-full h-20 px-3 py-2 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Official Phone</label>
-                                        <input value={editUni.phone} onChange={e => setEditUni({...editUni, phone: e.target.value})} className="w-full h-10 px-3 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Introduction / Description</label>
-                                        <textarea value={editUni.introduction} onChange={e => setEditUni({...editUni, introduction: e.target.value})} placeholder="Write a short paragraph about the university..." className="w-full h-32 px-3 py-2 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                </div>
-                                <button onClick={() => handleUpdateDetails('overview')} disabled={saving} className="mt-4 px-5 py-2.5 bg-[#1e3a5f] text-white text-sm font-bold rounded-lg hover:bg-[#162d4a] transition-colors">{saving ? 'Saving...' : 'Update Details'}</button>
-                            </div>
-                        </div>
-                    )}
 
-                    {/* LEADERSHIP TAB */}
-                    {activeTab === 'leadership' && (
-                        <div className="max-w-4xl animate-fade-in space-y-6">
-                            <h2 className="text-2xl font-bold text-text-primary mb-6">Leadership Hierarchy</h2>
-                            
-                            {/* Chancellor */}
-                            <div className="bg-white rounded-xl shadow-sm border border-border-color p-6">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">C</div>
-                                    <h3 className="text-lg font-bold text-text-primary">Chancellor Profile</h3>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Name</label>
-                                        <input value={editLeadership.chancellor.name} onChange={e => setEditLeadership({...editLeadership, chancellor: {...editLeadership.chancellor, name: e.target.value}})} className="w-full h-10 px-3 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Contact Email</label>
-                                        <input value={editLeadership.chancellor.email} onChange={e => setEditLeadership({...editLeadership, chancellor: {...editLeadership.chancellor, email: e.target.value}})} className="w-full h-10 px-3 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Chancellor's Message / Directive</label>
-                                        <textarea value={editLeadership.chancellor.message} onChange={e => setEditLeadership({...editLeadership, chancellor: {...editLeadership.chancellor, message: e.target.value}})} className="w-full h-24 px-3 py-2 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Vice Chancellor */}
-                            <div className="bg-white rounded-xl shadow-sm border border-border-color p-6">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-lg">VC</div>
-                                    <h3 className="text-lg font-bold text-text-primary">Vice Chancellor Profile</h3>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Name</label>
-                                        <input value={editLeadership.viceChancellor.name} onChange={e => setEditLeadership({...editLeadership, viceChancellor: {...editLeadership.viceChancellor, name: e.target.value}})} className="w-full h-10 px-3 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Contact Email</label>
-                                        <input value={editLeadership.viceChancellor.email} onChange={e => setEditLeadership({...editLeadership, viceChancellor: {...editLeadership.viceChancellor, email: e.target.value}})} className="w-full h-10 px-3 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                    <div className="col-span-1 md:col-span-2">
-                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">VC's Message / Directive</label>
-                                        <textarea value={editLeadership.viceChancellor.message} onChange={e => setEditLeadership({...editLeadership, viceChancellor: {...editLeadership.viceChancellor, message: e.target.value}})} className="w-full h-24 px-3 py-2 border border-[#D0D5DD] rounded-lg text-sm outline-none focus:border-[#1e3a5f]" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button onClick={() => handleUpdateDetails('leadership')} disabled={saving} className="px-5 py-2.5 bg-[#1e3a5f] text-white text-sm font-bold rounded-lg hover:bg-[#162d4a] transition-colors">{saving ? 'Saving...' : 'Update Leadership Profiles'}</button>
-                        </div>
-                    )}
-
-                    {/* DEPARTMENTS TAB (Placeholder) */}
-                    {activeTab === 'departments' && (
-                        <div className="max-w-5xl animate-fade-in">
-                            <div className="flex items-center justify-between mb-6">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-text-primary">Department Management</h2>
-                                    <p className="text-sm text-text-secondary mt-1">Organize departments, assign HODs, and manage faculty hiring.</p>
-                                </div>
-                                <button className="px-4 py-2 bg-[#1e3a5f] text-white text-sm font-bold rounded-lg hover:bg-[#162d4a]">+ New Department</button>
-                            </div>
-                            
-                            <div className="bg-white rounded-xl border border-border-color p-12 text-center shadow-sm">
-                                <div className="text-4xl mb-4">🏢</div>
-                                <h3 className="text-lg font-bold text-text-primary mb-2">Department Module Interface Ready</h3>
-                                <p className="text-text-secondary max-w-md mx-auto text-sm">
-                                    The frontend structure for full department-wise employee tracking and hiring is established. Backend routing is pending integration.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ACADEMIC OPS TAB */}
-                    {activeTab === 'academic' && (
+                    {/* NOTICES TAB */}
+                    {activeTab === 'notices' && (
                         <div className="max-w-5xl animate-fade-in grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* NOTICES */}
                             <div className="space-y-6">
@@ -507,9 +392,12 @@ const UniAdminDashboard = () => {
                                     ))}
                                 </div>
                             </div>
+                        </div>
+                    )}
 
-                            {/* RESULTS */}
-                            <div className="space-y-6">
+                    {/* RESULTS TAB */}
+                    {activeTab === 'results' && (
+                        <div className="max-w-5xl animate-fade-in space-y-6">
                                 <div className="bg-white rounded-xl border border-border-color p-6 shadow-sm">
                                     <h3 className="font-bold text-text-primary mb-4">Publish Exam Result</h3>
                                     <div className="space-y-4 mb-4">
@@ -549,7 +437,6 @@ const UniAdminDashboard = () => {
                                         </div>
                                     ))}
                                 </div>
-                            </div>
                         </div>
                     )}
 
@@ -651,9 +538,9 @@ const UniAdminDashboard = () => {
                                                     ) : (
                                                         <p className="text-xs text-red-500">No admin account found.</p>
                                                     )}
-                                                    
+
                                                     <div className="mt-6 pt-4 border-t border-slate-100">
-                                                        <a href={`/university-login?university=${encodeURIComponent(uniData?.name || '')}&college=${encodeURIComponent(c.name)}&role=college`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full text-center py-2.5 bg-[#1e3a5f] text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#162d4a] transition-all shadow-sm">
+                                                        <a href={`/login`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full text-center py-2.5 bg-[#1e3a5f] text-white rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-[#162d4a] transition-all shadow-sm">
                                                             <span>Login to Admin Portal</span>
                                                             <span>↗</span>
                                                         </a>
@@ -688,6 +575,22 @@ const UniAdminDashboard = () => {
                                     ))}
                                 </div>
                             )}
+                        </div>
+                    )}
+
+                    {/* QUESTION BANK TAB */}
+                    {activeTab === 'questionbank' && (
+                        <div className="animate-fade-in max-w-[1450px] mx-auto space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-color pb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-text-primary">Master Question Bank Repository</h2>
+                                    <p className="text-sm text-text-secondary mt-1">Cross-institutional question bank powered by trained neural novelty prediction models.</p>
+                                </div>
+                                <div className="px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-bold text-indigo-700 self-start sm:self-center">
+                                    🎓 Role Scope: University Exam Controller
+                                </div>
+                            </div>
+                            <QuestionBank role="SUPER_ADMIN" />
                         </div>
                     )}
                 </div>

@@ -43,7 +43,7 @@ export default function StudentProfilePage() {
   useEffect(() => {
     const fetchStudent = async () => {
       try {
-        const token = localStorage.getItem('cc_token');
+        const token = localStorage.getItem('urp_token');
         const res = await fetch(`http://localhost:5000/api/members/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });

@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type UserRole = 'SYSTEM_ADMIN' | 'SUPER_ADMIN' | 'COLLEGE' | 'PROFESSOR' | 'STUDENT';
+type UserRole = 'SYSTEM_ADMIN' | 'SUPER_ADMIN' | 'COLLEGE' | 'PROFESSOR' | 'STAFF' | 'STUDENT';
 
 interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
+  mustChangePassword?: boolean;
 }
 
 interface AuthContextType {

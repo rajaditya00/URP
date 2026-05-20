@@ -21,7 +21,7 @@ const CollegeAdminDashboard = () => {
     const [faculties, setFaculties] = useState<Faculty[]>([]);
     const [students, setStudents] = useState<Student[]>([]);
     const [loading, setLoading] = useState(true);
-    const [lastCredentials, setLastCredentials] = useState<{email: string, password: string, role: string} | null>(null);
+    const [lastCredentials, setLastCredentials] = useState<{ email: string, password: string, role: string } | null>(null);
 
     const [showAddFaculty, setShowAddFaculty] = useState(false);
     const [newFaculty, setNewFaculty] = useState<Partial<Faculty>>({ name: '', email: '', mobile: '', department: DEPARTMENTS[0], position: FACULTY_POSITIONS[0], specialRole: 'None', status: 'Active' });
@@ -35,25 +35,25 @@ const CollegeAdminDashboard = () => {
 
     const loadMembers = async () => {
         try {
-            const token = localStorage.getItem('cc_token');
+            const token = localStorage.getItem('urp_token');
             const res = await fetch('http://localhost:5000/api/members', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             if (Array.isArray(data)) {
                 setFaculties(data.filter(m => m.role === 'PROFESSOR').map(m => ({
-                    id: m._id, name: m.name, email: m.email, 
-                    department: m.department || 'Not Assigned', 
-                    position: m.position || 'Professor', 
-                    specialRole: m.specialRole || 'None', 
+                    id: m._id, name: m.name, email: m.email,
+                    department: m.department || 'Not Assigned',
+                    position: m.position || 'Professor',
+                    specialRole: m.specialRole || 'None',
                     status: 'Active'
                 })));
                 setStudents(data.filter(m => m.role === 'STUDENT').map(m => ({
-                    id: m._id, name: m.name, email: m.email, 
-                    rollNo: m.rollNo || 'N/A', 
+                    id: m._id, name: m.name, email: m.email,
+                    rollNo: m.rollNo || 'N/A',
                     registrationNo: m.registrationNo || 'N/A',
-                    department: m.department || 'Not Assigned', 
-                    semester: m.semester || 'Sem 1', 
+                    department: m.department || 'Not Assigned',
+                    semester: m.semester || 'Sem 1',
                     status: 'Active'
                 })));
             }
@@ -62,10 +62,10 @@ const CollegeAdminDashboard = () => {
     };
 
     useEffect(() => {
-        const stored = localStorage.getItem('cc_user');
-        if (!stored) { navigate('/university-login'); return; }
+        const stored = localStorage.getItem('urp_user');
+        if (!stored) { navigate('/login'); return; }
         const u = JSON.parse(stored);
-        if (u.role !== 'COLLEGE' && u.role !== 'COLLEGE_ADMIN') { navigate('/university-login'); return; }
+        if (u.role !== 'COLLEGE' && u.role !== 'COLLEGE_ADMIN') { navigate('/login'); return; }
         setUser(u);
         loadMembers();
     }, [navigate]);
@@ -75,7 +75,7 @@ const CollegeAdminDashboard = () => {
     const handleAddFaculty = async () => {
         if (!newFaculty.name || !newFaculty.email) return showToastMsg('Name and Email are required.');
         try {
-            const token = localStorage.getItem('cc_token');
+            const token = localStorage.getItem('urp_token');
             const res = await fetch('http://localhost:5000/api/members/professor', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -97,7 +97,7 @@ const CollegeAdminDashboard = () => {
     const handleAddStudent = async () => {
         if (!newStudent.name || !newStudent.rollNo || !newStudent.email) return showToastMsg('Name, Email and Roll Number are required.');
         try {
-            const token = localStorage.getItem('cc_token');
+            const token = localStorage.getItem('urp_token');
             const res = await fetch('http://localhost:5000/api/members/student', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -127,11 +127,11 @@ const CollegeAdminDashboard = () => {
             {lastCredentials && (
                 <div className="fixed inset-0 z-[120] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
                     <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl relative animate-scale-in">
-                        <button onClick={() => setLastCredentials(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"><X className="w-5 h-5"/></button>
+                        <button onClick={() => setLastCredentials(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"><X className="w-5 h-5" /></button>
                         <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-inner"><CheckCircle className="w-6 h-6" /></div>
                         <h3 className="text-xl font-extrabold text-center text-slate-800 mb-2">{lastCredentials.role} Added!</h3>
                         <p className="text-center text-xs font-medium text-slate-500 mb-6 leading-relaxed">Auto-generated login credentials have been immediately dispatched to the user's email address.</p>
-                        
+
                         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
                             <div>
                                 <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Login Email</p>
@@ -150,20 +150,30 @@ const CollegeAdminDashboard = () => {
             <ChangePassword isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} />
 
             {/* HEADER */}
-            <header className="bg-[#1e3a5f] text-white sticky top-0 z-40 shadow-md flex-shrink-0">
-                <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center shadow-inner">
-                            <Building className="w-5 h-5 text-white" />
+            <header className="bg-[#1e3a5f] text-white sticky top-0 z-40 shadow-md flex-shrink-0 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
+                <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full relative z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border border-blue-300/30">
+                            <Building className="text-white w-5 h-5" />
                         </div>
                         <div>
                             <p className="font-extrabold text-sm tracking-wide">{user?.college?.name || 'College Administrator Portal'}</p>
                             <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-0.5">Management Dashboard</p>
                         </div>
                     </div>
+                    
+                    {/* Role Indicator in the Middle */}
+                    <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 -translate-x-1/2 z-10">
+                        <span className="text-[9px] text-white/40 font-extrabold tracking-widest uppercase mb-1">Access Role</span>
+                        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-3.5 py-1 rounded-md backdrop-blur-md shadow-sm">
+                            <span className="text-[10px] font-bold text-amber-300 tracking-wider font-mono">EMS College Administration</span>
+                        </div>
+                    </div>
+
                     <div className="flex items-center gap-5">
                         <button onClick={() => setShowChangePassword(true)} className="text-xs text-white/80 hover:text-white font-bold transition-colors">Change Password</button>
-                        <button onClick={() => { localStorage.clear(); navigate('/university-login'); }} className="text-xs px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 font-bold transition-colors">Secure Logout</button>
+                        <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="text-xs px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 font-bold transition-colors">Secure Logout</button>
                     </div>
                 </div>
             </header>
@@ -172,7 +182,7 @@ const CollegeAdminDashboard = () => {
                 {/* SIDEBAR NAVIGATION */}
                 <div className="w-64 bg-[#f8fafc] border-r border-slate-200 flex-shrink-0 py-6 flex flex-col overflow-y-auto z-10">
                     <div className="px-6 pb-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Main Menu</div>
-                    
+
                     {[
                         { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
                         { id: 'faculty', label: 'Faculty & Staff', icon: <Users className="w-4 h-4" /> },
@@ -180,7 +190,7 @@ const CollegeAdminDashboard = () => {
                         { id: 'departments', label: 'Departments', icon: <Building className="w-4 h-4" /> },
                         { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
                     ].map(tab => (
-                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} 
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                             className={`w-full text-left px-6 py-3 text-sm font-bold transition-all flex items-center gap-3 ${activeTab === tab.id ? 'bg-white text-[#1e3a5f] border-r-4 border-[#1e3a5f] shadow-[0_2px_10px_-4px_rgba(0,0,0,0.1)]' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}`}>
                             {tab.icon}
                             <span>{tab.label}</span>
@@ -190,12 +200,12 @@ const CollegeAdminDashboard = () => {
 
                 {/* MAIN CONTENT AREA */}
                 <div className="flex-1 overflow-y-auto p-8 relative bg-white">
-                    
+
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
                         <div className="animate-fade-in space-y-6">
                             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight mb-6">College Overview</h2>
-                            
+
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 shadow-sm">
                                     <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4"><Users className="w-6 h-6" /></div>
@@ -213,7 +223,7 @@ const CollegeAdminDashboard = () => {
                                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mt-1">Active Departments</p>
                                 </div>
                             </div>
-                            
+
                             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 text-center max-w-3xl shadow-sm">
                                 <h3 className="font-bold text-slate-800 text-lg mb-2">Welcome to your Management Portal</h3>
                                 <p className="text-slate-500 text-sm leading-relaxed max-w-xl mx-auto">
@@ -243,31 +253,31 @@ const CollegeAdminDashboard = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Full Name *</label>
-                                            <input value={newFaculty.name} onChange={e => setNewFaculty({...newFaculty, name: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="Dr. John Doe" />
+                                            <input value={newFaculty.name} onChange={e => setNewFaculty({ ...newFaculty, name: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="Dr. John Doe" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Email Address *</label>
-                                            <input value={newFaculty.email} onChange={e => setNewFaculty({...newFaculty, email: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="john.doe@college.edu" />
+                                            <input value={newFaculty.email} onChange={e => setNewFaculty({ ...newFaculty, email: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="john.doe@college.edu" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Department</label>
-                                            <select value={newFaculty.department} onChange={e => setNewFaculty({...newFaculty, department: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
+                                            <select value={newFaculty.department} onChange={e => setNewFaculty({ ...newFaculty, department: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                                                 {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Academic Position</label>
-                                            <select value={newFaculty.position} onChange={e => setNewFaculty({...newFaculty, position: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
+                                            <select value={newFaculty.position} onChange={e => setNewFaculty({ ...newFaculty, position: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                                                 {FACULTY_POSITIONS.map(p => <option key={p}>{p}</option>)}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Phone / Mobile No.</label>
-                                            <input value={newFaculty.mobile || ''} onChange={e => setNewFaculty({...newFaculty, mobile: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="10-digit mobile number" />
+                                            <input value={newFaculty.mobile || ''} onChange={e => setNewFaculty({ ...newFaculty, mobile: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all" placeholder="10-digit mobile number" />
                                         </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Special Administrative Role</label>
-                                            <select value={newFaculty.specialRole} onChange={e => setNewFaculty({...newFaculty, specialRole: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
+                                            <select value={newFaculty.specialRole} onChange={e => setNewFaculty({ ...newFaculty, specialRole: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all">
                                                 {SPECIAL_ROLES.map(r => <option key={r}>{r}</option>)}
                                             </select>
                                         </div>
@@ -313,7 +323,12 @@ const CollegeAdminDashboard = () => {
                                                         <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${f.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{f.status}</span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition-colors"><MoreVertical className="w-4 h-4" /></button>
+                                                        <button 
+                                                            onClick={() => navigate(`/college-admin/faculty/${f.id}`)}
+                                                            className="text-xs font-bold text-[#1e3a5f] hover:underline"
+                                                        >
+                                                            View Profile
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -351,34 +366,34 @@ const CollegeAdminDashboard = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Full Name *</label>
-                                            <input value={newStudent.name} onChange={e => setNewStudent({...newStudent, name: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Student Name" />
+                                            <input value={newStudent.name} onChange={e => setNewStudent({ ...newStudent, name: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Student Name" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Email Address *</label>
-                                            <input value={newStudent.email} onChange={e => setNewStudent({...newStudent, email: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="student@college.edu" />
+                                            <input value={newStudent.email} onChange={e => setNewStudent({ ...newStudent, email: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="student@college.edu" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Programme / Course</label>
-                                            <input value={newStudent.programme || ''} onChange={e => setNewStudent({...newStudent, programme: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="B.Tech" />
+                                            <input value={newStudent.programme || ''} onChange={e => setNewStudent({ ...newStudent, programme: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="B.Tech" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">College Roll No. *</label>
-                                            <input value={newStudent.rollNo} onChange={e => setNewStudent({...newStudent, rollNo: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="CS-2023-001" />
+                                            <input value={newStudent.rollNo} onChange={e => setNewStudent({ ...newStudent, rollNo: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="CS-2023-001" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Univ Registration No.</label>
-                                            <input value={newStudent.registrationNo || ''} onChange={e => setNewStudent({...newStudent, registrationNo: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="REG-89234" />
+                                            <input value={newStudent.registrationNo || ''} onChange={e => setNewStudent({ ...newStudent, registrationNo: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="REG-89234" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Branch / Department</label>
-                                            <select value={newStudent.department} onChange={e => setNewStudent({...newStudent, department: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
+                                            <select value={newStudent.department} onChange={e => setNewStudent({ ...newStudent, department: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
                                                 {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Semester</label>
-                                            <select value={newStudent.semester} onChange={e => setNewStudent({...newStudent, semester: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
-                                                {[1,2,3,4,5,6,7,8].map(s => <option key={s}>Sem {s}</option>)}
+                                            <select value={newStudent.semester} onChange={e => setNewStudent({ ...newStudent, semester: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
+                                                {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s}>Sem {s}</option>)}
                                             </select>
                                         </div>
                                         <div>
@@ -396,39 +411,39 @@ const CollegeAdminDashboard = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Father's Name</label>
-                                            <input value={newStudent.fatherName || ''} onChange={e => setNewStudent({...newStudent, fatherName: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Father's Full Name" />
+                                            <input value={newStudent.fatherName || ''} onChange={e => setNewStudent({ ...newStudent, fatherName: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Father's Full Name" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Mother's Name</label>
-                                            <input value={newStudent.motherName || ''} onChange={e => setNewStudent({...newStudent, motherName: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Mother's Full Name" />
+                                            <input value={newStudent.motherName || ''} onChange={e => setNewStudent({ ...newStudent, motherName: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Mother's Full Name" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Gender</label>
-                                            <select value={newStudent.gender || 'Male'} onChange={e => setNewStudent({...newStudent, gender: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
+                                            <select value={newStudent.gender || 'Male'} onChange={e => setNewStudent({ ...newStudent, gender: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
                                                 <option>Male</option><option>Female</option><option>Other</option>
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Date of Birth</label>
-                                            <input type="date" value={newStudent.dob || ''} onChange={e => setNewStudent({...newStudent, dob: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" />
+                                            <input type="date" value={newStudent.dob || ''} onChange={e => setNewStudent({ ...newStudent, dob: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Caste Category</label>
-                                            <select value={newStudent.casteCategory || 'General'} onChange={e => setNewStudent({...newStudent, casteCategory: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
+                                            <select value={newStudent.casteCategory || 'General'} onChange={e => setNewStudent({ ...newStudent, casteCategory: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all">
                                                 <option>General</option><option>OBC</option><option>SC</option><option>ST</option><option>EWS</option>
                                             </select>
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Mobile No.</label>
-                                            <input value={newStudent.mobile || ''} onChange={e => setNewStudent({...newStudent, mobile: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="10-digit mobile" />
+                                            <input value={newStudent.mobile || ''} onChange={e => setNewStudent({ ...newStudent, mobile: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="10-digit mobile" />
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Aadhar No.</label>
-                                            <input value={newStudent.aadharNo || ''} onChange={e => setNewStudent({...newStudent, aadharNo: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="XXXX XXXX XXXX" />
+                                            <input value={newStudent.aadharNo || ''} onChange={e => setNewStudent({ ...newStudent, aadharNo: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all font-mono" placeholder="XXXX XXXX XXXX" />
                                         </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Residential / Permanent Address</label>
-                                            <input value={newStudent.address || ''} onChange={e => setNewStudent({...newStudent, address: e.target.value})} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Village/Town, District, State – PIN" />
+                                            <input value={newStudent.address || ''} onChange={e => setNewStudent({ ...newStudent, address: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all" placeholder="Village/Town, District, State – PIN" />
                                         </div>
                                     </div>
 
@@ -525,7 +540,11 @@ const CollegeAdminDashboard = () => {
                                     <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">Question Bank & Paper Generator</span>
                                 </div>
                             </div>
-                            <QuestionBank />
+                            <QuestionBank 
+                                role={user?.role || 'COLLEGE'} 
+                                collegeId={user?.college?._id}
+                                facultyName={user?.name || 'College Admin'}
+                            />
                         </div>
                     )}
                 </div>

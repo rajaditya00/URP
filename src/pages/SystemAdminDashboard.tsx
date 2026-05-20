@@ -11,8 +11,8 @@ const SystemAdminDashboard = () => {
     const [loginLoading, setLoginLoading] = useState(false);
     const [statusMsg, setStatusMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
-    const isEmailValid  = email === (import.meta.env.VITE_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com');
-    const isCodeValid   = securityCode === (import.meta.env.VITE_ADMIN_SECURITY_CODE || 'admin123');
+    const isEmailValid = email === (import.meta.env.VITE_ADMIN_EMAIL || 'rajaditya.addy00@gmail.com');
+    const isCodeValid = securityCode === (import.meta.env.VITE_ADMIN_SECURITY_CODE || 'admin123');
 
     // ── Dashboard data state ────────────────────────────────
     const [tab, setTab] = useState<'pending' | 'verified'>('pending');
@@ -20,7 +20,8 @@ const SystemAdminDashboard = () => {
     const [verifiedUnis, setVerifiedUnis] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // ── Direct credential login ─────────────────────────────
+    // Ref to auto‑focus the security code field when email becomes valid
+    const codeInputRef = useRef<HTMLInputElement>(null);
     const handleLogin = useCallback(async () => {
         if (!email || !securityCode) {
             setStatusMsg({ text: 'Please enter your email and security code.', type: 'error' });
@@ -49,7 +50,10 @@ const SystemAdminDashboard = () => {
 
     // ── Auto-login Trigger ──────────────────────────────────
     useEffect(() => {
-        // If both are valid, and we haven't already shown a status message for this attempt, and we aren't currently loading...
+        // Auto‑focus the security code input as soon as a valid email is entered
+        if (isEmailValid) {
+            setTimeout(() => codeInputRef.current?.focus(), 50);
+        }
         if (isEmailValid && isCodeValid && !loginLoading && !statusMsg) {
             handleLogin();
         }
@@ -130,7 +134,7 @@ const SystemAdminDashboard = () => {
                                     type="email"
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                                    onKeyDown={e => { if (e.key === 'Enter') codeInputRef.current?.focus(); }}
                                     placeholder="admin@campuscore.edu"
                                     className={`w-full pl-11 pr-10 py-3 bg-slate-50 border ${isEmailValid ? 'border-green-400 focus:border-green-400 focus:ring-green-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-4 outline-none transition-all`}
                                 />
@@ -143,11 +147,20 @@ const SystemAdminDashboard = () => {
                         </div>
 
                         {/* Security Code */}
-                        <div>
+                        <div
+                            style={{
+                                maxHeight: isEmailValid ? '120px' : '0px',
+                                opacity: isEmailValid ? 1 : 0,
+                                overflow: 'hidden',
+                                transition: 'max-height 0.35s ease, opacity 0.3s ease',
+                                visibility: isEmailValid ? 'visible' : 'hidden'
+                            }}
+                        >
                             <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-2">Security Code</label>
                             <div className="relative">
                                 <Lock className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                                 <input
+                                    ref={codeInputRef}
                                     type="password"
                                     value={securityCode}
                                     onChange={e => setSecurityCode(e.target.value)}
@@ -222,11 +235,10 @@ const SystemAdminDashboard = () => {
                             <button
                                 key={t}
                                 onClick={() => setTab(t)}
-                                className={`px-5 py-2 rounded-md text-sm font-semibold transition-all capitalize ${
-                                    tab === t
-                                        ? 'bg-white shadow-sm text-text-primary'
-                                        : 'text-text-muted hover:text-text-secondary'
-                                }`}
+                                className={`px-5 py-2 rounded-md text-sm font-semibold transition-all capitalize ${tab === t
+                                    ? 'bg-white shadow-sm text-text-primary'
+                                    : 'text-text-muted hover:text-text-secondary'
+                                    }`}
                             >
                                 {t === 'pending' ? `Pending (${pendingUnis.length})` : `Verified (${verifiedUnis.length})`}
                             </button>
@@ -350,7 +362,7 @@ const SystemAdminDashboard = () => {
                                 </div>
 
                                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-                                   {/* University Details */}
+                                    {/* University Details */}
                                     <div className="md:col-span-2 grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Email</p><p className="font-medium text-text-primary">{uni.email}</p></div>
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Phone</p><p className="font-medium text-text-primary">{uni.phone}</p></div>
@@ -359,10 +371,10 @@ const SystemAdminDashboard = () => {
                                         <div><p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Registered Email</p><p className="font-medium text-text-primary">{uni.email}</p></div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Portal Link</p>
-                                            <a href={`/university-login?university=${encodeURIComponent(uni.name)}`} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:underline text-xs font-medium">View Portal (Login)</a>
+                                            <a href={`/login`} target="_blank" rel="noreferrer" className="text-[#3b82f6] hover:underline text-xs font-medium">View Portal (Login)</a>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Super Admin Account Box */}
                                     <div className="bg-[#f0fdf4] border border-green-200 rounded-xl p-5">
                                         <p className="text-[10px] uppercase tracking-wider text-green-700 font-bold mb-3">Super Admin Credentials</p>
