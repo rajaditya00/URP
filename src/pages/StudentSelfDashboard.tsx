@@ -6,7 +6,7 @@ import {
     GraduationCap, BookOpen, Clock, FileText, Download,
     ShieldCheck, Mail, MapPin, User, Calendar, Phone, IdCard,
     PieChart, CalendarCheck, CreditCard, ArrowRight, Bell, Sparkles,
-    ChevronRight, Zap, Target, Award, ExternalLink, Library,
+    ChevronRight, ChevronLeft, Zap, Target, Award, ExternalLink, Library,
     ClipboardCheck, History, Info, Bookmark, FileBadge, Eye, EyeOff,
     CheckCircle, ShieldAlert, Globe, HelpCircle, Share2,
     Search, SlidersHorizontal, Users, MessageSquare, ClipboardList, X, Loader2
@@ -235,7 +235,19 @@ const StudentSelfDashboard = () => {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                setClassSessions(data.data);
+                const sorted = [...data.data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                setClassSessions(sorted);
+                if (sorted.length > 0) {
+                    const dates = Array.from(new Set(sorted.map((s: any) => s.date.split('T')[0]))).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayIdx = dates.findIndex((d: string) => d === todayStr);
+                    if (todayIdx !== -1) {
+                        setStudentSlideIndex(todayIdx);
+                    } else {
+                        const upcomingIdx = dates.findIndex((d: string) => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0));
+                        setStudentSlideIndex(upcomingIdx !== -1 ? upcomingIdx : 0);
+                    }
+                }
             }
         } catch (err) {
             console.error('Fetch sessions failed:', err);
@@ -296,58 +308,9 @@ const StudentSelfDashboard = () => {
         }
     };
 
-    // Repurposed ACTIVE SEMESTER space -> Campus Facility dropdown state
-    const [showFacilityDropdown, setShowFacilityDropdown] = useState(false);
-    const [facilities, setFacilities] = useState<any[]>([]);
-    const [facilitiesLoading, setFacilitiesLoading] = useState(false);
-    const [facilityBookingSuccess, setFacilityBookingSuccess] = useState('');
-    const [quickBookId, setQuickBookId] = useState('');
-    const [quickBookDate, setQuickBookDate] = useState('');
-
-    const MOCK_FACILITIES = [
-        { _id: 'mock-1', title: 'Main Auditorium', type: 'Auditorium', capacity: 1200, location: 'Central Block', operatingHours: '9:00 AM - 9:00 PM', status: 'Operational' },
-        { _id: 'mock-2', title: 'Advanced Computing Lab', type: 'Computing', capacity: 60, location: 'IT Building, Rm 202', operatingHours: '8:00 AM - 8:00 PM', status: 'Operational' },
-        { _id: 'mock-3', title: 'Central Library Study Hall', type: 'Library', capacity: 500, location: 'Library Complex', operatingHours: '24 Hours', status: 'Operational' },
-        { _id: 'mock-4', title: 'Indoor Sports Arena', type: 'Sports', capacity: 300, location: 'Sports Complex', operatingHours: '6:00 AM - 9:00 PM', status: 'Maintenance' }
-    ];
-
-    const fetchFacilities = async () => {
-        setFacilitiesLoading(true);
-        try {
-            const token = localStorage.getItem('urp_token');
-            if (!token) return;
-            const resp = await fetch(BASE_URL + '/api/facilitys', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (resp.ok) {
-                const data = await resp.json();
-                if (Array.isArray(data)) {
-                    setFacilities(data);
-                }
-            }
-        } catch (e) {
-            console.error('Failed to fetch facilities:', e);
-        } finally {
-            setFacilitiesLoading(false);
-        }
-    };
-
-    const handleQuickBookFacility = async (facilityId: string) => {
-        if (!quickBookDate) {
-            setFacilityBookingSuccess('❌ Please select a date first!');
-            setTimeout(() => setFacilityBookingSuccess(''), 3000);
-            return;
-        }
-        const selectedFac = (facilities.length > 0 ? facilities : MOCK_FACILITIES).find(f => f._id === facilityId);
-        setFacilityBookingSuccess(`✅ Successfully requested reservation for ${selectedFac?.title || 'Facility'} on ${quickBookDate}!`);
-        setQuickBookId('');
-        setTimeout(() => setFacilityBookingSuccess(''), 4000);
-    };
-
     const [expandedSem, setExpandedSem] = useState<string | null>('Semester 6');
     const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
+    const [studentSlideIndex, setStudentSlideIndex] = useState<number>(0);
 
     // Notices State
     const [notices, setNotices] = useState<any[]>(() => {
@@ -1134,7 +1097,7 @@ const StudentSelfDashboard = () => {
                     <body>
                         <div class="badge">
                             <div class="header">
-                                <div class="logo">🎓</div>
+                                <div class="logo">URP</div>
                                 <span class="verified">VERIFIED</span>
                             </div>
                             <div class="photo-container">
@@ -1232,7 +1195,6 @@ const StudentSelfDashboard = () => {
         fetchDbNotifications();
         fetchCurriculum();
         fetchLockerDocs();
-        fetchFacilities();
     }, [navigate]);
 
     useEffect(() => {
@@ -1781,120 +1743,7 @@ const StudentSelfDashboard = () => {
                         ))}
                     </div>
 
-                    {/* CAMPUS FACILITIES QUICK RESERVATION DROPDOWN repurposed from ACTIVE SEMESTER */}
-                    <div className="relative shrink-0 select-none">
-                        <button
-                            type="button"
-                            onClick={() => setShowFacilityDropdown(!showFacilityDropdown)}
-                            className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-slate-200/80 rounded-xl px-3.5 py-2 text-slate-800 shadow-sm hover:scale-[1.01] transition-all cursor-pointer group"
-                            title="Quick View & Book Campus Facilities"
-                        >
-                            <span className="text-[10px] font-black text-[#1e3a5f] uppercase tracking-widest leading-none flex items-center gap-1.5">
-                                🏢 Campus Facilities
-                            </span>
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        </button>
 
-                        {showFacilityDropdown && (
-                            <div className="absolute right-0 mt-2.5 w-80 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl z-55 p-5 animate-scale-in flex flex-col gap-4">
-                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-2xl" />
-                                
-                                <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                                    <div>
-                                        <h4 className="font-black text-xs text-slate-900 uppercase">Facility Directory</h4>
-                                        <p className="text-[8px] font-extrabold text-slate-400 uppercase tracking-wider mt-0.5">Quick Booking Status Console</p>
-                                    </div>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowFacilityDropdown(false)}
-                                        className="text-slate-400 hover:text-slate-700 text-xs font-bold"
-                                    >
-                                        ✕
-                                    </button>
-                                </div>
-
-                                {facilityBookingSuccess && (
-                                    <div className="p-3.5 bg-slate-900 border border-white/10 rounded-xl text-[10px] font-bold text-white uppercase tracking-wider animate-fade-in shadow-inner text-center">
-                                        {facilityBookingSuccess}
-                                    </div>
-                                )}
-
-                                <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                                    {(facilities.length > 0 ? facilities : MOCK_FACILITIES).map(fac => {
-                                        const isOpen = fac.status === 'Operational';
-                                        return (
-                                            <div key={fac._id} className="p-3 bg-slate-50 border border-slate-150/70 rounded-xl flex flex-col gap-2 hover:bg-slate-100/50 transition-colors">
-                                                <div className="flex justify-between items-start gap-1">
-                                                    <div className="min-w-0 flex-1">
-                                                        <h5 className="font-black text-[11px] text-slate-900 leading-snug truncate">{fac.title}</h5>
-                                                        <p className="text-[9px] text-slate-450 font-bold mt-0.5">{fac.location} &bull; Cap: {fac.capacity}</p>
-                                                    </div>
-                                                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase rounded-md tracking-wider shrink-0 ${
-                                                        isOpen ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : 'bg-amber-50 border border-amber-100 text-amber-700'
-                                                    }`}>
-                                                        {fac.status}
-                                                    </span>
-                                                </div>
-
-                                                {isOpen && (
-                                                    <div className="flex gap-1.5 pt-1 mt-1 border-t border-slate-250/30">
-                                                        {quickBookId === fac._id ? (
-                                                            <div className="flex flex-col gap-2 w-full animate-fade-in">
-                                                                <input
-                                                                    type="date"
-                                                                    value={quickBookDate}
-                                                                    onChange={e => setQuickBookDate(e.target.value)}
-                                                                    className="w-full h-8 px-2 bg-white border border-slate-200 rounded-lg text-[9px] font-bold text-slate-900 focus:border-[#1e3a5f] outline-none"
-                                                                />
-                                                                <div className="flex gap-1.5">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setQuickBookId('')}
-                                                                        className="flex-1 h-7 text-[9px] font-bold text-slate-500 hover:bg-slate-200 rounded-lg transition-all"
-                                                                    >
-                                                                        Cancel
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleQuickBookFacility(fac._id)}
-                                                                        className="flex-1 h-7 bg-emerald-600 hover:bg-emerald-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all shadow-sm"
-                                                                    >
-                                                                        Confirm
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setQuickBookId(fac._id);
-                                                                    setQuickBookDate(new Date().toISOString().split('T')[0]);
-                                                                }}
-                                                                className="w-full py-1 bg-white hover:bg-[#1e3a5f] hover:text-white border border-slate-250/70 rounded-lg text-[9px] font-black uppercase tracking-widest text-[#1e3a5f] transition-all"
-                                                            >
-                                                                Quick Reserve
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowFacilityDropdown(false);
-                                        navigate('/facilities');
-                                    }}
-                                    className="w-full py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 shadow-md cursor-pointer"
-                                >
-                                    <ExternalLink size={11} /> Open Booking Portal
-                                </button>
-                            </div>
-                        )}
-                    </div>
 
                     {/* DYNAMIC NOTIFICATIONS BUTTON & DROPDOWN */}
                     <div className="relative">
@@ -2996,101 +2845,174 @@ const StudentSelfDashboard = () => {
 
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                             
-                            {/* LEFT COLUMN: CLASS SCHEDULE TIMELINE */}
+                            {/* LEFT COLUMN: CLASS SCHEDULE TIMELINE CAROUSEL */}
                             <div className="lg:col-span-7 space-y-6">
                                 <div className="bg-white border border-slate-200/60 rounded-[32px] p-6 sm:p-8 shadow-sm">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
-                                        <Clock size={16} className="text-slate-900" /> Department Lecture Report & Timeline
-                                    </h3>
+                                    {(() => {
+                                        const uniqueDates = Array.from(
+                                            new Set(classSessions.map((s: any) => s.date.split('T')[0]))
+                                        ).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
-                                    {loadingSessions ? (
-                                        <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                                            <div className="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading department schedule...</p>
-                                        </div>
-                                    ) : classSessions.length === 0 ? (
-                                        <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                                            <Calendar className="mx-auto text-slate-300 mb-3" size={36} />
-                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">No lectures scheduled today</p>
-                                        </div>
-                                    ) : (
-                                        <div className="relative pl-6 border-l-2 border-slate-100 space-y-8">
-                                            {classSessions.map((session) => (
-                                                <div key={session._id} className="relative group">
-                                                    {/* TIMELINE CIRCLE */}
-                                                    <div className={`absolute -left-[31px] top-1 w-4 h-4 rounded-full border-2 bg-white transition-transform ${
-                                                        session.status === 'completed'
-                                                            ? 'border-emerald-500 bg-emerald-50'
-                                                            : session.status === 'cancelled'
-                                                                ? 'border-rose-500 bg-rose-50'
-                                                                : 'border-indigo-500 bg-indigo-50'
-                                                    }`} />
-
-                                                    <div className={`border rounded-2xl p-5 transition-all duration-300 ${
-                                                        session.status === 'completed'
-                                                            ? 'bg-emerald-50/10 hover:bg-emerald-50/20 border-emerald-200/60'
-                                                            : session.status === 'cancelled'
-                                                                ? 'bg-rose-50/10 hover:bg-rose-50/20 border-rose-200/60 shadow-sm shadow-rose-100/50'
-                                                                : 'bg-slate-50/40 hover:bg-slate-50 border-slate-200/40 hover:border-slate-250'
-                                                    }`}>
-                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-3">
-                                                            <div>
-                                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{session.semester} • {session.batch || 'All'} • {session.department}</span>
-                                                                <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight mt-0.5">{session.subject}</h4>
-                                                            </div>
-                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xl self-start sm:self-auto border ${
-                                                                session.status === 'completed'
-                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-150'
-                                                                    : session.status === 'cancelled'
-                                                                        ? 'bg-rose-50 text-rose-700 border-rose-150'
-                                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-150'
-                                                            }`}>
-                                                                {session.status}
+                                        return (
+                                            <>
+                                                <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-6">
+                                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                                        <Clock size={16} className="text-slate-900" /> Date-wise Lecture Schedule
+                                                    </h3>
+                                                    {uniqueDates.length > 1 && (
+                                                        <div className="flex items-center gap-1 bg-slate-50 p-1 border border-slate-200/50 rounded-xl shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                disabled={studentSlideIndex === 0}
+                                                                onClick={() => setStudentSlideIndex(prev => Math.max(0, prev - 1))}
+                                                                className="p-1 rounded-lg hover:bg-white text-slate-500 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                                                            >
+                                                                <ChevronLeft size={12} />
+                                                            </button>
+                                                            <span className="text-[10px] font-black text-slate-500 px-1.5 select-none tabular-nums">
+                                                                {studentSlideIndex + 1} / {uniqueDates.length}
                                                             </span>
+                                                            <button
+                                                                type="button"
+                                                                disabled={studentSlideIndex === uniqueDates.length - 1}
+                                                                onClick={() => setStudentSlideIndex(prev => Math.min(uniqueDates.length - 1, prev + 1))}
+                                                                className="p-1 rounded-lg hover:bg-white text-slate-500 disabled:opacity-30 disabled:hover:bg-transparent transition-all cursor-pointer"
+                                                            >
+                                                                <ChevronRight size={12} />
+                                                            </button>
                                                         </div>
+                                                    )}
+                                                </div>
 
-                                                        {/* TIMING INFO */}
-                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-[11px] font-bold text-slate-600 mb-4">
-                                                            <div>
-                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Date & Time</div>
-                                                                <div className="mt-0.5 text-slate-800">
-                                                                    {new Date(session.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} at {session.time}
-                                                                </div>
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Faculty</div>
-                                                                <div className="mt-0.5 text-slate-800">{session.faculty?.name || 'Assigned Professor'}</div>
-                                                            </div>
-                                                            <div>
-                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Duration</div>
-                                                                <div className="mt-0.5 text-slate-800">{session.duration} mins</div>
-                                                            </div>
-                                                        </div>
+                                                {loadingSessions ? (
+                                                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                                                        <div className="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading department schedule...</p>
+                                                    </div>
+                                                ) : classSessions.length === 0 ? (
+                                                    <div className="text-center py-12 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                                        <Calendar className="mx-auto text-slate-300 mb-3" size={36} />
+                                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">No lectures scheduled today</p>
+                                                    </div>
+                                                ) : (() => {
+                                                    const activeDateIndex = studentSlideIndex >= uniqueDates.length ? 0 : studentSlideIndex;
+                                                    const activeDateStr = uniqueDates[activeDateIndex];
+                                                    if (!activeDateStr) return null;
 
-                                                        {/* TOPIC LOG COVER */}
-                                                        <div className="bg-white border border-slate-200/50 rounded-xl p-3.5 shadow-sm text-xs">
-                                                            {session.status === 'completed' ? (
+                                                    const sessionsForActiveDate = classSessions.filter(s => s.date.split('T')[0] === activeDateStr);
+                                                    const todayStr = new Date().toISOString().split('T')[0];
+                                                    const isToday = activeDateStr === todayStr;
+
+                                                    return (
+                                                        <div className="space-y-6">
+                                                            {/* Active Date Header Card */}
+                                                            <div className="p-4 bg-slate-50 border border-slate-200/50 rounded-2xl flex items-center justify-between shadow-sm">
                                                                 <div>
-                                                                    <span className="font-black text-emerald-600 uppercase tracking-widest text-[8px] block mb-1">Topic Completed Today</span>
-                                                                    <span className="font-extrabold text-slate-950 text-sm">“{session.topicCovered}”</span>
+                                                                    <span className="text-[8px] font-black text-indigo-600 uppercase tracking-widest block">Lecture Date</span>
+                                                                    <span className="text-xs font-black text-slate-900 uppercase">
+                                                                        {new Date(activeDateStr).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                    </span>
                                                                 </div>
-                                                            ) : session.status === 'cancelled' ? (
-                                                                <div>
-                                                                    <span className="font-black text-rose-600 uppercase tracking-widest text-[8px] block mb-1">Cancellation Reason</span>
-                                                                    <span className="font-extrabold text-rose-950 text-sm">“{session.cancellationReason || 'No reason specified.'}”</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div>
-                                                                    <span className="font-black text-indigo-600 uppercase tracking-widest text-[8px] block mb-1">Lecture Plan / Agenda</span>
-                                                                    <span className="font-semibold text-slate-600">{session.topicPlanned || 'No description provided.'}</span>
+                                                                {isToday && (
+                                                                    <span className="px-2.5 py-1 text-[8px] font-black uppercase rounded-md tracking-wider bg-emerald-50 border border-emerald-100 text-emerald-700 animate-pulse">
+                                                                        Today
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Sessions Stack */}
+                                                            <div className="space-y-4">
+                                                                {sessionsForActiveDate.map(session => (
+                                                                    <div key={session._id} className={`border rounded-2xl p-5 transition-all duration-300 ${
+                                                                        session.status === 'completed'
+                                                                            ? 'bg-emerald-50/10 hover:bg-emerald-50/20 border-emerald-200/60'
+                                                                            : session.status === 'cancelled'
+                                                                                ? 'bg-rose-50/10 hover:bg-rose-50/20 border-rose-200/60 shadow-sm shadow-rose-100/50'
+                                                                                : 'bg-slate-50/40 hover:bg-slate-50 border-slate-200/40 hover:border-slate-250'
+                                                                    }`}>
+                                                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-3">
+                                                                            <div>
+                                                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{session.semester} • {session.batch || 'All'} • {session.department}</span>
+                                                                                <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight mt-0.5">{session.subject}</h4>
+                                                                            </div>
+                                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xl self-start sm:self-auto border ${
+                                                                                session.status === 'completed'
+                                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-150'
+                                                                                    : session.status === 'cancelled'
+                                                                                        ? 'bg-rose-50 text-rose-700 border-rose-150'
+                                                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-150'
+                                                                            }`}>
+                                                                                {session.status}
+                                                                            </span>
+                                                                        </div>
+
+                                                                        {/* TIMING INFO */}
+                                                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-[11px] font-bold text-slate-600 mb-4">
+                                                                            <div>
+                                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Time</div>
+                                                                                <div className="mt-0.5 text-slate-800">{session.time}</div>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Faculty</div>
+                                                                                <div className="mt-0.5 text-slate-800">{session.faculty?.name || 'Assigned Professor'}</div>
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Duration</div>
+                                                                                <div className="mt-0.5 text-slate-800">{session.duration} mins</div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* TOPIC LOG COVER */}
+                                                                        <div className="bg-white border border-slate-200/50 rounded-xl p-3.5 shadow-sm text-xs">
+                                                                            {session.status === 'completed' ? (
+                                                                                <div>
+                                                                                    <span className="font-black text-emerald-600 uppercase tracking-widest text-[8px] block mb-1">Topic Completed Today</span>
+                                                                                    <span className="font-extrabold text-slate-950 text-sm">“{session.topicCovered}”</span>
+                                                                                </div>
+                                                                            ) : session.status === 'cancelled' ? (
+                                                                                <div>
+                                                                                    <span className="font-black text-rose-600 uppercase tracking-widest text-[8px] block mb-1">Cancellation Reason</span>
+                                                                                    <span className="font-extrabold text-rose-950 text-sm">“{session.cancellationReason || 'No reason specified.'}”</span>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div>
+                                                                                    <span className="font-black text-indigo-600 uppercase tracking-widest text-[8px] block mb-1">Lecture Plan / Agenda</span>
+                                                                                    <span className="font-semibold text-slate-600">{session.topicPlanned || 'No description provided.'}</span>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+
+                                                            {/* Dots Navigation indicators */}
+                                                            {uniqueDates.length > 1 && (
+                                                                <div className="flex justify-center gap-1.5 pt-3">
+                                                                    {uniqueDates.map((dStr, idx) => {
+                                                                        const isTodaySlide = dStr === todayStr;
+                                                                        return (
+                                                                            <button
+                                                                                key={dStr}
+                                                                                type="button"
+                                                                                onClick={() => setStudentSlideIndex(idx)}
+                                                                                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                                                                                    idx === studentSlideIndex 
+                                                                                        ? 'w-5 bg-indigo-650' 
+                                                                                        : isTodaySlide
+                                                                                            ? 'w-1.5 bg-green-500 hover:bg-green-600'
+                                                                                            : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                                                                                }`}
+                                                                            />
+                                                                        );
+                                                                    })}
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                    );
+                                                })()}
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             </div>
 
@@ -3188,7 +3110,7 @@ const StudentSelfDashboard = () => {
                                         {mySubmission && mySubmission.grade !== 'Pending' && (
                                             <div className="bg-emerald-50 border border-emerald-250 rounded-2xl p-4 mb-4 text-emerald-800 text-xs">
                                                 <div className="font-extrabold flex items-center justify-between mb-1">
-                                                    <span>🎯 Grade Allotted: {mySubmission.grade}</span>
+                                                    <span>Grade Allotted: {mySubmission.grade}</span>
                                                     <span className="font-medium opacity-80">{new Date(mySubmission.submittedAt).toLocaleDateString()}</span>
                                                 </div>
                                                 {mySubmission.feedback && (
@@ -3309,46 +3231,116 @@ const StudentSelfDashboard = () => {
                                         </button>
                                     </div>
                                 ) : (
-                                    curriculum.map((sem) => (
-                                        <div key={sem.sem} className="space-y-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => setExpandedSem(expandedSem === sem.sem ? null : sem.sem)}
-                                                className="w-full flex items-center justify-between p-6 bg-white rounded-[24px] border-[1px] border-slate-200/60 shadow-sm hover:shadow-md transition-all group cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-colors ${expandedSem === sem.sem
-                                                        ? 'bg-slate-900 text-white'
-                                                        : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-700'
-                                                        }`}>
-                                                        <Library size={22} />
-                                                    </div>
-                                                    <div className="text-left">
-                                                        <h3 className="text-base font-black text-slate-900 tracking-tight uppercase">{sem.sem}</h3>
-                                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">
-                                                            {sem.status} {sem.gpa && `· SGPA: ${sem.gpa}`} &bull; {sem.credits} Total Credits
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <ChevronRight size={20} className={`text-slate-300 transition-transform duration-300 ${expandedSem === sem.sem ? 'rotate-90 text-slate-900' : ''}`} />
-                                            </button>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {curriculum.map((sem) => {
+                                            return (
+                                                <div key={sem.sem} className="bg-white rounded-[24px] border-[1px] border-slate-200/60 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
+                                                    <div className="space-y-4">
+                                                        {/* Header */}
+                                                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center border border-slate-105 shrink-0">
+                                                                    <Library size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-tight">{sem.sem}</h3>
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                                                                        {sem.credits} Total Credits
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex flex-col items-end gap-1 shrink-0">
+                                                                <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border leading-none ${
+                                                                    sem.status === 'Completed' 
+                                                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+                                                                        : 'bg-indigo-50 border-indigo-100 text-indigo-700'
+                                                                }`}>
+                                                                    {sem.status}
+                                                                </span>
+                                                                {sem.gpa && (
+                                                                    <span className="text-[8px] font-extrabold text-slate-750 bg-slate-50 border border-slate-200 px-1 py-0.5 rounded">
+                                                                        SGPA: {sem.gpa}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
 
-                                            {expandedSem === sem.sem && (
-                                                <div className="space-y-3.5 pl-4 sm:pl-6 border-l-2 border-slate-200/80 animate-slide-down">
-                                                    {sem.courses.map((course: any) => (
-                                                        <CourseRow
-                                                            key={course.code}
-                                                            {...course}
-                                                            name={course.title}
-                                                            isExpanded={expandedCourse === course.code}
-                                                            onToggle={() => setExpandedCourse(expandedCourse === course.code ? null : course.code)}
-                                                            onToast={triggerToast}
-                                                        />
-                                                    ))}
+                                                        {/* Courses short list */}
+                                                        <div className="space-y-2">
+                                                            {sem.courses.map((course: any) => {
+                                                                const isCourseExpanded = expandedCourse === course.code;
+                                                                return (
+                                                                    <div key={course.code} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setExpandedCourse(isCourseExpanded ? null : course.code)}
+                                                                            className="w-full flex items-center justify-between p-2.5 bg-slate-50/50 hover:bg-slate-100/50 transition-colors text-left"
+                                                                        >
+                                                                            <div className="min-w-0 flex-1 flex items-center gap-2">
+                                                                                <span className="font-mono text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-1 py-0.5 rounded shrink-0">
+                                                                                    {course.code}
+                                                                                </span>
+                                                                                <span className="text-[11px] font-extrabold text-slate-800 truncate">
+                                                                                    {course.title || course.name}
+                                                                                </span>
+                                                                            </div>
+                                                                            <ChevronRight size={12} className={`text-slate-450 transition-transform shrink-0 ${isCourseExpanded ? 'rotate-90 text-slate-900' : ''}`} />
+                                                                        </button>
+                                                                        
+                                                                        {isCourseExpanded && (
+                                                                            <div className="p-3 bg-white border-t border-slate-100 space-y-2 text-[10px]">
+                                                                                <div className="flex justify-between items-center text-slate-500 font-bold">
+                                                                                    <span>Instructor: {course.faculty}</span>
+                                                                                    <span>Credits: {course.credits}</span>
+                                                                                </div>
+                                                                                {course.result && (
+                                                                                    <div className="font-black text-indigo-750">Grade: {course.result}</div>
+                                                                                )}
+                                                                                {course.progress !== undefined && !course.result && (
+                                                                                    <div className="space-y-1">
+                                                                                        <div className="flex justify-between text-[8px] text-slate-400 font-bold uppercase">
+                                                                                            <span>Progress</span>
+                                                                                            <span>{course.progress}%</span>
+                                                                                        </div>
+                                                                                        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                                                            <div className="h-full bg-slate-900 rounded-full" style={{ width: `${course.progress}%` }}></div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                                {course.topics && (
+                                                                                    <div className="pt-2 border-t border-slate-100 space-y-1">
+                                                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Topics covered</span>
+                                                                                        <div className="grid grid-cols-1 gap-1 max-h-[80px] overflow-y-auto pr-1">
+                                                                                            {course.topics.map((t: string, idx: number) => (
+                                                                                                <div key={idx} className="flex items-center gap-1.5 bg-slate-50 p-1 rounded font-medium text-slate-650">
+                                                                                                    <span className="text-[8px] font-bold text-slate-400 bg-white border border-slate-200 w-3.5 h-3.5 rounded flex items-center justify-center shrink-0">{idx+1}</span>
+                                                                                                    <span className="truncate">{t}</span>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[8px]">
+                                                                                    <span className="text-slate-350 italic">Certified syllabus</span>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => triggerToast(`Downloading course unit syllabus for ${course.code}...`)}
+                                                                                        className="font-black text-indigo-650 hover:underline flex items-center gap-1"
+                                                                                    >
+                                                                                        <Download size={10} /> Syllabus PDF
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ))
+                                            );
+                                        })}
+                                    </div>
                                 )}
                             </div>
 
@@ -3784,6 +3776,17 @@ const StudentSelfDashboard = () => {
                                             <p className="text-xs font-extrabold text-indigo-300">
                                                 {user.mentor ? `${user.mentor.name} (${user.mentor.position || 'Professor'})` : 'Not Allotted'}
                                             </p>
+                                        </div>
+                                        <div className="pt-3 border-t border-white/10">
+                                            <p className="text-[8px] text-slate-400 uppercase tracking-widest">College</p>
+                                            <p className="text-xs font-extrabold text-indigo-300">
+                                                {user.college?.name || 'My Digital Campus'}
+                                            </p>
+                                            {(user.college?.address || user.college?.location) && (
+                                                <p className="text-[9px] text-slate-450 mt-0.5 font-semibold">
+                                                    {user.college?.address || user.college?.location}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
 
