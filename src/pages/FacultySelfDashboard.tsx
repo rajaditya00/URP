@@ -7,7 +7,8 @@ import {
     ShieldCheck, Mail, MapPin, User, Users, Calendar, Phone, IdCard, Layers,
     Bell, Award, CheckCircle, XCircle, AlertTriangle, ChevronRight, ChevronLeft,
     Star, TrendingUp, BookMarked, Briefcase, ClipboardList, Plus,
-    ChevronDown, ChevronUp, Target, Zap, Info, Check, X, Lock, LogOut, Loader2, Search, MessageSquare, Edit
+    ChevronDown, ChevronUp, Target, Zap, Info, Check, X, Lock, LogOut, Loader2, Search, MessageSquare, Edit,
+    Library, Download, Bookmark, FileBadge
 } from 'lucide-react';
 import QuestionBank from '../components/Examination/QuestionBank';
 
@@ -105,7 +106,7 @@ const CountdownBox = ({ value, label }: { value: number; label: string }) => (
 const FacultySelfDashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'questionbank' | 'approvals' | 'mentoring' | 'schedule'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'questionbank' | 'approvals' | 'schedule' | 'curriculum'>('overview');
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [toast, setToast] = useState('');
     const [notifOpen, setNotifOpen] = useState(false);
@@ -118,16 +119,6 @@ const FacultySelfDashboard = () => {
     const [editForm, setEditForm] = useState({ mobile: '', dob: '', address: '', aadharNo: '' });
     const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
     const [editProfileSaving, setEditProfileSaving] = useState(false);
-
-    // Mentoring states
-    const [mentoredStudents, setMentoredStudents] = useState<any[]>([]);
-    const [selectedStudent, setSelectedStudent] = useState<any>(null);
-    const [studentProjects, setStudentProjects] = useState<any[]>([]);
-    const [studentSearch, setStudentSearch] = useState('');
-    const [loadingStudents, setLoadingStudents] = useState(false);
-    const [loadingProjects, setLoadingProjects] = useState(false);
-    const [evaluatingProjectId, setEvaluatingProjectId] = useState<string | null>(null);
-    const [evaluationForm, setEvaluationForm] = useState<Record<string, { credits: number; feedback: string }>>({});
 
     // Approval state
     const [approvals, setApprovals] = useState(PENDING_APPROVALS);
@@ -146,7 +137,7 @@ const FacultySelfDashboard = () => {
     const [showCalendarInModal, setShowCalendarInModal] = useState<boolean>(false);
     const [activeSlideIndex, setActiveSlideIndex] = useState<number>(0);
     const [selectedInnerSessionIndex, setSelectedInnerSessionIndex] = useState<number>(0);
-    
+
     const SUBJECTS_BY_DEPT: Record<string, { code: string; name: string; sem: string }[]> = {
         'Computer Science': [
             { code: 'CS601', name: 'Computer Networks', sem: 'Sem 6' },
@@ -186,7 +177,18 @@ const FacultySelfDashboard = () => {
     };
 
     const getAvailableSubjects = () => {
-        const dept = user?.department || 'Computer Science';
+        let dept = user?.department || 'Computer Science';
+
+        // Map custom department names to standard pre-seeded database departments
+        const d = dept.toLowerCase();
+        if (d.includes('computer') || d.includes('cse') || d.includes('software')) dept = 'Computer Science';
+        else if (d.includes('electrical') || d.includes('electronic') || d.includes('ee') || d.includes('ece')) dept = 'Electrical Engineering';
+        else if (d.includes('mechanical') || d.includes('mech')) dept = 'Mechanical Engineering';
+        else if (d.includes('civil')) dept = 'Civil Engineering';
+        else if (d.includes('chemical') || d.includes('chem')) dept = 'Chemical Engineering';
+        else if (d.includes('bio') || d.includes('biotech')) dept = 'Biotechnology Engineering';
+        else if (d.includes('aero') || d.includes('aerospace')) dept = 'Aerospace Engineering';
+
         return SUBJECTS_BY_DEPT[dept] || SUBJECTS_BY_DEPT['Computer Science'];
     };
 
@@ -225,6 +227,12 @@ const FacultySelfDashboard = () => {
     const [currentPlanText, setCurrentPlanText] = useState<string>('');
     const [savingLecturePlan, setSavingLecturePlan] = useState<boolean>(false);
 
+    // Curriculum select-and-view states
+    const [curriculum, setCurriculum] = useState<any[]>([]);
+    const [curriculumLoading, setCurriculumLoading] = useState<boolean>(false);
+    const [selectedCurriculumSem, setSelectedCurriculumSem] = useState<string>('');
+    const [selectedCurriculumCourseCode, setSelectedCurriculumCourseCode] = useState<string>('');
+
     const handleSaveLecturePlan = async (id: string) => {
         if (!currentPlanText.trim()) {
             triggerToast('⚠️ Lecture plan cannot be empty.');
@@ -233,11 +241,11 @@ const FacultySelfDashboard = () => {
         setSavingLecturePlan(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/class-sessions/${id}`, {
+            const res = await fetch(`${BASE_URL}/api/class-sessions/${id}`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ topicPlanned: currentPlanText.trim() })
             });
@@ -256,6 +264,62 @@ const FacultySelfDashboard = () => {
         }
     };
 
+    const fetchCurriculum = async () => {
+        setCurriculumLoading(true);
+        try {
+            const token = localStorage.getItem('urp_token');
+            if (!token) return;
+            const resp = await fetch(BASE_URL + '/api/academic', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = await resp.json();
+            if (Array.isArray(data)) {
+                const semestersMap: Record<string, any> = {};
+
+                data.forEach((course: any) => {
+                    const sem = course.semester || 'Semester 1';
+                    if (!semestersMap[sem]) {
+                        semestersMap[sem] = {
+                            sem,
+                            status: course.status || 'Completed',
+                            isCurrent: course.status === 'Ongoing',
+                            gpa: course.gpa || '',
+                            credits: 0,
+                            courses: []
+                        };
+                    }
+                    semestersMap[sem].courses.push(course);
+                    semestersMap[sem].credits += course.credits;
+
+                    if (course.status === 'Ongoing') {
+                        semestersMap[sem].status = 'Ongoing';
+                        semestersMap[sem].isCurrent = true;
+                    }
+                });
+
+                const sortedSemesters = Object.values(semestersMap).sort((a: any, b: any) => {
+                    const numA = parseInt(a.sem.replace(/[^0-9]/g, '')) || 1;
+                    const numB = parseInt(b.sem.replace(/[^0-9]/g, '')) || 1;
+                    return numB - numA;
+                });
+
+                setCurriculum(sortedSemesters);
+                if (sortedSemesters.length > 0) {
+                    setSelectedCurriculumSem(sortedSemesters[0].sem);
+                    if (sortedSemesters[0].courses.length > 0) {
+                        setSelectedCurriculumCourseCode(sortedSemesters[0].courses[0].code);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch curriculum:', e);
+        } finally {
+            setCurriculumLoading(false);
+        }
+    };
+
     const fetchClassSessions = async () => {
         setLoadingSessions(true);
         try {
@@ -267,7 +331,7 @@ const FacultySelfDashboard = () => {
             if (res.ok && data.success) {
                 const sorted = [...data.data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
                 setClassSessions(sorted);
-                
+
                 if (sorted.length > 0) {
                     const dates = Array.from(new Set(sorted.map((s: any) => s.date.split('T')[0]))).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
                     const todayStr = new Date().toISOString().split('T')[0];
@@ -308,8 +372,19 @@ const FacultySelfDashboard = () => {
     const fetchQuestionsForSelector = async () => {
         try {
             const token = localStorage.getItem('urp_token');
-            const dept = user?.department || 'Computer Science';
-            const res = await fetch(`{BASE_URL}/api/questions?department=${encodeURIComponent(dept)}`, {
+            let dept = user?.department || 'Computer Science';
+
+            // Map custom department names to standard pre-seeded database departments
+            const d = dept.toLowerCase();
+            if (d.includes('computer') || d.includes('cse') || d.includes('software')) dept = 'Computer Science';
+            else if (d.includes('electrical') || d.includes('electronic') || d.includes('ee') || d.includes('ece')) dept = 'Electrical Engineering';
+            else if (d.includes('mechanical') || d.includes('mech')) dept = 'Mechanical Engineering';
+            else if (d.includes('civil')) dept = 'Civil Engineering';
+            else if (d.includes('chemical') || d.includes('chem')) dept = 'Chemical Engineering';
+            else if (d.includes('bio') || d.includes('biotech')) dept = 'Biotechnology Engineering';
+            else if (d.includes('aero') || d.includes('aerospace')) dept = 'Aerospace Engineering';
+
+            const res = await fetch(`${BASE_URL}/api/questions?department=${encodeURIComponent(dept)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -384,7 +459,7 @@ const FacultySelfDashboard = () => {
         }
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/class-sessions/${markingCompleteId}/complete`, {
+            const res = await fetch(`${BASE_URL}/api/class-sessions/${markingCompleteId}/complete`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -463,7 +538,7 @@ const FacultySelfDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/assignments/${gradingAssignmentId}/grade/${gradingSubmissionId}`, {
+            const res = await fetch(`${BASE_URL}/api/assignments/${gradingAssignmentId}/grade/${gradingSubmissionId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -497,11 +572,11 @@ const FacultySelfDashboard = () => {
 
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/class-sessions/${id}?reason=${encodeURIComponent(reason.trim())}`, {
+            const res = await fetch(`${BASE_URL}/api/class-sessions/${id}?reason=${encodeURIComponent(reason.trim())}`, {
                 method: 'DELETE',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ reason: reason.trim() })
             });
@@ -631,145 +706,38 @@ const FacultySelfDashboard = () => {
                 const updatedUser = { ...user, ...data.user };
                 localStorage.setItem('urp_user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
-                triggerToast('✅ Profile updated successfully!');
+                triggerToast('Profile updated successfully!');
                 setEditProfileOpen(false);
             } else {
-                triggerToast(`❌ ${data.msg || 'Update failed'}`);
+                triggerToast(`${data.msg || 'Update failed'}`);
             }
         } catch (err) {
             console.error('Profile update failed:', err);
-            triggerToast('❌ Server communication error');
+            triggerToast('Server communication error');
         } finally {
             setEditProfileSaving(false);
         }
     };
 
-    const loadMentoredStudents = async () => {
-        setLoadingStudents(true);
-        try {
-            const token = localStorage.getItem('urp_token');
-            const res = await fetch(BASE_URL + '/api/projects/mentored-students', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await res.json();
-            if (res.ok && Array.isArray(data)) {
-                setMentoredStudents(data);
-                if (data.length > 0 && !selectedStudent) {
-                    setSelectedStudent(data[0]);
-                    // Direct fetch for that student
-                    const projRes = await fetch(`{BASE_URL}/api/projects/student-projects/${data[0]._id}`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    const projData = await projRes.json();
-                    if (projRes.ok && Array.isArray(projData)) {
-                        setStudentProjects(projData);
-                        const defaults: Record<string, { credits: number; feedback: string }> = {};
-                        projData.forEach((p: any) => {
-                            defaults[p._id] = {
-                                credits: p.skillsCredits || 3,
-                                feedback: p.feedback || ''
-                            };
-                        });
-                        setEvaluationForm(defaults);
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Failed to load mentored students:', e);
-        } finally {
-            setLoadingStudents(false);
-        }
-    };
-
-    const loadStudentProjects = async (studentId: string) => {
-        setLoadingProjects(true);
-        try {
-            const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/projects/student-projects/${studentId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await res.json();
-            if (res.ok && Array.isArray(data)) {
-                setStudentProjects(data);
-                const defaults: Record<string, { credits: number; feedback: string }> = {};
-                data.forEach((p: any) => {
-                    defaults[p._id] = {
-                        credits: p.skillsCredits || 3,
-                        feedback: p.feedback || ''
-                    };
-                });
-                setEvaluationForm(defaults);
-            }
-        } catch (e) {
-            console.error('Failed to load student projects:', e);
-        } finally {
-            setLoadingProjects(false);
-        }
-    };
-
-    const handleSelectStudent = (student: any) => {
-        setSelectedStudent(student);
-        loadStudentProjects(student._id);
-    };
-
-    const handleEvaluateProjectClick = async (projectId: string) => {
-        const evalData = evaluationForm[projectId];
-        if (!evalData) return;
-        setEvaluatingProjectId(projectId);
-        try {
-            const token = localStorage.getItem('urp_token');
-            const res = await fetch(BASE_URL + '/api/projects/evaluate', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    projectId,
-                    feedback: evalData.feedback,
-                    skillsCredits: evalData.credits
-                })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setStudentProjects(prev => prev.map(p => p._id === projectId ? data : p));
-                triggerToast('✅ Project successfully evaluated & credits awarded!');
-            } else {
-                triggerToast(`❌ Evaluation failed: ${data.error || 'Server error'}`);
-            }
-        } catch (e) {
-            console.error(e);
-            triggerToast('❌ Server communication error');
-        } finally {
-            setEvaluatingProjectId(null);
-        }
-    };
-
     useEffect(() => {
-        if (activeTab === 'mentoring') {
-            loadMentoredStudents();
-        } else if (activeTab === 'schedule') {
+        if (activeTab === 'schedule') {
             fetchClassSessions();
             fetchAssignments();
             fetchQuestionsForSelector();
+        } else if (activeTab === 'curriculum') {
+            fetchCurriculum();
         }
     }, [activeTab, user]);
 
     const handleApprove = (id: string) => {
         const credits = creditInputs[id];
         setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'approved', creditSuggested: credits } : a));
-        triggerToast(`✅ Approved! ${credits} credit(s) awarded to student.`);
+        triggerToast(`Approved! ${credits} credit(s) awarded to student.`);
     };
 
     const handleReject = (id: string) => {
         setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' } : a));
-        triggerToast('❌ Submission rejected.');
+        triggerToast('Submission rejected.');
     };
 
     const pendingCount = approvals.filter(a => a.status === 'pending').length;
@@ -811,7 +779,7 @@ const FacultySelfDashboard = () => {
                                         {editPhotoFile ? (
                                             <img src={URL.createObjectURL(editPhotoFile)} alt="Preview" className="w-full h-full object-cover" />
                                         ) : user?.profileImage ? (
-                                            <img src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`} alt="Current" className="w-full h-full object-cover" />
+                                            <img src={user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`} alt="Current" className="w-full h-full object-cover" />
                                         ) : (
                                             <span>{user?.name?.charAt(0).toUpperCase()}</span>
                                         )}
@@ -1003,7 +971,7 @@ const FacultySelfDashboard = () => {
                                                                 <span className="text-[10px] font-black text-red-600">DEADLINE PASSED</span>
                                                             ) : (
                                                                 <span className="text-[10px] font-black text-amber-700">
-                                                                    ⏱ {countdown.d}d {countdown.h}h {countdown.m}m remaining
+                                                                    {countdown.d}d {countdown.h}h {countdown.m}m remaining
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1055,7 +1023,7 @@ const FacultySelfDashboard = () => {
                             >
                                 {user?.profileImage ? (
                                     <img
-                                        src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`}
+                                        src={user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`}
                                         alt={user?.name || 'Profile'}
                                         className="w-full h-full object-cover"
                                     />
@@ -1108,9 +1076,9 @@ const FacultySelfDashboard = () => {
                         {[
                             { id: 'overview', label: 'Dashboard', icon: <TrendingUp size={15} /> },
                             { id: 'schedule', label: 'Class Schedule', icon: <Calendar size={15} /> },
-                            { id: 'mentoring', label: 'Student Mentoring', icon: <Users size={15} /> },
                             { id: 'approvals', label: `Approvals${pendingCount > 0 ? ` (${pendingCount})` : ''}`, icon: <ClipboardList size={15} /> },
                             { id: 'questionbank', label: 'Question Bank', icon: <Layers size={15} /> },
+                            { id: 'curriculum', label: 'Curriculum', icon: <BookOpen size={15} /> },
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1276,8 +1244,8 @@ const FacultySelfDashboard = () => {
                                                     <span className="text-[11px] font-black text-slate-500 w-8 text-right">{pct}%</span>
                                                 </div>
                                                 <div className="flex gap-4 mt-2 text-[10px] font-bold text-slate-500">
-                                                    <span>📖 {subj.done}/{subj.lectures} lectures</span>
-                                                    <span>📝 {subj.assignments} assignments</span>
+                                                    <span> {subj.done}/{subj.lectures} lectures</span>
+                                                    <span> {subj.assignments} assignments</span>
                                                     {subj.pending > 0 && <span className="text-amber-600">⏳ {subj.pending} pending</span>}
                                                 </div>
                                             </div>
@@ -1320,7 +1288,7 @@ const FacultySelfDashboard = () => {
                                     <div className="flex items-center gap-6">
                                         <div className="w-24 h-24 rounded-2xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center text-4xl font-black shadow-2xl">
                                             {user?.profileImage ? (
-                                                <img src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`} alt={user.name} className="w-full h-full object-cover" />
+                                                <img src={user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}/${user.profileImage}`} alt={user.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span>{user?.name?.charAt(0)}</span>
                                             )}
@@ -1423,7 +1391,7 @@ const FacultySelfDashboard = () => {
                                 onClick={() => setShowScheduleModal(true)}
                                 className="flex items-center gap-2 bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white font-bold text-xs uppercase tracking-widest px-5 py-3 rounded-2xl shadow-lg shadow-[#1e3a5f]/15 hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 cursor-pointer self-start sm:self-auto"
                             >
-                                <Plus size={14} /> + Schedule a Class
+                                <Plus size={14} /> Schedule a Class
                             </button>
                         </div>
 
@@ -1558,7 +1526,7 @@ const FacultySelfDashboard = () => {
 
                                                     {/* Split Layout: List left, Details right */}
                                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-                                                        
+
                                                         {/* LEFT PANEL: DAILY TIMELINE LIST */}
                                                         <div className="lg:col-span-1">
                                                             <span className="text-[9px] font-black uppercase tracking-widest text-[#1e3a5f]/60 block border-b border-slate-100 pb-1.5 mb-2">
@@ -1605,7 +1573,7 @@ const FacultySelfDashboard = () => {
                                                             {(() => {
                                                                 const isSessionCompleted = session.status === 'completed';
                                                                 const isSessionCancelled = session.status === 'cancelled';
-                                                                const isSessionUpcoming = new Date(session.date).getTime() > new Date().setHours(0,0,0,0) && session.date.split('T')[0] !== todayStr;
+                                                                const isSessionUpcoming = new Date(session.date).getTime() > new Date().setHours(0, 0, 0, 0) && session.date.split('T')[0] !== todayStr;
                                                                 const isPast = new Date(activeDateStr).getTime() < new Date().setHours(0, 0, 0, 0);
                                                                 const hasAssignment = assignmentsList.some(a => String(a.classSession?._id || a.classSession) === String(session._id));
                                                                 return (
@@ -1616,153 +1584,154 @@ const FacultySelfDashboard = () => {
                                                                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{session.semester} · {session.batch || 'All'} · {session.department}</span>
                                                                                 <h5 className="text-sm font-black text-[#1e3a5f] uppercase tracking-tight truncate">{session.subject}</h5>
                                                                             </div>
-                                                                            <span className={`text-[8px] font-extrabold uppercase px-2.5 py-1 rounded-lg border shrink-0 ${
-                                                                                isSessionCompleted 
-                                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                                                                    : isSessionCancelled 
-                                                                                        ? 'bg-rose-50 text-rose-700 border-rose-200' 
-                                                                                        : 'bg-blue-50 text-blue-700 border-blue-200'
-                                                                            }`}>
+                                                                            <span className={`text-[8px] font-extrabold uppercase px-2.5 py-1 rounded-lg border shrink-0 ${isSessionCompleted
+                                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                                : isSessionCancelled
+                                                                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                                }`}>
                                                                                 {session.time} · {session.duration}m
                                                                             </span>
                                                                         </div>
 
                                                                         <div className="p-4 space-y-3">
-                                                                        {/* Key Specs Row */}
-                                                                        <div className="grid grid-cols-3 gap-2">
-                                                                            {[
-                                                                                { label: 'Time · Duration', value: `${session.time} / ${session.duration}m` },
-                                                                                { label: 'Audience', value: `${session.semester} · ${session.batch || 'All'}` },
-                                                                                { label: 'Assignment', value: hasAssignment ? '✓ Allotted' : 'None' },
-                                                                            ].map(spec => (
-                                                                                <div key={spec.label} className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                                                                                    <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">{spec.label}</span>
-                                                                                    <div className="text-slate-700 font-extrabold text-[10px] truncate">{spec.value}</div>
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-
-                                                                        {/* Lecture Plan Objectives */}
-                                                                        <div className="space-y-1.5">
-                                                                            <span className="font-black text-[#1e3a5f] uppercase tracking-widest text-[8px] block">Lecture Plan & Objectives</span>
-                                                                            <div className="relative group/textarea bg-white border border-slate-200/80 rounded-xl overflow-hidden">
-                                                                                {isSessionCompleted ? (
-                                                                                    <div className="p-3">
-                                                                                        <span className="font-black text-emerald-700 uppercase tracking-widest text-[8px] block mb-1">Lecture Completed</span>
-                                                                                        <p className="font-extrabold text-slate-800 text-xs leading-relaxed bg-emerald-50/20 border border-emerald-100/50 p-2.5 rounded-xl">
-                                                                                            <span className="text-emerald-700">“{session.topicCovered || 'No topics logged.'}”</span>
-                                                                                        </p>
+                                                                            {/* Key Specs Row */}
+                                                                            <div className="grid grid-cols-3 gap-2">
+                                                                                {[
+                                                                                    { label: 'Time · Duration', value: `${session.time} / ${session.duration}m` },
+                                                                                    { label: 'Audience', value: `${session.semester} · ${session.batch || 'All'}` },
+                                                                                    { label: 'Assignment', value: hasAssignment ? '✓ Allotted' : 'None' },
+                                                                                ].map(spec => (
+                                                                                    <div key={spec.label} className="bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                                                                                        <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 block mb-0.5">{spec.label}</span>
+                                                                                        <div className="text-slate-700 font-extrabold text-[10px] truncate">{spec.value}</div>
                                                                                     </div>
-                                                                                ) : isSessionCancelled ? (
-                                                                                    <div className="p-3">
-                                                                                        <span className="font-black text-rose-700 uppercase tracking-widest text-[8px] block mb-1">Cancellation Reason</span>
-                                                                                        <p className="font-semibold text-rose-700 bg-rose-50/50 border border-rose-100 p-2.5 rounded-xl leading-relaxed text-xs">
-                                                                                            “{session.cancellationReason || 'No reason specified.'}”
-                                                                                        </p>
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <>
-                                                                                        <textarea
-                                                                                            value={currentPlanText}
-                                                                                            onChange={e => setCurrentPlanText(e.target.value)}
-                                                                                            placeholder="Enter planned topics and lecture objectives..."
-                                                                                            className="w-full text-xs font-semibold text-slate-800 bg-white hover:bg-slate-50/30 focus:bg-white border-0 rounded-xl p-2.5 pr-20 outline-none transition-all leading-relaxed resize-none"
-                                                                                            rows={2}
-                                                                                        />
-                                                                                        {currentPlanText !== (session.topicPlanned || '') && (
-                                                                                            <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5 animate-scale-up z-10">
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={() => setCurrentPlanText(session.topicPlanned || '')}
-                                                                                                    className="bg-slate-50 hover:bg-slate-200/80 text-slate-700 font-extrabold uppercase text-[9px] tracking-wider px-2.5 py-1.5 rounded-lg transition-all border border-slate-200/60 shadow-sm cursor-pointer"
-                                                                                                >
-                                                                                                    Reset
-                                                                                                </button>
-                                                                                                <button
-                                                                                                    type="button"
-                                                                                                    onClick={async () => {
-                                                                                                        setSavingLecturePlan(true);
-                                                                                                        try {
-                                                                                                            const token = localStorage.getItem('urp_token');
-                                                                                                            const res = await fetch(`{BASE_URL}/api/class-sessions/${session._id}`, {
-                                                                                                                method: 'PUT',
-                                                                                                                headers: {
-                                                                                                                    'Content-Type': 'application/json',
-                                                                                                                    'Authorization': `Bearer ${token}`
-                                                                                                                },
-                                                                                                                body: JSON.stringify({ topicPlanned: currentPlanText.trim() })
-                                                                                                            });
-                                                                                                            const data = await res.json();
-                                                                                                            if (res.ok && data.success) {
-                                                                                                                triggerToast('📝 Lecture plan saved successfully!');
-                                                                                                                fetchClassSessions();
-                                                                                                            } else {
-                                                                                                                triggerToast(`❌ Error: ${data.error || 'Failed to update plan'}`);
-                                                                                                            }
-                                                                                                        } catch (err) {
-                                                                                                            console.error(err);
-                                                                                                            triggerToast('❌ Server communication error');
-                                                                                                        } finally {
-                                                                                                            setSavingLecturePlan(false);
-                                                                                                        }
-                                                                                                    }}
-                                                                                                    disabled={savingLecturePlan || !currentPlanText.trim()}
-                                                                                                    className="flex items-center gap-1 bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white font-extrabold uppercase text-[9px] tracking-wider px-3 py-1.5 rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer"
-                                                                                                >
-                                                                                                    {savingLecturePlan ? (
-                                                                                                        <>
-                                                                                                            <Loader2 className="animate-spin" size={10} /> Saving
-                                                                                                        </>
-                                                                                                    ) : (
-                                                                                                        <>
-                                                                                                            <Check size={10} /> Save
-                                                                                                        </>
-                                                                                                    )}
-                                                                                                </button>
-                                                                                            </div>
-                                                                                        )}
-                                                                                    </>
-                                                                                )}
+                                                                                ))}
                                                                             </div>
-                                                                        </div>
+
+                                                                            {/* Lecture Plan Objectives */}
+                                                                            <div className="space-y-1.5">
+                                                                                <span className="font-black text-[#1e3a5f] uppercase tracking-widest text-[8px] block">Lecture Plan & Objectives</span>
+                                                                                <div className="relative group/textarea bg-white border border-slate-200/80 rounded-xl overflow-hidden">
+                                                                                    {isSessionCompleted ? (
+                                                                                        <div className="p-3">
+                                                                                            <span className="font-black text-emerald-700 uppercase tracking-widest text-[8px] block mb-1">Lecture Completed</span>
+                                                                                            <p className="font-extrabold text-slate-800 text-xs leading-relaxed bg-emerald-50/20 border border-emerald-100/50 p-2.5 rounded-xl">
+                                                                                                <span className="text-emerald-700">“{session.topicCovered || 'No topics logged.'}”</span>
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    ) : isSessionCancelled ? (
+                                                                                        <div className="p-3">
+                                                                                            <span className="font-black text-rose-700 uppercase tracking-widest text-[8px] block mb-1">Cancellation Reason</span>
+                                                                                            <p className="font-semibold text-rose-700 bg-rose-50/50 border border-rose-100 p-2.5 rounded-xl leading-relaxed text-xs">
+                                                                                                “{session.cancellationReason || 'No reason specified.'}”
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        <>
+                                                                                            <textarea
+                                                                                                value={currentPlanText}
+                                                                                                onChange={e => setCurrentPlanText(e.target.value)}
+                                                                                                placeholder="Enter planned topics and lecture objectives..."
+                                                                                                className="w-full text-xs font-semibold text-slate-800 bg-white hover:bg-slate-50/30 focus:bg-white border-0 rounded-xl p-2.5 pr-20 outline-none transition-all leading-relaxed resize-none"
+                                                                                                rows={2}
+                                                                                            />
+                                                                                            {currentPlanText !== (session.topicPlanned || '') && (
+                                                                                                <div className="absolute right-2.5 bottom-2.5 flex items-center gap-1.5 animate-scale-up z-10">
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={() => setCurrentPlanText(session.topicPlanned || '')}
+                                                                                                        className="bg-slate-50 hover:bg-slate-200/80 text-slate-700 font-extrabold uppercase text-[9px] tracking-wider px-2.5 py-1.5 rounded-lg transition-all border border-slate-200/60 shadow-sm cursor-pointer"
+                                                                                                    >
+                                                                                                        Reset
+                                                                                                    </button>
+                                                                                                    <button
+                                                                                                        type="button"
+                                                                                                        onClick={async () => {
+                                                                                                            setSavingLecturePlan(true);
+                                                                                                            try {
+                                                                                                                const token = localStorage.getItem('urp_token');
+                                                                                                                const res = await fetch(`${BASE_URL}/api/class-sessions/${session._id}`, {
+                                                                                                                    method: 'PUT',
+                                                                                                                    headers: {
+                                                                                                                        'Content-Type': 'application/json',
+                                                                                                                        'Authorization': `Bearer ${token}`
+                                                                                                                    },
+                                                                                                                    body: JSON.stringify({ topicPlanned: currentPlanText.trim() })
+                                                                                                                });
+                                                                                                                const data = await res.json();
+                                                                                                                if (res.ok && data.success) {
+                                                                                                                    triggerToast('📝 Lecture plan saved successfully!');
+                                                                                                                    fetchClassSessions();
+                                                                                                                } else {
+                                                                                                                    triggerToast(` Error: ${data.error || 'Failed to update plan'}`);
+                                                                                                                }
+                                                                                                            } catch (err) {
+                                                                                                                console.error(err);
+                                                                                                                triggerToast('❌ Server communication error');
+                                                                                                            } finally {
+                                                                                                                setSavingLecturePlan(false);
+                                                                                                            }
+                                                                                                        }}
+                                                                                                        disabled={savingLecturePlan || !currentPlanText.trim()}
+                                                                                                        className="flex items-center gap-1 bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white font-extrabold uppercase text-[9px] tracking-wider px-3 py-1.5 rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer"
+                                                                                                    >
+                                                                                                        {savingLecturePlan ? (
+                                                                                                            <>
+                                                                                                                <Loader2 className="animate-spin" size={10} /> Saving
+                                                                                                            </>
+                                                                                                        ) : (
+                                                                                                            <>
+                                                                                                                <Check size={10} /> Save
+                                                                                                            </>
+                                                                                                        )}
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            )}
+                                                                                        </>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
                                                                         </div>{/* end p-4 space-y-3 */}
 
-                                                                        {/* Card Actions Footer */}
-                                                                        <div className="flex items-center justify-between flex-wrap gap-2 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
-                                                                            {!isSessionCompleted && !isSessionCancelled ? (
-                                                                                <div className="flex items-center gap-4">
-                                                                                    <button
-                                                                                        onClick={() => handleDeleteClassSession(session._id)}
-                                                                                        className="text-rose-600 hover:text-rose-800 font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
-                                                                                    >
-                                                                                        Cancle the session
-                                                                                    </button>
-                                                                                    {!isPast && (
-                                                                                        <button
-                                                                                            onClick={() => {
-                                                                                                setNewClassForm(prev => ({
-                                                                                                    ...prev,
-                                                                                                    subject: session.subject,
-                                                                                                    semester: session.semester,
-                                                                                                    batch: session.batch || 'All'
-                                                                                                }));
-                                                                                                setShowScheduleModal(true);
-                                                                                            }}
-                                                                                            className="text-[#1e3a5f] hover:text-[#2d5a9e] font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer"
-                                                                                        >
-                                                                                            + Add Class
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="flex items-center gap-4">
+                                                                        {/* Card Actions Footer - Aligned in a single cohesive row */}
+                                                                        <div className="flex items-center flex-wrap gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/50 w-full">
+                                                                            {!isSessionCompleted && !isSessionCancelled && (
+                                                                                <button
+                                                                                    onClick={() => handleDeleteClassSession(session._id)}
+                                                                                    className="text-rose-600 hover:text-rose-800 font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer mr-2 shrink-0"
+                                                                                >
+                                                                                    Cancel the session
+                                                                                </button>
+                                                                            )}
+
+                                                                            {!isSessionCompleted && !isSessionCancelled && !isPast && (
+                                                                                <button
+                                                                                    onClick={() => {
+                                                                                        setNewClassForm(prev => ({
+                                                                                            ...prev,
+                                                                                            subject: session.subject,
+                                                                                            semester: session.semester,
+                                                                                            batch: session.batch || 'All'
+                                                                                        }));
+                                                                                        setShowScheduleModal(true);
+                                                                                    }}
+                                                                                    className="text-[#1e3a5f] hover:text-[#2d5a9e] font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer mr-auto shrink-0"
+                                                                                >
+                                                                                    + Add Class
+                                                                                </button>
+                                                                            )}
+
+                                                                            {/* Completed/Cancelled states */}
+                                                                            {(isSessionCompleted || isSessionCancelled) && (
+                                                                                <div className="flex items-center gap-3 mr-auto">
                                                                                     {isSessionCancelled ? (
-                                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500/80 select-none bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100 shadow-sm">
-                                                                                            🚫 Lecture Session Cancelled
+                                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-rose-500/80 select-none bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100 shadow-sm flex items-center gap-1 shrink-0">
+                                                                                            <XCircle size={10} className="text-rose-500 shrink-0" /> Cancelled
                                                                                         </span>
                                                                                     ) : (
-                                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 select-none bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-sm">
-                                                                                            ✅ Lecture Session Completed
+                                                                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-600 select-none bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 shadow-sm flex items-center gap-1 shrink-0">
+                                                                                            <CheckCircle size={10} className="text-emerald-600 shrink-0" /> Completed
                                                                                         </span>
                                                                                     )}
                                                                                     {!isPast && (
@@ -1776,16 +1745,16 @@ const FacultySelfDashboard = () => {
                                                                                                 }));
                                                                                                 setShowScheduleModal(true);
                                                                                             }}
-                                                                                            className="text-[#1e3a5f] hover:text-[#2d5a9e] font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer bg-slate-100/85 hover:bg-slate-200/80 px-2.5 py-1 rounded-lg"
+                                                                                            className="text-[#1e3a5f] hover:text-[#2d5a9e] font-black uppercase text-[10px] tracking-wider transition-colors cursor-pointer bg-slate-100/85 hover:bg-slate-200/80 px-2.5 py-1 rounded-lg shrink-0"
                                                                                         >
                                                                                             + Add Class
                                                                                         </button>
                                                                                     )}
                                                                                 </div>
                                                                             )}
-                                                                            
+
                                                                             {!isSessionCompleted && !isSessionCancelled && (
-                                                                                <div className="flex items-center gap-2">
+                                                                                <div className="flex items-center gap-2.5 ml-auto shrink-0">
                                                                                     {!hasAssignment && (
                                                                                         <button
                                                                                             disabled={isSessionUpcoming}
@@ -1793,7 +1762,7 @@ const FacultySelfDashboard = () => {
                                                                                                 setAllottingAssignmentId(session._id);
                                                                                                 setSelectedQuestions([]);
                                                                                             }}
-                                                                                            className={`bg-purple-50 hover:bg-purple-100 text-purple-700 font-extrabold uppercase text-[10px] tracking-wider px-3.5 py-2 rounded-xl transition-all border border-purple-150 ${isSessionUpcoming ? 'opacity-50 cursor-not-allowed hover:bg-purple-50' : 'cursor-pointer'}`}
+                                                                                            className={`bg-purple-50 hover:bg-purple-100 text-purple-700 font-extrabold uppercase text-[10px] tracking-wider px-3.5 py-2 rounded-xl transition-all border border-purple-150 shrink-0 ${isSessionUpcoming ? 'opacity-50 cursor-not-allowed hover:bg-purple-50' : 'cursor-pointer'}`}
                                                                                         >
                                                                                             Allot Assignment
                                                                                         </button>
@@ -1804,7 +1773,7 @@ const FacultySelfDashboard = () => {
                                                                                             setMarkingCompleteId(session._id);
                                                                                             setTopicCoveredInput(session.topicPlanned || '');
                                                                                         }}
-                                                                                        className={`bg-green-600 hover:bg-green-700 text-white font-extrabold uppercase text-[10px] tracking-wider px-4 py-2 rounded-xl shadow transition-all ${isSessionUpcoming ? 'opacity-50 cursor-not-allowed hover:bg-green-600' : 'cursor-pointer'}`}
+                                                                                        className={`bg-green-600 hover:bg-green-700 text-white font-extrabold uppercase text-[10px] tracking-wider px-4 py-2 rounded-xl shadow transition-all shrink-0 ${isSessionUpcoming ? 'opacity-50 cursor-not-allowed hover:bg-green-600' : 'cursor-pointer'}`}
                                                                                     >
                                                                                         Mark Complete
                                                                                     </button>
@@ -1828,19 +1797,18 @@ const FacultySelfDashboard = () => {
                                                                     key={dStr}
                                                                     type="button"
                                                                     onClick={() => setActiveSlideIndex(idx)}
-                                                                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                                                                        idx === activeSlideIndex 
-                                                                            ? 'w-5 bg-[#1e3a5f]' 
-                                                                            : isTodaySlide
-                                                                                ? 'w-1.5 bg-green-500 hover:bg-green-600'
-                                                                                : 'w-1.5 bg-slate-200 hover:bg-slate-300'
-                                                                    }`}
+                                                                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === activeSlideIndex
+                                                                        ? 'w-5 bg-[#1e3a5f]'
+                                                                        : isTodaySlide
+                                                                            ? 'w-1.5 bg-green-500 hover:bg-green-600'
+                                                                            : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                                                                        }`}
                                                                 />
                                                             );
                                                         })}
                                                     </div>
                                                 )}
-                                                </div>
+                                            </div>
                                         );
                                     })()}
                                 </div>
@@ -1873,7 +1841,7 @@ const FacultySelfDashboard = () => {
                                                     </div>
 
                                                     <p className="text-[11px] text-slate-500 font-medium mb-3">{assignment.description || 'No description.'}</p>
-                                                    
+
                                                     {/* QUESTIONS COUNT */}
                                                     <div className="text-[9px] font-black text-[#1e3a5f] uppercase tracking-wider mb-3">
                                                         📚 Questions Selected: {assignment.questions?.length || 0}
@@ -1882,7 +1850,7 @@ const FacultySelfDashboard = () => {
                                                     {/* SUBMISSIONS EXPANDABLE CONTAINER */}
                                                     <div className="border-t border-slate-200/50 pt-2 space-y-2">
                                                         <h5 className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Submissions ({assignment.submissions?.length || 0})</h5>
-                                                        
+
                                                         {assignment.submissions?.length === 0 ? (
                                                             <p className="text-[10px] text-slate-400 italic">No submissions yet.</p>
                                                         ) : (
@@ -1891,9 +1859,8 @@ const FacultySelfDashboard = () => {
                                                                     <div key={sub._id} className="bg-white border border-slate-150 rounded-xl p-2.5 shadow-sm text-[11px]">
                                                                         <div className="flex items-center justify-between font-extrabold text-slate-700 mb-1">
                                                                             <span>{sub.student?.name} <span className="font-medium text-slate-400">({sub.student?.rollNo})</span></span>
-                                                                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${
-                                                                                sub.grade === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-150' : 'bg-green-50 text-green-600 border border-green-150'
-                                                                            }`}>
+                                                                            <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full ${sub.grade === 'Pending' ? 'bg-amber-50 text-amber-600 border border-amber-150' : 'bg-green-50 text-green-600 border border-green-150'
+                                                                                }`}>
                                                                                 Grade: {sub.grade}
                                                                             </span>
                                                                         </div>
@@ -2140,15 +2107,14 @@ const FacultySelfDashboard = () => {
                                                                             setSelectedBulkDates(prev => [...prev, formatted].sort());
                                                                         }
                                                                     }}
-                                                                    className={`w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-[10px] transition-all ${
-                                                                        isPast
-                                                                            ? 'text-slate-300 opacity-30 blur-[1px] cursor-not-allowed hover:bg-transparent pointer-events-none'
-                                                                            : isSelected 
-                                                                                ? 'bg-[#1e3a5f] text-white shadow shadow-[#1e3a5f]/25 scale-110 cursor-pointer' 
-                                                                                : isToday 
-                                                                                    ? 'bg-blue-50 text-blue-700 border border-blue-200 cursor-pointer' 
-                                                                                    : 'hover:bg-slate-200/60 text-slate-700 cursor-pointer'
-                                                                    }`}
+                                                                    className={`w-7 h-7 rounded-full flex items-center justify-center font-extrabold text-[10px] transition-all ${isPast
+                                                                        ? 'text-slate-300 opacity-30 blur-[1px] cursor-not-allowed hover:bg-transparent pointer-events-none'
+                                                                        : isSelected
+                                                                            ? 'bg-[#1e3a5f] text-white shadow shadow-[#1e3a5f]/25 scale-110 cursor-pointer'
+                                                                            : isToday
+                                                                                ? 'bg-blue-50 text-blue-700 border border-blue-200 cursor-pointer'
+                                                                                : 'hover:bg-slate-200/60 text-slate-700 cursor-pointer'
+                                                                        }`}
                                                                 >
                                                                     {d}
                                                                 </button>
@@ -2199,9 +2165,9 @@ const FacultySelfDashboard = () => {
                                                 onClick={() => {
                                                     if (!customAddDateInput) return;
                                                     const chosenDate = new Date(customAddDateInput);
-                                                    chosenDate.setHours(0,0,0,0);
+                                                    chosenDate.setHours(0, 0, 0, 0);
                                                     const today = new Date();
-                                                    today.setHours(0,0,0,0);
+                                                    today.setHours(0, 0, 0, 0);
                                                     if (chosenDate.getTime() < today.getTime()) {
                                                         triggerToast('⚠️ Cannot schedule lectures on past dates');
                                                         return;
@@ -2407,313 +2373,6 @@ const FacultySelfDashboard = () => {
                     </div>
                 )}
 
-                {/* ══════════════════ MENTORING TAB ══════════════════ */}
-                {activeTab === 'mentoring' && (
-                    <div className="animate-fade-in space-y-6">
-                        <div className="flex items-center justify-between border-b border-slate-200/50 pb-4">
-                            <div>
-                                <h2 className="text-2xl font-black text-[#1e3a5f] uppercase tracking-tight">Student Mentorship Portal</h2>
-                                <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mt-1">Search mentored student profiles, evaluate projects, and award skill credits</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Left Column: Student search and select */}
-                            <div className="space-y-4">
-                                <div className="glass-card-premium p-5">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-1.5">
-                                        <Search size={14} className="text-[#1e3a5f]" /> Mentored Students
-                                    </h3>
-                                    <div className="relative mb-3">
-                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="text"
-                                            value={studentSearch}
-                                            onChange={e => setStudentSearch(e.target.value)}
-                                            placeholder="Search by student name..."
-                                            className="w-full h-10 pl-9 pr-4 bg-white/60 border border-slate-200 rounded-xl text-xs outline-none focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all font-semibold"
-                                        />
-                                    </div>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        {mentoredStudents.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase())).length} Students Found
-                                    </span>
-                                </div>
-
-                                {/* Student cards list */}
-                                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
-                                    {loadingStudents ? (
-                                        <div className="text-center py-10">
-                                            <Loader2 className="animate-spin text-[#1e3a5f] mx-auto mb-2" size={24} />
-                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Loading roster...</p>
-                                        </div>
-                                    ) : mentoredStudents.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase())).length === 0 ? (
-                                        <div className="text-center py-10 bg-white/50 border border-slate-200/50 rounded-2xl p-4">
-                                            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">No associated students found</p>
-                                        </div>
-                                    ) : (
-                                        mentoredStudents.filter(s => s.name.toLowerCase().includes(studentSearch.toLowerCase())).map((student) => {
-                                            const isSelected = selectedStudent?._id === student._id;
-                                            return (
-                                                <button
-                                                    type="button"
-                                                    key={student._id}
-                                                    onClick={() => handleSelectStudent(student)}
-                                                    className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 cursor-pointer ${isSelected
-                                                            ? 'bg-[#1e3a5f] border-[#1e3a5f] text-white shadow-lg'
-                                                            : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-350'
-                                                        }`}
-                                                >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs ${isSelected ? 'bg-white/10 text-white' : 'bg-slate-100 text-[#1e3a5f]'}`}>
-                                                            {student.name.charAt(0)}
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <p className={`font-black text-sm truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>{student.name}</p>
-                                                            <p className={`text-[10px] uppercase font-bold tracking-wider mt-0.5 ${isSelected ? 'text-white/60' : 'text-slate-400'}`}>
-                                                                {student.rollNo || 'No Roll No'} · {student.programme || 'B.Tech'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Right Column: Selected student mentoring details & projects list */}
-                            <div className="lg:col-span-2 space-y-6">
-                                {selectedStudent ? (
-                                    <>
-                                        {/* Mentorship Profile Card */}
-                                        <div className="glass-card-premium p-6">
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-1.5 pb-2.5 border-b border-slate-100">
-                                                <User size={14} className="text-[#1e3a5f]" /> Mentoring Profile Details
-                                            </h3>
-                                            <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                                                <DetailRow label="Student Name" value={selectedStudent.name} highlight />
-                                                <DetailRow icon={<Mail size={11} />} label="Student Email" value={selectedStudent.email} />
-                                                <DetailRow label="Department" value={selectedStudent.department || 'Computer Science'} />
-                                                <DetailRow label="University Roll No" value={selectedStudent.rollNo} />
-                                                <DetailRow label="Programme / Stream" value={selectedStudent.programme || 'B.Tech'} />
-                                                <DetailRow label="Current Semester" value={selectedStudent.semester || 'Sem 6'} />
-                                            </div>
-                                        </div>
-
-                                        {/* Student Submitted Projects Section */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Submitted Projects for Evaluation</h3>
-                                                <span className="text-[10px] font-black px-2 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 rounded-full">
-                                                    {studentProjects.length} Submitted
-                                                </span>
-                                            </div>
-
-                                            {loadingProjects ? (
-                                                <div className="text-center py-20 bg-white/50 border border-slate-200/50 rounded-3xl p-6">
-                                                    <Loader2 className="animate-spin text-[#1e3a5f] mx-auto mb-2" size={24} />
-                                                    <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Fetching student projects database...</p>
-                                                </div>
-                                            ) : studentProjects.length === 0 ? (
-                                                <div className="text-center py-16 bg-white/50 border border-slate-200/50 rounded-3xl p-6">
-                                                    <div className="text-3xl mb-3">📁</div>
-                                                    <h4 className="font-bold text-slate-700 text-sm mb-1">No projects submitted yet</h4>
-                                                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">This student has not registered any projects</p>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    {studentProjects.map((project) => {
-                                                        const isEvaluated = project.creditsLocked || !!project.feedback;
-                                                        const isCompleted = project.status === 'Completed';
-                                                        const formState = evaluationForm[project._id] || { credits: project.skillsCredits || 3, feedback: '' };
-                                                        const isEvaluating = evaluatingProjectId === project._id;
-
-                                                        // Border color: green = evaluated/completed, red = awaiting
-                                                        const borderColor = isEvaluated
-                                                            ? isCompleted ? '#10b981' : '#6366f1'
-                                                            : '#ef4444';
-                                                        const borderLabel = isEvaluated
-                                                            ? isCompleted ? 'COMPLETED' : 'EVALUATED'
-                                                            : 'AWAITING REVIEW';
-                                                        const borderLabelColor = isEvaluated
-                                                            ? isCompleted ? '#059669' : '#4f46e5'
-                                                            : '#dc2626';
-
-                                                        return (
-                                                            <div key={project._id} className="bg-white rounded-2xl overflow-hidden shadow-sm transition-all hover:shadow-md" style={{
-                                                                border: `2px solid ${borderColor}`,
-                                                                boxShadow: `0 0 0 0px ${borderColor}22, 0 1px 3px rgba(0,0,0,0.07)`
-                                                            }}>
-                                                                {/* Colored top strip */}
-                                                                <div className="h-1 w-full" style={{ background: borderColor }} />
-
-                                                                <div className="p-6">
-                                                                    {/* Project Metadata */}
-                                                                    <div className="flex justify-between items-start gap-4 mb-3">
-                                                                        <div>
-                                                                            <h4 className="font-black text-[#1e3a5f] text-base leading-snug">{project.name}</h4>
-                                                                            <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mt-1">
-                                                                                Stack: <strong className="text-slate-600">{project.stack}</strong>
-                                                                            </p>
-                                                                        </div>
-                                                                        <span className="px-2.5 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border flex-shrink-0" style={{
-                                                                            color: borderLabelColor,
-                                                                            background: `${borderColor}12`,
-                                                                            borderColor: `${borderColor}50`
-                                                                        }}>
-                                                                            {borderLabel}
-                                                                        </span>
-                                                                    </div>
-
-                                                                    {/* Description */}
-                                                                    <p className="text-xs text-slate-600 leading-relaxed font-semibold bg-slate-50/50 p-3.5 rounded-xl border border-slate-100/50 mb-5">
-                                                                        {project.desc}
-                                                                    </p>
-
-                                                                    {/* Evaluation block */}
-                                                                    <div className="border-t border-slate-100 pt-4 space-y-4">
-                                                                        <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                                                            <Award size={12} className="text-indigo-500" /> Evaluation & Skill Credits Allocation
-                                                                        </h5>
-
-                                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                                                            {/* Credits — locked after first eval */}
-                                                                            <div>
-                                                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                                                                                    Award Skill Credits
-                                                                                    {isEvaluated && <span className="ml-1 text-emerald-600 normal-case tracking-normal font-bold">(Locked)</span>}
-                                                                                </label>
-                                                                                {isEvaluated ? (
-                                                                                    <div className="flex items-center h-10 px-4 bg-emerald-50 border border-emerald-200 rounded-xl gap-2 w-fit">
-                                                                                        <Award size={13} className="text-emerald-600" />
-                                                                                        <span className="text-base font-black text-emerald-700">{project.skillsCredits}</span>
-                                                                                        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Credits</span>
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm h-10 w-fit">
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => setEvaluationForm(prev => ({
-                                                                                                ...prev,
-                                                                                                [project._id]: { ...prev[project._id], credits: Math.max(0, formState.credits - 1) }
-                                                                                            }))}
-                                                                                            className="px-3 py-2 text-slate-500 hover:bg-slate-100 font-black text-lg leading-none transition-colors"
-                                                                                        >−</button>
-                                                                                        <input
-                                                                                            type="number"
-                                                                                            min={0} max={10}
-                                                                                            value={formState.credits}
-                                                                                            onChange={e => setEvaluationForm(prev => ({
-                                                                                                ...prev,
-                                                                                                [project._id]: { ...prev[project._id], credits: Number(e.target.value) }
-                                                                                            }))}
-                                                                                            className="w-12 text-center text-sm font-black text-slate-800 border-0 outline-none"
-                                                                                        />
-                                                                                        <button
-                                                                                            type="button"
-                                                                                            onClick={() => setEvaluationForm(prev => ({
-                                                                                                ...prev,
-                                                                                                [project._id]: { ...prev[project._id], credits: Math.min(10, formState.credits + 1) }
-                                                                                            }))}
-                                                                                            className="px-3 py-2 text-slate-500 hover:bg-slate-100 font-black text-lg leading-none transition-colors"
-                                                                                        >+</button>
-                                                                                    </div>
-                                                                                )}
-                                                                            </div>
-
-                                                                            {/* Feedback input — always active */}
-                                                                            <div className="md:col-span-2">
-                                                                                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">
-                                                                                    {isEvaluated ? 'Add Another Feedback' : 'Mentoring Feedback'}
-                                                                                </label>
-                                                                                <input
-                                                                                    type="text"
-                                                                                    value={formState.feedback}
-                                                                                    onChange={e => setEvaluationForm(prev => ({
-                                                                                        ...prev,
-                                                                                        [project._id]: { ...prev[project._id], feedback: e.target.value }
-                                                                                    }))}
-                                                                                    placeholder={isEvaluated ? "Add a new feedback note…" : "Enter feedback comments for the student..."}
-                                                                                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-xs focus:border-[#1e3a5f] outline-none transition-all placeholder:text-slate-400 font-semibold"
-                                                                                />
-                                                                            </div>
-                                                                        </div>
-
-                                                                        {/* Feedback History */}
-                                                                        {project.feedbackHistory && project.feedbackHistory.length > 0 && (
-                                                                            <div className="mt-2 rounded-xl overflow-hidden border border-slate-100">
-                                                                                <div className="bg-slate-50 px-3 py-2 border-b border-slate-100 flex items-center gap-1.5">
-                                                                                    <MessageSquare size={11} className="text-slate-400" />
-                                                                                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Feedback History ({project.feedbackHistory.length})</span>
-                                                                                </div>
-                                                                                <div className="divide-y divide-slate-50 max-h-40 overflow-y-auto">
-                                                                                    {[...project.feedbackHistory].reverse().map((entry: any, idx: number) => (
-                                                                                        <div key={idx} className="px-3 py-2.5 bg-white flex flex-col gap-0.5">
-                                                                                            <p className="text-xs font-semibold text-slate-700 leading-relaxed">"{entry.text}"</p>
-                                                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                                                <span className="text-[9px] font-black text-indigo-600">{entry.byName}</span>
-                                                                                                <span className="text-[9px] text-slate-400 font-bold">·</span>
-                                                                                                <span className="text-[9px] text-slate-400 font-semibold">
-                                                                                                    {new Date(entry.at).toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
-
-                                                                        <div className="flex justify-between items-center pt-1">
-                                                                            <span className="text-[9px] font-black px-2 py-0.5 rounded-lg border" style={{
-                                                                                color: borderLabelColor,
-                                                                                background: `${borderColor}10`,
-                                                                                borderColor: `${borderColor}40`
-                                                                            }}>
-                                                                                {isEvaluated
-                                                                                    ? `✓ Evaluated — ${project.skillsCredits} Credits Locked`
-                                                                                    : '⏳ Awaiting Review'}
-                                                                            </span>
-
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleEvaluateProjectClick(project._id)}
-                                                                                disabled={isEvaluating || !formState.feedback.trim()}
-                                                                                className="px-4 py-2.5 bg-[#1e3a5f] hover:bg-[#162d4a] disabled:bg-slate-200 disabled:text-slate-400 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-md active:scale-[0.98] hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer ml-auto"
-                                                                            >
-                                                                                {isEvaluating ? (
-                                                                                    <>
-                                                                                        <Loader2 size={12} className="animate-spin" />
-                                                                                        <span>Saving…</span>
-                                                                                    </>
-                                                                                ) : (
-                                                                                    <>
-                                                                                        <Check size={12} />
-                                                                                        <span>{isEvaluated ? 'Add Feedback' : 'Submit Evaluation'}</span>
-                                                                                    </>
-                                                                                )}
-                                                                            </button>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="text-center py-24 bg-white/50 border border-slate-200/50 rounded-3xl p-6">
-                                        <div className="text-4xl mb-4">👨‍🏫</div>
-                                        <h3 className="font-bold text-slate-700 text-lg mb-1">Select a student from the mentoring roster</h3>
-                                        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Choose a student on the left to evaluate their submissions and award credits</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 {/* ══════════════════ APPROVALS TAB ══════════════════ */}
                 {activeTab === 'approvals' && (
                     <div className="animate-fade-in space-y-6">
@@ -2876,9 +2535,240 @@ const FacultySelfDashboard = () => {
                     </div>
                 )}
 
+                {/* ══════════════════ CURRICULUM TAB ══════════════════ */}
+                {activeTab === 'curriculum' && (
+                    <div className="animate-fade-in space-y-10">
+                        {/* Header block */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-black text-[#1e3a5f] uppercase tracking-tight">Academic Curriculum</h2>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">Official syllabus, progress tracking, and lecture breakdown across all phases.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div className="lg:col-span-8 space-y-6">
+                                {curriculumLoading ? (
+                                    <div className="flex flex-col items-center justify-center py-16 space-y-4 bg-white border border-slate-200/60 rounded-[32px] shadow-sm">
+                                        <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading Academic Curriculum...</p>
+                                    </div>
+                                ) : curriculum.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-5 bg-white border border-slate-200/60 rounded-[32px] shadow-sm">
+                                        <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-[22px] flex items-center justify-center text-slate-400">
+                                            <Library size={32} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Institutional Syllabus Empty</h4>
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide max-w-sm mt-1.5 leading-relaxed">
+                                                No sessional syllabus branches have been registered under this college registry ledger yet.
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                try {
+                                                    const token = localStorage.getItem('urp_token');
+                                                    if (!token) return;
+                                                    triggerToast('Seeding comprehensive 8-semester blueprint...');
+                                                    const res = await fetch(BASE_URL + '/api/academic/seed', {
+                                                        headers: { 'Authorization': `Bearer ${token}` }
+                                                    });
+                                                    if (res.ok) {
+                                                        triggerToast('Syllabus seeder completed successfully!');
+                                                        fetchCurriculum();
+                                                    }
+                                                } catch (e) {
+                                                    console.error(e);
+                                                }
+                                            }}
+                                            className="px-5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                                        >
+                                            Seed 8-Semester Syllabus Blueprint
+                                        </button>
+                                    </div>
+                                ) : (
+                                    (() => {
+                                        const selectedSemObj = curriculum.find(s => s.sem === selectedCurriculumSem) || curriculum[0];
+                                        const availableCourses = selectedSemObj?.courses || [];
+                                        const selectedCourseObj = availableCourses.find((c: any) => c.code === selectedCurriculumCourseCode) || availableCourses[0];
+
+                                        return (
+                                            <div className="bg-white rounded-[32px] border border-slate-200/60 p-6 sm:p-8 shadow-sm space-y-6">
+                                                {/* Semester and Subject Selectors Row */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Semester</label>
+                                                        <select
+                                                            value={selectedCurriculumSem}
+                                                            onChange={(e) => {
+                                                                const semVal = e.target.value;
+                                                                setSelectedCurriculumSem(semVal);
+                                                                const semObj = curriculum.find(s => s.sem === semVal);
+                                                                if (semObj && semObj.courses.length > 0) {
+                                                                    setSelectedCurriculumCourseCode(semObj.courses[0].code);
+                                                                } else {
+                                                                    setSelectedCurriculumCourseCode('');
+                                                                }
+                                                            }}
+                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all cursor-pointer"
+                                                        >
+                                                            {curriculum.map((sem) => (
+                                                                <option key={sem.sem} value={sem.sem}>
+                                                                    {sem.sem} ({sem.credits} Credits)
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Subject</label>
+                                                        <select
+                                                            value={selectedCurriculumCourseCode}
+                                                            onChange={(e) => setSelectedCurriculumCourseCode(e.target.value)}
+                                                            disabled={availableCourses.length === 0}
+                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all disabled:opacity-50 cursor-pointer"
+                                                        >
+                                                            {availableCourses.map((c: any) => (
+                                                                <option key={c.code} value={c.code}>
+                                                                    {c.code} - {c.title || c.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {/* Detailed Syllabus Rectangular Section Box */}
+                                                {selectedCourseObj ? (
+                                                    <div className="bg-slate-50/40 rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-6">
+                                                        {/* Course Header info */}
+                                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200/60">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
+                                                                    <Library size={20} />
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-mono text-[9px] font-black text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded uppercase tracking-wider">{selectedCourseObj.code}</span>
+                                                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mt-1">{selectedCourseObj.title || selectedCourseObj.name}</h4>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-xl shadow-sm">
+                                                                    Credits: {selectedCourseObj.credits}
+                                                                </span>
+                                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border shrink-0 ${selectedSemObj.status === 'Completed' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
+                                                                    {selectedSemObj.status}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Instructor / Progress */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-500">
+                                                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2.5">
+                                                                <User size={16} className="text-slate-400" />
+                                                                <div>
+                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Instructor</span>
+                                                                    <span className="text-slate-800 font-extrabold">{selectedCourseObj.faculty || 'Senior Faculty Member'}</span>
+                                                                </div>
+                                                            </div>
+                                                            {selectedCourseObj.result ? (
+                                                                <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 shadow-sm flex items-center gap-2.5 text-indigo-950">
+                                                                    <Award size={16} className="text-indigo-600" />
+                                                                    <div>
+                                                                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Grade Allotted</span>
+                                                                        <span className="text-indigo-700 font-extrabold">{selectedCourseObj.result}</span>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
+                                                                    <div className="flex justify-between text-[8px] text-slate-400 font-black uppercase tracking-widest">
+                                                                        <span>Syllabus Progress</span>
+                                                                        <span>{selectedCourseObj.progress || 0}%</span>
+                                                                    </div>
+                                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                        <div className="h-full bg-slate-900 rounded-full" style={{ width: `${selectedCourseObj.progress || 0}%` }}></div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Topics / Syllabus covered */}
+                                                        {selectedCourseObj.topics && (
+                                                            <div className="space-y-2">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Syllabus Breakdown & Topics</span>
+                                                                <div className="grid grid-cols-1 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                                                                    {selectedCourseObj.topics.map((t: string, idx: number) => (
+                                                                        <div key={idx} className="flex items-center gap-2.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-700 hover:border-slate-350 transition-colors">
+                                                                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-200 w-5 h-5 rounded-lg flex items-center justify-center shrink-0">{idx + 1}</span>
+                                                                            <span>{t}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Syllabus Download Action */}
+                                                        <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[10px]">
+                                                            <span className="text-slate-400 italic">Certified syllabus record</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => triggerToast(`Downloading course unit syllabus for ${selectedCourseObj.code}...`)}
+                                                                className="font-black text-indigo-650 hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                                                            >
+                                                                <Download size={12} /> Syllabus PDF
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-12 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                                        <p className="text-xs font-bold uppercase tracking-wider">No subjects found in selected semester</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()
+                                )}
+                            </div>
+
+                            <div className="lg:col-span-4 space-y-6">
+                                <div className="bg-white rounded-[28px] p-6 border-[1px] border-slate-200/60 shadow-sm space-y-6">
+                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                        <Bookmark className="text-slate-900" size={15} /> Academic Utilities
+                                    </h3>
+                                    <div className="space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerToast('Syllabus Handbook PDF download initiated.')}
+                                            className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                                <FileBadge size={16} className="text-slate-500" />
+                                                <span>Syllabus Handbook (PDF)</span>
+                                            </div>
+                                            <ChevronRight size={14} className="text-slate-400" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerToast('Institutional Calendar download initiated.')}
+                                            className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                                                <Calendar size={16} className="text-slate-500" />
+                                                <span>Institutional Calendar</span>
+                                            </div>
+                                            <ChevronRight size={14} className="text-slate-400" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </main>
         </div>
     );
 };
 
 export default FacultySelfDashboard;
+

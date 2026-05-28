@@ -212,7 +212,7 @@ const generateMockTestPaper = (
 const StudentSelfDashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'examcell' | 'elearning' | 'locker' | 'projects' | 'schedule'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'curriculum' | 'examcell' | 'elearning' | 'locker' | 'schedule'>('overview');
     const [showExamForm, setShowExamForm] = useState(false);
     const [showChangePassword, setShowChangePassword] = useState(false);
 
@@ -274,12 +274,297 @@ const StudentSelfDashboard = () => {
         }
     };
 
+    const handleDownloadAssignment = (assignment: any) => {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            const totalMarks = assignment.questions?.reduce((acc: number, q: any) => acc + (q.marks || 0), 0) || 0;
+            const qListHTML = assignment.questions && assignment.questions.length > 0 
+                ? assignment.questions.map((q: any, idx: number) => `
+                    <div class="question-block" style="margin-bottom: 24px; page-break-inside: avoid;">
+                        <div class="question-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 10px;">
+                            <span class="q-title" style="font-weight: 800; font-size: 13px; color: #0f172a; text-transform: uppercase;">Question ${idx + 1} <span style="font-size: 10px; font-weight: 600; color: #64748b;">[Code: ${q.code || 'Q-' + idx}]</span></span>
+                            <span class="q-marks" style="font-weight: 800; font-size: 11px; background: #f1f5f9; color: #1e293b; padding: 2px 8px; border: 1px solid #e2e8f0; border-radius: 4px;">[${q.marks || 10} Marks]</span>
+                        </div>
+                        <p class="q-text" style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 12px; line-height: 1.5;">${q.text}</p>
+                        <div class="answer-ruled" style="height: 120px; border: 1px solid #e2e8f0; border-radius: 8px; background: linear-gradient(180deg, transparent, transparent 29px, #e2e8f0 30px); background-size: 100% 30px; margin-top: 10px; padding: 10px;"></div>
+                    </div>
+                `).join('')
+                : '<p style="text-align: center; color: #64748b; font-size: 12px; font-weight: bold; padding: 20px;">No subjective questions enrolled in this sessional assignment ledger.</p>';
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title>Assignment: ${assignment.title}</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap');
+                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                            body {
+                                font-family: 'Inter', sans-serif;
+                                color: #1e293b;
+                                padding: 20px;
+                                background-color: #ffffff;
+                                line-height: 1.4;
+                            }
+                            .sheet-container {
+                                max-width: 800px;
+                                margin: 0 auto;
+                                border: 2px solid #0f172a;
+                                padding: 40px;
+                                border-radius: 16px;
+                                position: relative;
+                                background: #fff;
+                            }
+                            .header-block {
+                                text-align: center;
+                                border-bottom: 3px double #0f172a;
+                                padding-bottom: 20px;
+                                margin-bottom: 24px;
+                            }
+                            .college-name {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 20px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 0.5px;
+                                margin-bottom: 4px;
+                            }
+                            .college-address {
+                                font-size: 10px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                color: #64748b;
+                                letter-spacing: 1px;
+                                margin-bottom: 12px;
+                            }
+                            .doc-title {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 14px;
+                                font-weight: 900;
+                                display: inline-block;
+                                border: 1px solid #0f172a;
+                                padding: 6px 16px;
+                                background: #f8fafc;
+                                color: #0f172a;
+                                letter-spacing: 2px;
+                                border-radius: 6px;
+                            }
+                            .info-grid {
+                                display: grid;
+                                grid-template-cols: 1fr 1fr;
+                                gap: 14px;
+                                margin-bottom: 24px;
+                                border: 1px solid #cbd5e1;
+                                border-radius: 8px;
+                                padding: 16px;
+                                background-color: #f8fafc;
+                            }
+                            .info-item {
+                                font-size: 11px;
+                            }
+                            .info-label {
+                                font-weight: 800;
+                                color: #64748b;
+                                text-transform: uppercase;
+                                font-size: 9px;
+                                letter-spacing: 0.5px;
+                                margin-bottom: 2px;
+                            }
+                            .info-value {
+                                font-weight: 700;
+                                color: #0f172a;
+                            }
+                            .student-form {
+                                display: grid;
+                                grid-template-cols: 1fr 1fr;
+                                gap: 16px;
+                                border: 1px dashed #cbd5e1;
+                                border-radius: 8px;
+                                padding: 16px;
+                                margin-bottom: 24px;
+                            }
+                            .form-field {
+                                display: flex;
+                                align-items: flex-end;
+                                font-size: 11px;
+                                font-weight: 800;
+                                color: #0f172a;
+                                text-transform: uppercase;
+                            }
+                            .form-line {
+                                flex: 1;
+                                border-bottom: 1px solid #94a3b8;
+                                margin-left: 8px;
+                                height: 16px;
+                            }
+                            .desc-block {
+                                margin-bottom: 28px;
+                                padding: 14px;
+                                border-left: 4px solid #0f172a;
+                                background: #f8fafc;
+                                border-radius: 0 8px 8px 0;
+                            }
+                            .desc-title {
+                                font-size: 10px;
+                                font-weight: 800;
+                                text-transform: uppercase;
+                                color: #64748b;
+                                margin-bottom: 4px;
+                                letter-spacing: 0.5px;
+                            }
+                            .desc-text {
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #334155;
+                            }
+                            .section-heading {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 13px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 1px;
+                                border-bottom: 2px solid #0f172a;
+                                padding-bottom: 4px;
+                                margin-bottom: 20px;
+                            }
+                            .signature-block {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-top: 40px;
+                                padding-top: 24px;
+                                border-top: 1px dashed #cbd5e1;
+                                page-break-inside: avoid;
+                            }
+                            .sig-line {
+                                text-align: center;
+                                width: 200px;
+                            }
+                            .sig-space {
+                                height: 40px;
+                            }
+                            .sig-text {
+                                font-size: 10px;
+                                font-weight: 800;
+                                border-top: 1.5px solid #0f172a;
+                                padding-top: 6px;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 0.5px;
+                            }
+                            .watermark {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%) rotate(-45deg);
+                                font-size: 50px;
+                                font-weight: 900;
+                                color: rgba(226, 232, 240, 0.28);
+                                pointer-events: none;
+                                z-index: 0;
+                                white-space: nowrap;
+                                text-transform: uppercase;
+                                letter-spacing: 8px;
+                            }
+                            @media print {
+                                body { padding: 0; background-color: #ffffff; }
+                                .sheet-container { border: none; padding: 0; max-width: 100%; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="sheet-container">
+                            <div class="watermark">${assignment.department || 'OFFICIAL WORKSHEET'}</div>
+                            
+                            <div class="header-block">
+                                <h1 class="college-name">${user?.college?.name || 'All Campus Digital College'}</h1>
+                                <p class="college-address">${user?.college?.address || user?.college?.location || 'Blockchain Verified Campus Registry'}</p>
+                                <span class="doc-title">Assignment Worksheet</span>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <p class="info-label">Assignment Title</p>
+                                    <p class="info-value">${assignment.title}</p>
+                                </div>
+                                <div class="info-item">
+                                    <p class="info-label">Faculty Instructor</p>
+                                    <p class="info-value">${assignment.faculty?.name || 'Academic Faculty'}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 10px;">
+                                    <p class="info-label">Department / Branch</p>
+                                    <p class="info-value">${assignment.department}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 10px;">
+                                    <p class="info-label">Semester & Phase</p>
+                                    <p class="info-value">${assignment.semester}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 10px;">
+                                    <p class="info-label">Due Date Deadline</p>
+                                    <p class="info-value">${new Date(assignment.dueDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 10px;">
+                                    <p class="info-label">Evaluative Weightage</p>
+                                    <p class="info-value" style="color: #4f46e5; font-weight: 800;">${totalMarks} Marks Total</p>
+                                </div>
+                            </div>
+
+                            <div class="student-form">
+                                <div class="form-field">
+                                    <span>Student Name:</span>
+                                    <div class="form-line"></div>
+                                </div>
+                                <div class="form-field">
+                                    <span>Roll Number:</span>
+                                    <div class="form-line"></div>
+                                </div>
+                            </div>
+
+                            ${assignment.description ? `
+                            <div class="desc-block">
+                                <p class="desc-title">Instructions / Description</p>
+                                <p class="desc-text">${assignment.description}</p>
+                            </div>
+                            ` : ''}
+
+                            <h2 class="section-heading">Assigned Questions Booklet</h2>
+                            
+                            <div class="questions-container">
+                                ${qListHTML}
+                            </div>
+
+                            <div class="signature-block">
+                                <div class="sig-line">
+                                    <div class="sig-space"></div>
+                                    <p class="sig-text">Student Signature</p>
+                                </div>
+                                <div class="sig-line">
+                                    <div class="sig-space"></div>
+                                    <p class="sig-text">Faculty Assessor Signature</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                setTimeout(function() { window.close(); }, 500);
+                            };
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+    };
+
     const handleSolveAssignmentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmittingAssignment(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/assignments/${solvingAssignmentId}/submit`, {
+            const res = await fetch(`${BASE_URL}/api/assignments/${solvingAssignmentId}/submit`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -292,17 +577,17 @@ const StudentSelfDashboard = () => {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                alert('🚀 Assignment submitted successfully!');
+                alert('Assignment submitted successfully!');
                 setSolvingAssignmentId(null);
                 setAssignmentAnswers([]);
                 setGeneralSubText('');
                 fetchAssignments();
             } else {
-                alert(`❌ Error: ${data.error || 'Failed to submit assignment'}`);
+                alert(`Error: ${data.error || 'Failed to submit assignment'}`);
             }
         } catch (err) {
             console.error(err);
-            alert('❌ Server communication error');
+            alert('Server communication error');
         } finally {
             setSubmittingAssignment(false);
         }
@@ -499,6 +784,8 @@ const StudentSelfDashboard = () => {
     // Dynamic curriculum & digital credentials states
     const [curriculum, setCurriculum] = useState<any[]>([]);
     const [curriculumLoading, setCurriculumLoading] = useState<boolean>(false);
+    const [selectedCurriculumSem, setSelectedCurriculumSem] = useState<string>('');
+    const [selectedCurriculumCourseCode, setSelectedCurriculumCourseCode] = useState<string>('');
     const [lockerDocs, setLockerDocs] = useState<any[]>([]);
     const [lockerLoading, setLockerLoading] = useState<boolean>(false);
 
@@ -917,6 +1204,12 @@ const StudentSelfDashboard = () => {
                 });
 
                 setCurriculum(sortedSemesters);
+                if (sortedSemesters.length > 0) {
+                    setSelectedCurriculumSem(sortedSemesters[0].sem);
+                    if (sortedSemesters[0].courses.length > 0) {
+                        setSelectedCurriculumCourseCode(sortedSemesters[0].courses[0].code);
+                    }
+                }
             }
         } catch (e) {
             console.error('Failed to fetch curriculum:', e);
@@ -1662,8 +1955,8 @@ const StudentSelfDashboard = () => {
                                         type="button"
                                         onClick={() => setSelectedMockFormat('sessional')}
                                         className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${selectedMockFormat === 'sessional'
-                                                ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]'
-                                                : 'bg-slate-50 text-slate-650 border-slate-200/60 hover:bg-slate-100/50'
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]'
+                                            : 'bg-slate-50 text-slate-650 border-slate-200/60 hover:bg-slate-100/50'
                                             }`}
                                     >
                                         <p className="text-[10px] font-black uppercase tracking-wider">Sessional Exam</p>
@@ -1674,8 +1967,8 @@ const StudentSelfDashboard = () => {
                                         type="button"
                                         onClick={() => setSelectedMockFormat('endsem')}
                                         className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${selectedMockFormat === 'endsem'
-                                                ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]'
-                                                : 'bg-slate-50 text-slate-655 border-slate-200/60 hover:bg-slate-100/50'
+                                            ? 'bg-slate-900 text-white border-slate-900 shadow-md scale-[1.02]'
+                                            : 'bg-slate-50 text-slate-655 border-slate-200/60 hover:bg-slate-100/50'
                                             }`}
                                     >
                                         <p className="text-[10px] font-black uppercase tracking-wider">End-Sem Exam</p>
@@ -1699,8 +1992,8 @@ const StudentSelfDashboard = () => {
             {/* HEADER */}
             <header
                 className={`fixed top-0 left-0 right-0 z-50 px-6 lg:px-12 h-20 flex items-center justify-between transition-all duration-300 ${scrolled
-                        ? 'bg-white/70 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_4px_24px_rgba(0,0,0,0.08)]'
-                        : 'bg-white border-b border-slate-100 shadow-sm'
+                    ? 'bg-white/70 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_4px_24px_rgba(0,0,0,0.08)]'
+                    : 'bg-white border-b border-slate-100 shadow-sm'
                     }`}
             >
                 <div className="flex items-center gap-3">
@@ -1726,7 +2019,6 @@ const StudentSelfDashboard = () => {
                             { id: 'overview', label: 'Dashboard' },
                             { id: 'curriculum', label: 'Curriculum' },
                             { id: 'schedule', label: 'Class Schedule & Assignments' },
-                            { id: 'projects', label: 'Projects & Achievements' },
                             { id: 'examcell', label: 'Exam Cell' },
                             { id: 'locker', label: 'Digital Locker' }
                         ].map(t => (
@@ -1813,7 +2105,7 @@ const StudentSelfDashboard = () => {
                                                             if (n.isBackend) {
                                                                 try {
                                                                     const token = localStorage.getItem('urp_token');
-                                                                    await fetch(`{BASE_URL}/api/notifications/${n.id}/read`, {
+                                                                    await fetch(`${BASE_URL}/api/notifications/${n.id}/read`, {
                                                                         method: 'PUT',
                                                                         headers: { 'Authorization': `Bearer ${token}` }
                                                                     });
@@ -1938,7 +2230,6 @@ const StudentSelfDashboard = () => {
                     { id: 'overview', label: 'Dashboard' },
                     { id: 'curriculum', label: 'Curriculum' },
                     { id: 'schedule', label: 'Schedule' },
-                    { id: 'projects', label: 'Projects' },
                     { id: 'examcell', label: 'Exam Cell' },
                     { id: 'locker', label: 'Locker' }
                 ].map(t => (
@@ -2066,81 +2357,47 @@ const StudentSelfDashboard = () => {
                             </div>
 
                             {/* Skills Credit Analytics on the Right Side */}
-                            <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[28px] border-[1px] border-slate-800 shadow-xl p-6 relative overflow-hidden flex flex-col justify-between text-white group">
-                                <div className="absolute -right-12 -top-12 w-32 h-32 rounded-full bg-indigo-500/10 blur-xl pointer-events-none group-hover:bg-indigo-500/20 transition-all duration-500" />
-                                <div className="absolute -left-12 -bottom-12 w-32 h-32 rounded-full bg-cyan-500/5 blur-xl pointer-events-none" />
+                            {/* Sleek Official Announcements Column */}
+                            <div className="bg-white rounded-[28px] border-[1px] border-slate-200/60 shadow-md p-6 relative overflow-hidden flex flex-col justify-between group">
+                                <div className="absolute -right-12 -top-12 w-32 h-32 rounded-full bg-slate-100 blur-xl pointer-events-none" />
 
                                 <div>
-                                    <div className="flex justify-between items-center border-b border-white/10 pb-3 mb-4">
-                                        <h3 className="text-xs font-black text-indigo-200 uppercase tracking-widest flex items-center gap-2">
-                                            <Award className="text-indigo-400 animate-pulse" size={15} /> Skills Credit Analytics
+                                    <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+                                        <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                                            <Bell className="text-[#1e3a5f] animate-pulse" size={15} /> Announcements Board
                                         </h3>
-                                        <span className="px-2 py-0.5 bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 text-[8px] font-black uppercase tracking-wider rounded-md">
-                                            Active Portfolio
+                                        <span className="px-2.5 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[8px] font-black uppercase tracking-wider rounded-md">
+                                            University Feed
                                         </span>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        {/* Credits Score */}
-                                        <div className="bg-white/5 border border-white/10 rounded-2xl p-3.5 flex items-center justify-between gap-4">
-                                            <div className="space-y-1">
-                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Total Skills Credits</span>
-                                                <p className="text-xl font-extrabold text-white">{skillsCredits} Credits</p>
-                                            </div>
-                                            <div className="relative flex items-center justify-center shrink-0">
-                                                <div className="w-11 h-11 rounded-full border-2 border-indigo-500 flex items-center justify-center font-mono text-[10px] font-black text-indigo-300">
-                                                    +{skillsCredits}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Skills breakdown bars */}
-                                        <div className="space-y-2.5">
-                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Skills Breakdown</span>
-                                            {[
-                                                { label: 'Projects', val: Math.min(100, (projects.filter((p: any) => p.type === 'project').length || 2) * 20), pts: (projects.filter((p: any) => p.type === 'project').length || 2) * 4, color: 'from-indigo-400 to-violet-500' },
-                                                { label: 'Achievements', val: Math.min(100, (projects.filter((p: any) => p.type === 'achievement').length || 1) * 30), pts: (projects.filter((p: any) => p.type === 'achievement').length || 1) * 3, color: 'from-amber-400 to-orange-500' },
-                                                { label: 'Open Source', val: 40, pts: 5, color: 'from-emerald-400 to-green-500' },
-                                            ].map(bar => (
-                                                <div key={bar.label}>
-                                                    <div className="flex justify-between text-[8px] font-black text-slate-400 mb-0.5">
-                                                        <span>{bar.label}</span><span>{bar.pts} pts</span>
-                                                    </div>
-                                                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                                        <div className={`h-full bg-gradient-to-r ${bar.color} rounded-full`} style={{ width: `${bar.val}%` }} />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Core Tech Stack */}
-                                        <div className="space-y-1.5 text-left">
-                                            <div className="flex items-center gap-1.5 text-indigo-300">
-                                                <Zap size={12} className="animate-bounce" />
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Core Technologies</span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                                {Array.from(new Set(projects.flatMap((p: any) => (p.stack || '').split(',').map((s: string) => s.trim())))).slice(0, 5).filter(Boolean).map((tech) => (
-                                                    <span key={tech} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-bold text-indigo-200">
-                                                        {tech}
+                                    <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
+                                        {notices.slice(0, 4).map((notice: any, idx: number) => (
+                                            <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl hover:bg-slate-100/50 transition-colors">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100/30 text-indigo-650 text-[8px] font-black uppercase tracking-wider rounded">
+                                                        {notice.category || 'Academic'}
                                                     </span>
-                                                ))}
-                                                {projects.length === 0 && ['Go', 'Raft', 'gRPC', 'Python', 'OpenCV', 'PyTorch'].map((tech) => (
-                                                    <span key={tech} className="px-2 py-0.5 bg-white/5 border border-white/10 rounded text-[9px] font-bold text-indigo-200">
-                                                        {tech}
-                                                    </span>
-                                                ))}
+                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{notice.date}</span>
+                                                </div>
+                                                <h4 className="text-xs font-bold text-slate-800 tracking-tight leading-relaxed line-clamp-2">{notice.title}</h4>
                                             </div>
-                                        </div>
+                                        ))}
+                                        {notices.length === 0 && (
+                                            <div className="text-center py-12 text-slate-400 text-xs font-bold uppercase tracking-wider">
+                                                No announcements posted yet.
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                <div className="mt-5 pt-3 border-t border-white/10 flex flex-col gap-3">
+                                <div className="mt-5 pt-3 border-t border-slate-150">
                                     <button
-                                        onClick={() => setActiveTab('projects')}
-                                        className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer border border-indigo-400/20"
+                                        type="button"
+                                        onClick={() => navigate('/student-notices')}
+                                        className="w-full py-2.5 bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white rounded-xl text-[9px] font-extrabold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                                     >
-                                        <BookOpen size={13} className="text-indigo-200" /> Manage Portfolio & Upload
+                                        <ArrowRight size={13} className="text-white" /> View All Notices
                                     </button>
                                 </div>
                             </div>
@@ -2282,15 +2539,15 @@ const StudentSelfDashboard = () => {
                                                                     key={group.subject}
                                                                     onClick={() => setSelectedTrendSubject(group.subject)}
                                                                     className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 ${active
-                                                                            ? 'bg-slate-900 border-slate-900 text-white shadow-md transform scale-[1.01]'
-                                                                            : 'bg-slate-50 hover:bg-slate-100/60 border-slate-200/50 text-slate-900'
+                                                                        ? 'bg-slate-900 border-slate-900 text-white shadow-md transform scale-[1.01]'
+                                                                        : 'bg-slate-50 hover:bg-slate-100/60 border-slate-200/50 text-slate-900'
                                                                         }`}
                                                                 >
                                                                     <div className="flex justify-between items-start gap-2">
                                                                         <h5 className="text-xs font-black tracking-tight truncate flex-1">{group.subject}</h5>
                                                                         <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${active
-                                                                                ? 'bg-white/20 text-white'
-                                                                                : 'bg-slate-200/60 text-slate-700'
+                                                                            ? 'bg-white/20 text-white'
+                                                                            : 'bg-slate-200/60 text-slate-700'
                                                                             }`}>
                                                                             {group.questions.length} Qs
                                                                         </span>
@@ -2342,8 +2599,8 @@ const StudentSelfDashboard = () => {
                                                                     className="w-full flex items-center gap-2.5 text-left text-xs font-semibold py-1 hover:opacity-80 transition-opacity cursor-pointer text-slate-700"
                                                                 >
                                                                     <div className={`w-4 h-4 rounded-md border flex items-center justify-center shrink-0 transition-all ${done
-                                                                            ? 'bg-indigo-600 border-indigo-600 text-white'
-                                                                            : 'border-slate-300 bg-white'
+                                                                        ? 'bg-indigo-600 border-indigo-600 text-white'
+                                                                        : 'border-slate-300 bg-white'
                                                                         }`}>
                                                                         {done && (
                                                                             <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="4">
@@ -2838,13 +3095,13 @@ const StudentSelfDashboard = () => {
                 {/* CLASS SCHEDULE & ASSIGNMENTS TAB */}
                 {activeTab === 'schedule' && (
                     <div className="space-y-10 animate-fade-in">
-                        <SectionHeader 
-                            title="Class Schedule & Assignments" 
-                            desc="View scheduled and completed lectures, see what topic was taught today, and solve question-bank assignments." 
+                        <SectionHeader
+                            title="Class Schedule & Assignments"
+                            desc="View scheduled and completed lectures, see what topic was taught today, and solve question-bank assignments."
                         />
 
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            
+
                             {/* LEFT COLUMN: CLASS SCHEDULE TIMELINE CAROUSEL */}
                             <div className="lg:col-span-7 space-y-6">
                                 <div className="bg-white border border-slate-200/60 rounded-[32px] p-6 sm:p-8 shadow-sm">
@@ -2923,25 +3180,23 @@ const StudentSelfDashboard = () => {
                                                             {/* Sessions Stack */}
                                                             <div className="space-y-4">
                                                                 {sessionsForActiveDate.map(session => (
-                                                                    <div key={session._id} className={`border rounded-2xl p-5 transition-all duration-300 ${
-                                                                        session.status === 'completed'
+                                                                    <div key={session._id} className={`border rounded-2xl p-5 transition-all duration-300 ${session.status === 'completed'
                                                                             ? 'bg-emerald-50/10 hover:bg-emerald-50/20 border-emerald-200/60'
                                                                             : session.status === 'cancelled'
                                                                                 ? 'bg-rose-50/10 hover:bg-rose-50/20 border-rose-200/60 shadow-sm shadow-rose-100/50'
                                                                                 : 'bg-slate-50/40 hover:bg-slate-50 border-slate-200/40 hover:border-slate-250'
-                                                                    }`}>
+                                                                        }`}>
                                                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-3">
                                                                             <div>
                                                                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">{session.semester} • {session.batch || 'All'} • {session.department}</span>
                                                                                 <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight mt-0.5">{session.subject}</h4>
                                                                             </div>
-                                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xl self-start sm:self-auto border ${
-                                                                                session.status === 'completed'
+                                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xl self-start sm:self-auto border ${session.status === 'completed'
                                                                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-150'
                                                                                     : session.status === 'cancelled'
                                                                                         ? 'bg-rose-50 text-rose-700 border-rose-150'
                                                                                         : 'bg-indigo-50 text-indigo-700 border-indigo-150'
-                                                                            }`}>
+                                                                                }`}>
                                                                                 {session.status}
                                                                             </span>
                                                                         </div>
@@ -2995,13 +3250,12 @@ const StudentSelfDashboard = () => {
                                                                                 key={dStr}
                                                                                 type="button"
                                                                                 onClick={() => setStudentSlideIndex(idx)}
-                                                                                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                                                                                    idx === studentSlideIndex 
-                                                                                        ? 'w-5 bg-indigo-650' 
+                                                                                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === studentSlideIndex
+                                                                                        ? 'w-5 bg-indigo-650'
                                                                                         : isTodaySlide
                                                                                             ? 'w-1.5 bg-green-500 hover:bg-green-600'
                                                                                             : 'w-1.5 bg-slate-200 hover:bg-slate-300'
-                                                                                }`}
+                                                                                    }`}
                                                                             />
                                                                         );
                                                                     })}
@@ -3044,13 +3298,12 @@ const StudentSelfDashboard = () => {
                                                                 <h4 className="text-xs font-black text-slate-950 uppercase tracking-tight">{assignment.title}</h4>
                                                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5 block">By: {assignment.faculty?.name}</span>
                                                             </div>
-                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                                                                mySubmission 
+                                                            <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${mySubmission
                                                                     ? mySubmission.grade !== 'Pending'
                                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                                         : 'bg-blue-50 text-blue-700 border-blue-200'
                                                                     : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                            }`}>
+                                                                }`}>
                                                                 {mySubmission ? (mySubmission.grade !== 'Pending' ? `Graded: ${mySubmission.grade}` : 'Submitted') : 'Pending'}
                                                             </span>
                                                         </div>
@@ -3063,23 +3316,10 @@ const StudentSelfDashboard = () => {
                                                         </div>
 
                                                         <button
-                                                            onClick={() => {
-                                                                setSolvingAssignmentId(assignment._id);
-                                                                if (mySubmission) {
-                                                                    setAssignmentAnswers(mySubmission.answers || []);
-                                                                    setGeneralSubText(mySubmission.submittedText || '');
-                                                                } else {
-                                                                    setAssignmentAnswers(new Array(assignment.questions?.length || 0).fill(''));
-                                                                    setGeneralSubText('');
-                                                                }
-                                                            }}
-                                                            className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-sm ${
-                                                                mySubmission
-                                                                    ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 hover:scale-[1.01]'
-                                                                    : 'bg-slate-900 hover:bg-slate-850 text-white hover:scale-[1.01]'
-                                                            } cursor-pointer`}
+                                                            onClick={() => handleDownloadAssignment(assignment)}
+                                                            className="w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-sm bg-slate-900 hover:bg-slate-850 text-white hover:scale-[1.01] cursor-pointer flex items-center justify-center gap-1.5"
                                                         >
-                                                            {mySubmission ? 'Review Submission' : 'Solve Assignment'}
+                                                            <Download size={12} /> Download Assignment
                                                         </button>
                                                     </div>
                                                 );
@@ -3122,7 +3362,7 @@ const StudentSelfDashboard = () => {
                                         <form onSubmit={handleSolveAssignmentSubmit} className="space-y-6 overflow-y-auto flex-1 pr-2">
                                             <div className="space-y-4">
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Questions List</h4>
-                                                
+
                                                 {assignment.questions?.map((q: any, idx: number) => (
                                                     <div key={q._id} className="bg-slate-50 border border-slate-200/50 rounded-2xl p-4">
                                                         <div className="flex items-start justify-between gap-4 border-b border-slate-200/30 pb-2 mb-2">
@@ -3132,9 +3372,9 @@ const StudentSelfDashboard = () => {
                                                                 <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-150">{q.difficulty}</span>
                                                             </div>
                                                         </div>
-                                                        
+
                                                         <p className="text-xs font-black text-slate-800 mb-3">{q.text}</p>
-                                                        
+
                                                         <textarea
                                                             rows={3}
                                                             required
@@ -3231,116 +3471,145 @@ const StudentSelfDashboard = () => {
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {curriculum.map((sem) => {
-                                            return (
-                                                <div key={sem.sem} className="bg-white rounded-[24px] border-[1px] border-slate-200/60 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between">
-                                                    <div className="space-y-4">
-                                                        {/* Header */}
-                                                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                                    (() => {
+                                        const selectedSemObj = curriculum.find(s => s.sem === selectedCurriculumSem) || curriculum[0];
+                                        const availableCourses = selectedSemObj?.courses || [];
+                                        const selectedCourseObj = availableCourses.find((c: any) => c.code === selectedCurriculumCourseCode) || availableCourses[0];
+
+                                        return (
+                                            <div className="bg-white rounded-[32px] border border-slate-200/60 p-6 sm:p-8 shadow-sm space-y-6">
+                                                {/* Semester and Subject Selectors Row */}
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Semester</label>
+                                                        <select
+                                                            value={selectedCurriculumSem}
+                                                            onChange={(e) => {
+                                                                const semVal = e.target.value;
+                                                                setSelectedCurriculumSem(semVal);
+                                                                const semObj = curriculum.find(s => s.sem === semVal);
+                                                                if (semObj && semObj.courses.length > 0) {
+                                                                    setSelectedCurriculumCourseCode(semObj.courses[0].code);
+                                                                } else {
+                                                                    setSelectedCurriculumCourseCode('');
+                                                                }
+                                                            }}
+                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all cursor-pointer"
+                                                        >
+                                                            {curriculum.map((sem) => (
+                                                                <option key={sem.sem} value={sem.sem}>
+                                                                    {sem.sem} ({sem.credits} Credits)
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="space-y-2">
+                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Subject</label>
+                                                        <select
+                                                            value={selectedCurriculumCourseCode}
+                                                            onChange={(e) => setSelectedCurriculumCourseCode(e.target.value)}
+                                                            disabled={availableCourses.length === 0}
+                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all disabled:opacity-50 cursor-pointer"
+                                                        >
+                                                            {availableCourses.map((c: any) => (
+                                                                <option key={c.code} value={c.code}>
+                                                                    {c.code} - {c.title || c.name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                {/* Detailed Syllabus Rectangular Section Box */}
+                                                {selectedCourseObj ? (
+                                                    <div className="bg-slate-50/40 rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-6">
+                                                        {/* Course Header info */}
+                                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200/60">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-700 flex items-center justify-center border border-slate-105 shrink-0">
+                                                                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
                                                                     <Library size={20} />
                                                                 </div>
                                                                 <div>
-                                                                    <h3 className="text-sm font-black text-slate-900 tracking-tight uppercase leading-tight">{sem.sem}</h3>
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
-                                                                        {sem.credits} Total Credits
-                                                                    </p>
+                                                                    <span className="font-mono text-[9px] font-black text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded uppercase tracking-wider">{selectedCourseObj.code}</span>
+                                                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mt-1">{selectedCourseObj.title || selectedCourseObj.name}</h4>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex flex-col items-end gap-1 shrink-0">
-                                                                <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border leading-none ${
-                                                                    sem.status === 'Completed' 
-                                                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
-                                                                        : 'bg-indigo-50 border-indigo-100 text-indigo-700'
-                                                                }`}>
-                                                                    {sem.status}
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-xl shadow-sm">
+                                                                    Credits: {selectedCourseObj.credits}
                                                                 </span>
-                                                                {sem.gpa && (
-                                                                    <span className="text-[8px] font-extrabold text-slate-750 bg-slate-50 border border-slate-200 px-1 py-0.5 rounded">
-                                                                        SGPA: {sem.gpa}
-                                                                    </span>
-                                                                )}
+                                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border shrink-0 ${selectedSemObj.status === 'Completed' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
+                                                                    {selectedSemObj.status}
+                                                                </span>
                                                             </div>
                                                         </div>
 
-                                                        {/* Courses short list */}
-                                                        <div className="space-y-2">
-                                                            {sem.courses.map((course: any) => {
-                                                                const isCourseExpanded = expandedCourse === course.code;
-                                                                return (
-                                                                    <div key={course.code} className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setExpandedCourse(isCourseExpanded ? null : course.code)}
-                                                                            className="w-full flex items-center justify-between p-2.5 bg-slate-50/50 hover:bg-slate-100/50 transition-colors text-left"
-                                                                        >
-                                                                            <div className="min-w-0 flex-1 flex items-center gap-2">
-                                                                                <span className="font-mono text-[9px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100/50 px-1 py-0.5 rounded shrink-0">
-                                                                                    {course.code}
-                                                                                </span>
-                                                                                <span className="text-[11px] font-extrabold text-slate-800 truncate">
-                                                                                    {course.title || course.name}
-                                                                                </span>
-                                                                            </div>
-                                                                            <ChevronRight size={12} className={`text-slate-450 transition-transform shrink-0 ${isCourseExpanded ? 'rotate-90 text-slate-900' : ''}`} />
-                                                                        </button>
-                                                                        
-                                                                        {isCourseExpanded && (
-                                                                            <div className="p-3 bg-white border-t border-slate-100 space-y-2 text-[10px]">
-                                                                                <div className="flex justify-between items-center text-slate-500 font-bold">
-                                                                                    <span>Instructor: {course.faculty}</span>
-                                                                                    <span>Credits: {course.credits}</span>
-                                                                                </div>
-                                                                                {course.result && (
-                                                                                    <div className="font-black text-indigo-750">Grade: {course.result}</div>
-                                                                                )}
-                                                                                {course.progress !== undefined && !course.result && (
-                                                                                    <div className="space-y-1">
-                                                                                        <div className="flex justify-between text-[8px] text-slate-400 font-bold uppercase">
-                                                                                            <span>Progress</span>
-                                                                                            <span>{course.progress}%</span>
-                                                                                        </div>
-                                                                                        <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                                                            <div className="h-full bg-slate-900 rounded-full" style={{ width: `${course.progress}%` }}></div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                                {course.topics && (
-                                                                                    <div className="pt-2 border-t border-slate-100 space-y-1">
-                                                                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Topics covered</span>
-                                                                                        <div className="grid grid-cols-1 gap-1 max-h-[80px] overflow-y-auto pr-1">
-                                                                                            {course.topics.map((t: string, idx: number) => (
-                                                                                                <div key={idx} className="flex items-center gap-1.5 bg-slate-50 p-1 rounded font-medium text-slate-650">
-                                                                                                    <span className="text-[8px] font-bold text-slate-400 bg-white border border-slate-200 w-3.5 h-3.5 rounded flex items-center justify-center shrink-0">{idx+1}</span>
-                                                                                                    <span className="truncate">{t}</span>
-                                                                                                </div>
-                                                                                            ))}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                                <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-[8px]">
-                                                                                    <span className="text-slate-350 italic">Certified syllabus</span>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => triggerToast(`Downloading course unit syllabus for ${course.code}...`)}
-                                                                                        className="font-black text-indigo-650 hover:underline flex items-center gap-1"
-                                                                                    >
-                                                                                        <Download size={10} /> Syllabus PDF
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-                                                                        )}
+                                                        {/* Instructor / Progress */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-500">
+                                                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2.5">
+                                                                <User size={16} className="text-slate-400" />
+                                                                <div>
+                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Instructor</span>
+                                                                    <span className="text-slate-800 font-extrabold">{selectedCourseObj.faculty || 'Senior Faculty Member'}</span>
+                                                                </div>
+                                                            </div>
+                                                            {selectedCourseObj.result ? (
+                                                                <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 shadow-sm flex items-center gap-2.5 text-indigo-950">
+                                                                    <Award size={16} className="text-indigo-600" />
+                                                                    <div>
+                                                                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Grade Allotted</span>
+                                                                        <span className="text-indigo-700 font-extrabold">{selectedCourseObj.result}</span>
                                                                     </div>
-                                                                );
-                                                            })}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
+                                                                    <div className="flex justify-between text-[8px] text-slate-400 font-black uppercase tracking-widest">
+                                                                        <span>Syllabus Progress</span>
+                                                                        <span>{selectedCourseObj.progress || 0}%</span>
+                                                                    </div>
+                                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                        <div className="h-full bg-slate-900 rounded-full" style={{ width: `${selectedCourseObj.progress || 0}%` }}></div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Topics / Syllabus covered */}
+                                                        {selectedCourseObj.topics && (
+                                                            <div className="space-y-2">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Syllabus Breakdown & Topics</span>
+                                                                <div className="grid grid-cols-1 gap-2 max-h-[180px] overflow-y-auto pr-1">
+                                                                    {selectedCourseObj.topics.map((t: string, idx: number) => (
+                                                                        <div key={idx} className="flex items-center gap-2.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-700 hover:border-slate-350 transition-colors">
+                                                                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-200 w-5 h-5 rounded-lg flex items-center justify-center shrink-0">{idx + 1}</span>
+                                                                            <span>{t}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Syllabus Download Action */}
+                                                        <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[10px]">
+                                                            <span className="text-slate-400 italic">Certified syllabus record</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => triggerToast(`Downloading course unit syllabus for ${selectedCourseObj.code}...`)}
+                                                                className="font-black text-indigo-650 hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                                                            >
+                                                                <Download size={12} /> Syllabus PDF
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                                ) : (
+                                                    <div className="text-center py-12 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                                                        <p className="text-xs font-bold uppercase tracking-wider">No subjects found in selected semester</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()
                                 )}
                             </div>
 
@@ -3447,281 +3716,7 @@ const StudentSelfDashboard = () => {
                     </div>
                 )}
 
-                {/* NEW FEATURE: PROJECTS & ACHIEVEMENTS SKILLS CREDIT TRANSFER HUB */}
-                {activeTab === 'projects' && (
-                    <div className="space-y-10 animate-fade-in font-body">
-                        <SectionHeader
-                            title="Skills Credit Transfer & Portfolio Hub"
-                            desc="Upload sessional software projects, technical achievements, and certifications. The system automatically analyses them for skills credits."
-                        />
-
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            {/* Left Side: Upload Panel (Col Span 5) */}
-                            <div className="lg:col-span-5 space-y-6">
-                                {/* Project Upload */}
-                                <div className="bg-white rounded-[28px] p-6 border-[1px] border-slate-200/60 shadow-sm relative overflow-hidden">
-                                    <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-indigo-500/5 blur-lg pointer-events-none" />
-
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <BookOpen className="text-indigo-600 animate-pulse" size={15} /> Upload Project Profile
-                                    </h3>
-
-                                    <form onSubmit={handleAddProject} className="space-y-4">
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Project Name</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="e.g. Distributed Key-Value Store"
-                                                value={newProjName}
-                                                onChange={(e) => setNewProjName(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-indigo-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Tech Stack</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="e.g. Go, Raft Consensus, gRPC"
-                                                value={newProjStack}
-                                                onChange={(e) => setNewProjStack(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-indigo-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Status</label>
-                                            <select
-                                                value={newProjStatus}
-                                                onChange={(e) => setNewProjStatus(e.target.value as any)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-bold bg-slate-50 outline-none focus:bg-white focus:border-indigo-500 transition-colors"
-                                            >
-                                                <option value="In Progress">In Progress</option>
-                                                <option value="Completed">Completed</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Assign Peer-Review Mentor</label>
-                                            <select
-                                                value={newProjMentor}
-                                                onChange={(e) => setNewProjMentor(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-bold bg-slate-50 outline-none focus:bg-white focus:border-indigo-500 transition-colors"
-                                            >
-                                                <option value="">-- Choose Faculty Mentor (Optional) --</option>
-                                                {mentorsList.map((m: any) => (
-                                                    <option key={m._id || m.id} value={m._id || m.id}>
-                                                        {m.name} ({m.department || 'General'} - {m.position || 'Professor'})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Project Description</label>
-                                            <textarea
-                                                required
-                                                rows={3}
-                                                placeholder="Brief summary of implementation and features..."
-                                                value={newProjDesc}
-                                                onChange={(e) => setNewProjDesc(e.target.value)}
-                                                className="w-full p-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-indigo-500 transition-colors resize-none"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[9px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                                        >
-                                            Upload Project to Database
-                                        </button>
-                                    </form>
-                                </div>
-
-                                {/* Achievement Upload */}
-                                <div className="bg-white rounded-[28px] p-6 border-[1px] border-slate-200/60 shadow-sm relative overflow-hidden">
-                                    <div className="absolute -right-8 -top-8 w-24 h-24 rounded-full bg-emerald-500/5 blur-lg pointer-events-none" />
-
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <Award className="text-emerald-600 animate-pulse" size={15} /> Upload Certification
-                                    </h3>
-
-                                    <form onSubmit={handleAddAchievement} className="space-y-4">
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Certification/Achievement Title</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="e.g. AWS Solutions Architect"
-                                                value={newAchTitle}
-                                                onChange={(e) => setNewAchTitle(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Issuing Organization</label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="e.g. Amazon Web Services"
-                                                value={newAchOrg}
-                                                onChange={(e) => setNewAchOrg(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[8px] font-black text-slate-500 uppercase tracking-wider mb-1">Date Achieved</label>
-                                            <input
-                                                type="date"
-                                                value={newAchDate}
-                                                onChange={(e) => setNewAchDate(e.target.value)}
-                                                className="w-full h-10 px-3 border-[1px] border-slate-200 rounded-xl text-xs font-medium bg-slate-50 outline-none focus:bg-white focus:border-emerald-500 transition-colors"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[9px] uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                                        >
-                                            Upload Achievement to Database
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            {/* Right Side: Active Portfolio Ledger (Col Span 7) */}
-                            <div className="lg:col-span-7 space-y-6">
-                                <div className="bg-slate-900 text-white p-5 rounded-[28px] border border-slate-800 shadow-md flex items-center justify-between">
-                                    <div>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Skills Credits Analyzed</span>
-                                        <p className="text-2xl font-black text-white">{skillsCredits} Credits</p>
-                                    </div>
-                                    <span className="px-3.5 py-1.5 bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-[9px] font-black uppercase tracking-widest rounded-xl">
-                                        Approved Portfolio Ledger
-                                    </span>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Active Project Profiles</h3>
-
-                                    <div className="space-y-4 max-h-[520px] overflow-y-auto pr-1">
-                                        {projects.map((p: any) => {
-                                            const isEvaluated = p.creditsLocked || !!p.feedback;
-                                            const isCompleted = p.status === 'Completed';
-
-                                            // Green border = completed & evaluated, indigo = evaluated only, red = awaiting
-                                            const borderColor = isEvaluated
-                                                ? isCompleted ? '#10b981' : '#6366f1'
-                                                : '#ef4444';
-                                            const badgeLabel = isEvaluated
-                                                ? isCompleted ? 'COMPLETED' : 'EVALUATED'
-                                                : 'AWAITING REVIEW';
-                                            const badgeTextColor = isEvaluated
-                                                ? isCompleted ? '#059669' : '#4f46e5'
-                                                : '#dc2626';
-
-                                            return (
-                                                <div key={p._id || p.id}
-                                                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all"
-                                                    style={{ border: `2px solid ${borderColor}` }}
-                                                >
-                                                    {/* Coloured top strip */}
-                                                    <div className="h-1 w-full" style={{ background: borderColor }} />
-
-                                                    <div className="p-5">
-                                                        {/* Header row */}
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <div className="flex flex-col gap-1">
-                                                                <h4 className="text-base font-black text-slate-900 tracking-tight leading-snug">{p.name}</h4>
-                                                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{p.stack}</span>
-                                                            </div>
-                                                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                                                                {/* Status badge */}
-                                                                <span
-                                                                    className="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border"
-                                                                    style={{ color: badgeTextColor, background: `${borderColor}12`, borderColor: `${borderColor}50` }}
-                                                                >
-                                                                    {badgeLabel}
-                                                                </span>
-                                                                {/* Credits chip */}
-                                                                {isEvaluated ? (
-                                                                    <span className="text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                                        <Award size={9} /> {p.skillsCredits} Credits · Locked
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-[9px] font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full">
-                                                                        +{p.skillsCredits || 0} Credits
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Description */}
-                                                        <p className="text-xs font-medium text-slate-500 leading-relaxed mb-3">{p.desc}</p>
-
-                                                        {/* Feedback History */}
-                                                        {p.feedbackHistory && p.feedbackHistory.length > 0 ? (
-                                                            <div className="mt-2 rounded-xl overflow-hidden border" style={{ borderColor: `${borderColor}40` }}>
-                                                                <div className="px-3 py-2 flex items-center gap-1.5" style={{ background: `${borderColor}0d` }}>
-                                                                    <MessageSquare size={10} style={{ color: borderColor }} />
-                                                                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: badgeTextColor }}>Mentor Feedback ({p.feedbackHistory.length})</span>
-                                                                </div>
-                                                                <div className="divide-y divide-slate-50 max-h-36 overflow-y-auto">
-                                                                    {[...p.feedbackHistory].reverse().map((entry: any, idx: number) => (
-                                                                        <div key={idx} className="px-3 py-2.5 bg-white">
-                                                                            <p className="text-xs font-semibold text-slate-700 leading-relaxed italic">"{entry.text}"</p>
-                                                                            <div className="flex items-center gap-2 mt-1">
-                                                                                <span className="text-[9px] font-black text-indigo-600">{entry.byName}</span>
-                                                                                <span className="text-[9px] text-slate-300">·</span>
-                                                                                <span className="text-[9px] text-slate-400 font-semibold">
-                                                                                    {new Date(entry.at).toLocaleString(undefined, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ) : !isEvaluated ? (
-                                                            <div className="mt-2 text-[9px] font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5 px-1">
-                                                                <Clock size={11} /> Awaiting Faculty Review
-                                                            </div>
-                                                        ) : null}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        {projects.length === 0 && (
-                                            <div className="text-center py-8 text-slate-400 font-bold text-xs">No project profiles uploaded yet.</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">Verified Credentials & Achievements</h3>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {achievements.map((a: any) => (
-                                            <div key={a._id || a.id} className="bg-white p-4.5 rounded-[24px] border border-slate-200/60 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-                                                <div>
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">{a.date}</span>
-                                                        <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-md">
-                                                            +{a.skillsCredits || 3} Credits
-                                                        </span>
-                                                    </div>
-                                                    <h4 className="text-sm font-black text-slate-900 tracking-tight leading-snug mb-1">{a.title}</h4>
-                                                    <p className="text-[10px] font-bold text-slate-500">{a.org}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {achievements.length === 0 && (
-                                            <div className="col-span-2 text-center py-6 text-slate-400 font-bold text-xs">No achievements uploaded yet.</div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* NEW FEATURE: DIGITAL LOCKER TAB */}
-                {activeTab === 'locker' && (
+{activeTab === 'locker' && (
                     <div className="space-y-10 animate-fade-in">
                         <SectionHeader title="Digital Credentials Wallet" desc="Verified documents ledger, secure transcripts, blockchain certificate hashes and digitally signed locker downloads." />
 
@@ -3748,7 +3743,7 @@ const StudentSelfDashboard = () => {
                                     <div className="flex gap-4 items-center mb-6 pt-2 border-t border-white/5">
                                         <div className="w-14 h-14 rounded-2xl border border-white/15 overflow-hidden shrink-0 bg-slate-800 flex items-center justify-center relative">
                                             {user.profileImage ? (
-                                                <img src={`{BASE_URL}/${user.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+                                                <img src={`${BASE_URL}/${user.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
                                                 <User size={24} className="text-white/30" />
                                             )}
