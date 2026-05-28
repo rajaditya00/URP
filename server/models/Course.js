@@ -8,7 +8,7 @@ const courseSchema = new mongoose.Schema({
   credits: { type: Number, required: true },
   description: { type: String },
   semester: { type: String, default: 'Semester 1' },
-  faculty: { type: String, default: 'Dr. Alan Turing' },
+  faculty: { type: String, default: 'Dr. Vijay Kumar' },
   progress: { type: Number, default: 0 },
   topics: [{ type: String }],
   status: { type: String, enum: ['Completed', 'Ongoing'], default: 'Completed' },

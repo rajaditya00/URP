@@ -360,7 +360,7 @@ const Signup = () => {
                     <div className="w-10 h-10 border-2 border-blue-400 rounded-full flex items-center justify-center bg-white/10 backdrop-blur-sm text-blue-400">
                         <BookOpen size={20} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[18px] font-bold tracking-tight">All Campus Digital</span>
+                    <span className="text-[18px] font-bold tracking-tight">Intelli<span className="text-blue-400">Q</span></span>
                 </div>
 
                 <div className="flex-1 px-8 py-10 mt-6">
@@ -870,7 +870,7 @@ const Signup = () => {
                                             />
                                         </div>
                                         <span className="text-[14px] text-slate-600 leading-relaxed">
-                                            I solemnly declare that the information provided is accurate and I agree to the <a href="#" className="font-bold text-blue-600 hover:underline">Terms of Service</a> and <a href="#" className="font-bold text-blue-600 hover:underline">Privacy Policy</a> of All Campus Digital.
+                                            I solemnly declare that the information provided is accurate and I agree to the <a href="#" className="font-bold text-blue-600 hover:underline">Terms of Service</a> and <a href="#" className="font-bold text-blue-600 hover:underline">Privacy Policy</a> of <strong>IntelliQ</strong>.
                                         </span>
                                     </label>
                                 </div>

@@ -136,7 +136,7 @@ const SystemAdminDashboard = () => {
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
                                     onKeyDown={e => { if (e.key === 'Enter') codeInputRef.current?.focus(); }}
-                                    placeholder="admin@campuscore.edu"
+                                    placeholder="admin@intelliq.edu"
                                     className={`w-full pl-11 pr-10 py-3 bg-slate-50 border ${isEmailValid ? 'border-green-400 focus:border-green-400 focus:ring-green-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'} rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-4 outline-none transition-all`}
                                 />
                                 {isEmailValid && (

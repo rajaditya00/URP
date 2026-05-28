@@ -30,12 +30,36 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Connect DB
 mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/allcampusdigital')
-    .then(() => console.log('✅  MongoDB Connected Successfully'))
+    .then(async () => {
+        console.log('✅  MongoDB Connected Successfully');
+        // Auto-migrate old faculty names in the database
+        try {
+            const Course = require('./models/Course');
+            const Project = require('./models/Project');
+            
+            // Migrate Course faculty names
+            await Course.updateMany({ faculty: 'Dr. Alan Turing' }, { faculty: 'Dr. Vijay Kumar' });
+            await Course.updateMany({ faculty: 'Prof. Grace Hopper' }, { faculty: 'Prof. Ashish Kumar' });
+            await Course.updateMany({ faculty: 'Dr. Linus Torvalds' }, { faculty: 'Dr. Dipak Kumae Chaudhary' });
+            await Course.updateMany({ faculty: 'Prof. Satya Nadella' }, { faculty: 'Prof. Shweta Kumari' });
+            await Course.updateMany({ faculty: 'Dr. Margaret Hamilton' }, { faculty: 'Dr. Nancy Priya' });
+            
+            // Migrate Project feedbacks containing old names
+            await Project.updateMany(
+                { feedback: 'Stellar work on consensus log compaction! - Dr. Alan Turing' },
+                { feedback: 'Stellar work on consensus log compaction! - Dr. Vijay Kumar' }
+            );
+            
+            console.log('✅  Database faculty names migration complete');
+        } catch (e) {
+            console.error('❌  Error running database faculty names migration:', e.message);
+        }
+    })
     .catch(err => console.error('❌  MongoDB Connection Error:', err));
 
 // Base health check
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', message: 'All Campus Digital API running', version: '2.0' });
+    res.json({ status: 'ok', message: 'IntelliQ API running', version: '2.0' });
 });
 
 // ── Import All Route Modules ─────────────────────────────────────────────────

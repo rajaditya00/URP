@@ -835,7 +835,7 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
                 return ALL_COMBINED_DATASET.map(d => ({ text: d.text, label: d.label, department: d.domain, sourceUniversity: 'Combined Academic Archives' }));
             case 'local':
             default:
-                return localData.map(d => ({ ...d, department: 'Local Question Bank', sourceUniversity: 'Campus URP Database' }));
+                return localData.map(d => ({ ...d, department: 'Local Question Bank', sourceUniversity: 'IntelliQ Question Database' }));
         }
     };
 
@@ -846,7 +846,7 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
             text: q.text,
             label: q.creditLevel && q.creditLevel >= 4 ? 'novel' as const : 'repeat' as const,
             department: q.unit || 'Master Question Bank',
-            sourceUniversity: q.addedBy || 'Campus URP Database'
+            sourceUniversity: q.addedBy || 'IntelliQ Question Database'
         }));
         
         const seen = new Set<string>();
@@ -1257,7 +1257,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
         } catch (e) {
             console.error('Error reading college from user storage', e);
         }
-        return 'All Campus Digital College';
+        return 'IntelliQ College';
     });
     const [logoUrl, setLogoUrl] = useState(() => {
         try {

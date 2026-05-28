@@ -5,9 +5,9 @@ import { BookOpen, CalendarCheck, Clock, Download, PieChart, CreditCard, FileTex
 import ExamForm from '../components/Examination/ExamForm';
 
 const subjects = [
-  { code: 'CS601', name: 'Computer Networks', attendance: 85, credits: 4, faculty: 'Dr. Alan Turing' },
-  { code: 'CS602', name: 'Database Systems', attendance: 92, credits: 4, faculty: 'Prof. Grace Hopper' },
-  { code: 'CS603', name: 'Operating Systems', attendance: 78, credits: 3, faculty: 'Dr. Linus Torvalds' },
+  { code: 'CS601', name: 'Computer Networks', attendance: 85, credits: 4, faculty: 'Dr. Vijay Kumar' },
+  { code: 'CS602', name: 'Database Systems', attendance: 92, credits: 4, faculty: 'Prof. Ashish Kumar' },
+  { code: 'CS603', name: 'Operating Systems', attendance: 78, credits: 3, faculty: 'Dr. Dipak Kumae Chaudhary' },
 ];
 
 const schedule = [

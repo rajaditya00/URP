@@ -157,7 +157,7 @@ const sendAdminOtp = async (req, res) => {
 
         // Print prominently to terminal
         console.log('\n\x1b[43m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
-        console.log('\x1b[43m\x1b[30m   🔐  SYSTEM ADMIN OTP — CAMPUSCORE URP          \x1b[0m');
+        console.log('\x1b[43m\x1b[30m   🔐  SYSTEM ADMIN OTP — INTELLIQ                 \x1b[0m');
         console.log('\x1b[43m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
         console.log(`\x1b[1m   📧  Email  : \x1b[36m${email}\x1b[0m`);
         console.log(`\x1b[1m   🔑  OTP    : \x1b[32m${otp}\x1b[0m`);
@@ -257,7 +257,7 @@ const forgotPassword = async (req, res) => {
 
         // Print prominently to terminal (bypassing SMTP for reliability)
         console.log('\n\x1b[45m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
-        console.log('\x1b[45m\x1b[30m   🔑  PASSWORD RESET OTP — CAMPUSCORE URP        \x1b[0m');
+        console.log('\x1b[45m\x1b[30m   🔑  PASSWORD RESET OTP — INTELLIQ               \x1b[0m');
         console.log('\x1b[45m\x1b[30m ══════════════════════════════════════════════ \x1b[0m');
         console.log(`\x1b[1m   📧  Email  : \x1b[36m${email}\x1b[0m`);
         console.log(`\x1b[1m   🔑  OTP    : \x1b[32m${otp}\x1b[0m`);

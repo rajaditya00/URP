@@ -2,13 +2,13 @@ import { Card, StatCard } from '../components/UI/Card';
 import { Microscope, BookOpen, FileText, Download, Target, TrendingUp, Presentation } from 'lucide-react';
 
 const projects = [
-    { id: 1, title: 'Quantum Cryptography Protocols', PI: 'Dr. Alan Turing', funder: 'NSF', grant: '$1.2M', status: 'Ongoing', progress: 65 },
+    { id: 1, title: 'Quantum Cryptography Protocols', PI: 'Dr. Vijay Kumar', funder: 'NSF', grant: '$1.2M', status: 'Ongoing', progress: 65 },
     { id: 2, title: 'AI for Climate Modeling', PI: 'Dr. Ada Lovelace', funder: 'DOE', grant: '$850K', status: 'Ongoing', progress: 40 },
     { id: 3, title: 'Next-Gen Solid State Batteries', PI: 'Dr. Richard Feynman', funder: 'ARPA-E', grant: '$2.1M', status: 'Completed', progress: 100 },
 ];
 
 const publications = [
-    { id: 1, title: 'Emergent Behaviors in LLMs', authors: 'Hopper G., Turing A.', journal: 'Nature AI', date: 'Sep 2026', citations: 124 },
+    { id: 1, title: 'Emergent Behaviors in LLMs', authors: 'Kumar A., Kumar V.', journal: 'Nature AI', date: 'Sep 2026', citations: 124 },
     { id: 2, title: 'Novel Syntheses of Graphene', authors: 'Curie M., Feynman R.', journal: 'Science', date: 'Aug 2026', citations: 89 },
 ];
 

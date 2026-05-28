@@ -242,7 +242,7 @@ export default function MemberProfilePage() {
 
         {/* Footer Banner */}
         <div className="bg-slate-900 py-3 px-10 flex justify-between items-center text-[9px] font-black text-white/50 uppercase tracking-[0.2em]">
-          <span>All Campus Digital · Institutional Profile Management System</span>
+          <span>IntelliQ · Institutional Profile Management System</span>
           <span>Security Level: Classified</span>
         </div>
       </div>

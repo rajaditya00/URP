@@ -108,23 +108,23 @@ exports.requestLockerDoc = async (req, res) => {
 async function seedCurriculumData(universityId) {
   const seedCourses = [
     // Semester 1
-    { title: 'Engineering Mathematics I', code: 'MA101', department: 'Computer Science', credits: 4, semester: 'Semester 1', faculty: 'Dr. Alan Turing', status: 'Completed', result: 'A', gpa: '8.5', topics: ['Calculus', 'Matrices', 'Vector Algebra', 'Differential Equations'] },
-    { title: 'Engineering Physics', code: 'PH101', department: 'Computer Science', credits: 4, semester: 'Semester 1', faculty: 'Prof. Grace Hopper', status: 'Completed', result: 'A+', topics: ['Quantum Mechanics', 'Wave Optics', 'Electromagnetism', 'Semiconductors'] },
-    { title: 'Programming in C', code: 'CS101', department: 'Computer Science', credits: 3, semester: 'Semester 1', faculty: 'Dr. Linus Torvalds', status: 'Completed', result: 'B+', topics: ['Basics', 'Control Structures', 'Arrays & Pointers', 'Structures & Files'] },
+    { title: 'Engineering Mathematics I', code: 'MA101', department: 'Computer Science', credits: 4, semester: 'Semester 1', faculty: 'Dr. Vijay Kumar', status: 'Completed', result: 'A', gpa: '8.5', topics: ['Calculus', 'Matrices', 'Vector Algebra', 'Differential Equations'] },
+    { title: 'Engineering Physics', code: 'PH101', department: 'Computer Science', credits: 4, semester: 'Semester 1', faculty: 'Prof. Ashish Kumar', status: 'Completed', result: 'A+', topics: ['Quantum Mechanics', 'Wave Optics', 'Electromagnetism', 'Semiconductors'] },
+    { title: 'Programming in C', code: 'CS101', department: 'Computer Science', credits: 3, semester: 'Semester 1', faculty: 'Dr. Dipak Kumae Chaudhary', status: 'Completed', result: 'B+', topics: ['Basics', 'Control Structures', 'Arrays & Pointers', 'Structures & Files'] },
     
     // Semester 2
-    { title: 'Engineering Mathematics II', code: 'MA201', department: 'Computer Science', credits: 4, semester: 'Semester 2', faculty: 'Dr. Alan Turing', status: 'Completed', result: 'B', gpa: '8.2', topics: ['Linear Algebra', 'Complex Variables', 'Fourier Series', 'Laplace Transforms'] },
-    { title: 'Basic Electronics', code: 'EC201', department: 'Computer Science', credits: 3, semester: 'Semester 2', faculty: 'Prof. Grace Hopper', status: 'Completed', result: 'A', topics: ['Diodes', 'Transistors', 'Operational Amplifiers', 'Digital Logic'] },
-    { title: 'Engineering Graphics', code: 'ME201', department: 'Computer Science', credits: 3, semester: 'Semester 2', faculty: 'Dr. Margaret Hamilton', status: 'Completed', result: 'A+', topics: ['Orthographic Projections', 'Isometric Views', 'CAD Basics', 'Sectional Views'] },
+    { title: 'Engineering Mathematics II', code: 'MA201', department: 'Computer Science', credits: 4, semester: 'Semester 2', faculty: 'Dr. Vijay Kumar', status: 'Completed', result: 'B', gpa: '8.2', topics: ['Linear Algebra', 'Complex Variables', 'Fourier Series', 'Laplace Transforms'] },
+    { title: 'Basic Electronics', code: 'EC201', department: 'Computer Science', credits: 3, semester: 'Semester 2', faculty: 'Prof. Ashish Kumar', status: 'Completed', result: 'A', topics: ['Diodes', 'Transistors', 'Operational Amplifiers', 'Digital Logic'] },
+    { title: 'Engineering Graphics', code: 'ME201', department: 'Computer Science', credits: 3, semester: 'Semester 2', faculty: 'Dr. Nancy Priya', status: 'Completed', result: 'A+', topics: ['Orthographic Projections', 'Isometric Views', 'CAD Basics', 'Sectional Views'] },
     
     // Semester 3
-    { title: 'Data Structures & Algorithms', code: 'CS301', department: 'Computer Science', credits: 4, semester: 'Semester 3', faculty: 'Dr. Alan Turing', status: 'Completed', result: 'A+', gpa: '8.8', topics: ['Linked Lists', 'Trees & Graphs', 'Sorting & Searching', 'Hashing Techniques'] },
+    { title: 'Data Structures & Algorithms', code: 'CS301', department: 'Computer Science', credits: 4, semester: 'Semester 3', faculty: 'Dr. Vijay Kumar', status: 'Completed', result: 'A+', gpa: '8.8', topics: ['Linked Lists', 'Trees & Graphs', 'Sorting & Searching', 'Hashing Techniques'] },
     { title: 'Computer Organization', code: 'CS302', department: 'Computer Science', credits: 3, semester: 'Semester 3', faculty: 'Prof. John von Neumann', status: 'Completed', result: 'A', topics: ['Register Transfer', 'Microoperations', 'CPU Architecture', 'Memory Organization'] },
     { title: 'Discrete Mathematics', code: 'CS303', department: 'Computer Science', credits: 3, semester: 'Semester 3', faculty: 'Dr. Alonzo Church', status: 'Completed', result: 'B+', topics: ['Set Theory', 'Mathematical Logic', 'Graph Theory', 'Relations & Functions'] },
     
     // Semester 4
     { title: 'Database Management Systems', code: 'CS401', department: 'Computer Science', credits: 4, semester: 'Semester 4', faculty: 'Prof. Edgar F. Codd', status: 'Completed', result: 'A+', gpa: '8.9', topics: ['Relational Algebra', 'SQL Queries', 'Normalization', 'Concurrency Control'] },
-    { title: 'Theory of Computation', code: 'CS402', department: 'Computer Science', credits: 3, semester: 'Semester 4', faculty: 'Dr. Alan Turing', status: 'Completed', result: 'A', topics: ['Finite Automata', 'Regular Languages', 'Turing Machines', 'Decidability'] },
+    { title: 'Theory of Computation', code: 'CS402', department: 'Computer Science', credits: 3, semester: 'Semester 4', faculty: 'Dr. Vijay Kumar', status: 'Completed', result: 'A', topics: ['Finite Automata', 'Regular Languages', 'Turing Machines', 'Decidability'] },
     { title: 'System Programming', code: 'CS403', department: 'Computer Science', credits: 3, semester: 'Semester 4', faculty: 'Dr. Dennis Ritchie', status: 'Completed', result: 'A+', topics: ['Assemblers', 'Linkers & Loaders', 'Compiler Phases', 'Device Drivers'] },
     
     // Semester 5
@@ -133,11 +133,11 @@ async function seedCurriculumData(universityId) {
     { title: 'Object Oriented Programming', code: 'CS503', department: 'Computer Science', credits: 3, semester: 'Semester 5', faculty: 'Dr. Bjarne Stroustrup', status: 'Completed', result: 'A', topics: ['Classes & Objects', 'Inheritance', 'Polymorphism', 'Exception Handling'] },
     
     // Semester 6
-    { title: 'Computer Networks', code: 'CS601', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Dr. Alan Turing', status: 'Ongoing', progress: 75, topics: ['OSI Model', 'TCP/IP Protocol', 'Routing Algorithms', 'Network Security', 'Wireless LANs', 'Socket Programming'] },
-    { title: 'Database Management Systems', code: 'CS602', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Prof. Grace Hopper', status: 'Ongoing', progress: 92, topics: ['Relational Model', 'SQL Queries', 'Normalization', 'Transaction Control', 'Concurrency', 'NoSQL Basics'] },
-    { title: 'Operating Systems', code: 'CS603', department: 'Computer Science', credits: 3, semester: 'Semester 6', faculty: 'Dr. Linus Torvalds', status: 'Ongoing', progress: 60, topics: ['Process Management', 'Memory Allocation', 'File Systems', 'Virtualization', 'Deadlocks', 'I/O Systems'] },
-    { title: 'Cloud Computing Infrastructure', code: 'CS604', department: 'Computer Science', credits: 3, semester: 'Semester 6', faculty: 'Prof. Satya Nadella', status: 'Ongoing', progress: 45, topics: ['SaaS/PaaS/IaaS', 'Virtual Machines', 'Serverless', 'Microservices', 'AWS/Azure Tools', 'Cloud Security'] },
-    { title: 'Software Engineering & Design', code: 'CS605', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Dr. Margaret Hamilton', status: 'Ongoing', progress: 80, topics: ['Agile Methodology', 'UML Diagrams', 'Software Testing', 'DevOps', 'SDLC Models', 'System Design'] },
+    { title: 'Computer Networks', code: 'CS601', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Dr. Vijay Kumar', status: 'Ongoing', progress: 75, topics: ['OSI Model', 'TCP/IP Protocol', 'Routing Algorithms', 'Network Security', 'Wireless LANs', 'Socket Programming'] },
+    { title: 'Database Management Systems', code: 'CS602', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Prof. Ashish Kumar', status: 'Ongoing', progress: 92, topics: ['Relational Model', 'SQL Queries', 'Normalization', 'Transaction Control', 'Concurrency', 'NoSQL Basics'] },
+    { title: 'Operating Systems', code: 'CS603', department: 'Computer Science', credits: 3, semester: 'Semester 6', faculty: 'Dr. Dipak Kumae Chaudhary', status: 'Ongoing', progress: 60, topics: ['Process Management', 'Memory Allocation', 'File Systems', 'Virtualization', 'Deadlocks', 'I/O Systems'] },
+    { title: 'Cloud Computing Infrastructure', code: 'CS604', department: 'Computer Science', credits: 3, semester: 'Semester 6', faculty: 'Prof. Shweta Kumari', status: 'Ongoing', progress: 45, topics: ['SaaS/PaaS/IaaS', 'Virtual Machines', 'Serverless', 'Microservices', 'AWS/Azure Tools', 'Cloud Security'] },
+    { title: 'Software Engineering & Design', code: 'CS605', department: 'Computer Science', credits: 4, semester: 'Semester 6', faculty: 'Dr. Nancy Priya', status: 'Ongoing', progress: 80, topics: ['Agile Methodology', 'UML Diagrams', 'Software Testing', 'DevOps', 'SDLC Models', 'System Design'] },
     
     // Semester 7
     { title: 'Machine Learning', code: 'CS701', department: 'Computer Science', credits: 4, semester: 'Semester 7', faculty: 'Dr. Andrew Ng', status: 'Ongoing', progress: 0, topics: ['Regression', 'Classification', 'Neural Networks', 'SVM', 'Unsupervised Learning'] },
@@ -147,7 +147,7 @@ async function seedCurriculumData(universityId) {
     // Semester 8
     { title: 'Distributed Systems', code: 'CS801', department: 'Computer Science', credits: 4, semester: 'Semester 8', faculty: 'Dr. Leslie Lamport', status: 'Ongoing', progress: 0, topics: ['Consensus Protocols', 'RPC', 'Replication', 'Distributed Storage'] },
     { title: 'Full-Stack Web Development', code: 'CS802', department: 'Computer Science', credits: 4, semester: 'Semester 8', faculty: 'Prof. Tim Berners-Lee', status: 'Ongoing', progress: 0, topics: ['React', 'Node.js', 'MongoDB', 'REST APIs', 'JWT Auth'] },
-    { title: 'Major Project / Capstone', code: 'CS803', department: 'Computer Science', credits: 6, semester: 'Semester 8', faculty: 'Dr. Margaret Hamilton', status: 'Ongoing', progress: 0, topics: ['Requirements', 'System Design', 'Implementation', 'Testing & Deployment'] }
+    { title: 'Major Project / Capstone', code: 'CS803', department: 'Computer Science', credits: 6, semester: 'Semester 8', faculty: 'Dr. Nancy Priya', status: 'Ongoing', progress: 0, topics: ['Requirements', 'System Design', 'Implementation', 'Testing & Deployment'] }
   ];
   
   const formattedCourses = seedCourses.map(c => ({ ...c, university: universityId }));

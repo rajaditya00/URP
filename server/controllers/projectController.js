@@ -75,7 +75,7 @@ exports.getStudentData = async (req, res) => {
                     stack: 'Go, Raft Consensus, gRPC',
                     desc: 'A fault-tolerant distributed transactional database implemented in Go using Raft consensus.',
                     status: 'Completed',
-                    feedback: 'Stellar work on consensus log compaction! - Dr. Alan Turing',
+                    feedback: 'Stellar work on consensus log compaction! - Dr. Vijay Kumar',
                     skillsCredits: 6
                 },
                 {

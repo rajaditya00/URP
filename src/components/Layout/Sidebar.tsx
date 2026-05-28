@@ -52,7 +52,7 @@ const Sidebar = () => {
           <LibraryBig size={18} color="#fff" />
         </div>
         <span className="text-base font-bold text-text-primary tracking-tight">
-          All Campus <span className="text-accent-primary font-medium">Digital</span>
+          Intelli<span className="text-accent-primary font-medium">Q</span>
         </span>
       </div>
 

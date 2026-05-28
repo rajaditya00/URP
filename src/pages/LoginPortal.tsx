@@ -126,14 +126,14 @@ const LoginPortal = () => {
                 role: 'SUPER_ADMIN' as const,
                 university: {
                     _id: 'mock-uni-id',
-                    name: 'All Campus Digital University',
+                    name: 'IntelliQ - University Portal',
                     logoUrl: '',
                     introduction: 'A premier educational institution dedicated to excellence.',
                     phone: '+91 9876543210',
                     address: 'Institutional Area, New Delhi, India',
                     viceChancellor: {
                         name: 'Prof. S. R. Sen',
-                        email: 'vc@acd.edu',
+                        email: 'vc@intelliq.edu',
                         message: 'Welcome to the digital university command center.'
                     }
                 }
@@ -144,7 +144,7 @@ const LoginPortal = () => {
                 role: matchedTier!.role as any,
                 university: {
                     _id: 'mock-uni-id',
-                    name: 'All Campus Digital University',
+                    name: 'IntelliQ - University Portal',
                     logoUrl: '',
                     introduction: 'A premier educational institution dedicated to excellence.',
                     phone: '+91 9876543210',
@@ -244,8 +244,8 @@ const LoginPortal = () => {
                             <button
                                 onClick={() => setActiveSection('login')}
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-wider ${activeSection === 'login'
-                                        ? 'bg-white text-slate-900 shadow-sm border border-slate-200/20'
-                                        : 'text-slate-500 hover:text-slate-800'
+                                    ? 'bg-white text-slate-900 shadow-sm border border-slate-200/20'
+                                    : 'text-slate-500 hover:text-slate-800'
                                     }`}
                             >
                                 <ShieldCheck size={14} className={activeSection === 'login' ? 'text-indigo-600' : ''} />
@@ -276,11 +276,10 @@ const LoginPortal = () => {
                                     key={tier.id}
                                     type="button"
                                     onClick={() => handleTierChange(tier.id)}
-                                    className={`flex flex-col sm:flex-row items-center justify-center gap-2 py-3 px-2 sm:px-4 rounded-xl border font-bold text-xs transition-all duration-200 shadow-sm ${
-                                        isActive
+                                    className={`flex flex-col sm:flex-row items-center justify-center gap-2 py-3 px-2 sm:px-4 rounded-xl border font-bold text-xs transition-all duration-200 shadow-sm ${isActive
                                             ? `${tier.activeTab} shadow-md`
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
-                                    }`}
+                                        }`}
                                 >
                                     <span className={isActive ? tier.iconColor : 'text-slate-400'}>{tier.icon}</span>
                                     <span>{tier.title}</span>

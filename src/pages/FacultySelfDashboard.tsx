@@ -665,7 +665,7 @@ const FacultySelfDashboard = () => {
                             <div class="watermark">${assignment.department || 'OFFICIAL WORKSHEET'}</div>
                             
                             <div class="header-block">
-                                <h1 class="college-name">${user?.college?.name || 'All Campus Digital College'}</h1>
+                                <h1 class="college-name">${user?.college?.name || 'IntelliQ College'}</h1>
                                 <p class="college-address">${user?.college?.address || user?.college?.location || 'Blockchain Verified Campus Registry'}</p>
                                 <span class="doc-title">Assignment Worksheet</span>
                             </div>

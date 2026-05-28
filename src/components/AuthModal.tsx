@@ -49,7 +49,7 @@ const AuthModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen,
               <Lock className="text-white" size={24} />
             </div>
             <h2 className="text-2xl font-bold text-text-primary tracking-tight">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-            <p className="text-sm text-text-secondary mt-1">Authenticate to access the All Campus Digital Platform</p>
+            <p className="text-sm text-text-secondary mt-1">Authenticate to access the <strong>IntelliQ</strong> Platform</p>
          </div>
 
          <form onSubmit={handleSubmit} className="p-6 space-y-4">

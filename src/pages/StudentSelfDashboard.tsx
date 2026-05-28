@@ -20,11 +20,11 @@ const SEMESTER_DATA = [
         isCurrent: true,
         credits: 18,
         courses: [
-            { code: 'CS601', name: 'Computer Networks', credits: 4, faculty: 'Dr. Alan Turing', progress: 75, topics: ['OSI Model', 'TCP/IP Protocol', 'Routing Algorithms', 'Network Security', 'Wireless LANs', 'Socket Programming'] },
-            { code: 'CS602', name: 'Database Management Systems', credits: 4, faculty: 'Prof. Grace Hopper', progress: 92, topics: ['Relational Model', 'SQL Queries', 'Normalization', 'Transaction Control', 'Concurrency', 'NoSQL Basics'] },
-            { code: 'CS603', name: 'Operating Systems', credits: 3, faculty: 'Dr. Linus Torvalds', progress: 60, topics: ['Process Management', 'Memory Allocation', 'File Systems', 'Virtualization', 'Deadlocks', 'I/O Systems'] },
-            { code: 'CS604', name: 'Cloud Computing Infrastructure', credits: 3, faculty: 'Prof. Satya Nadella', progress: 45, topics: ['SaaS/PaaS/IaaS', 'Virtual Machines', 'Serverless', 'Microservices', 'AWS/Azure Tools', 'Cloud Security'] },
-            { code: 'CS605', name: 'Software Engineering & Design', credits: 4, faculty: 'Dr. Margaret Hamilton', progress: 80, topics: ['Agile Methodology', 'UML Diagrams', 'Software Testing', 'DevOps', 'SDLC Models', 'System Design'] }
+            { code: 'CS601', name: 'Computer Networks', credits: 4, faculty: 'Dr. Vijay Kumar', progress: 75, topics: ['OSI Model', 'TCP/IP Protocol', 'Routing Algorithms', 'Network Security', 'Wireless LANs', 'Socket Programming'] },
+            { code: 'CS602', name: 'Database Management Systems', credits: 4, faculty: 'Prof. Ashish Kumar', progress: 92, topics: ['Relational Model', 'SQL Queries', 'Normalization', 'Transaction Control', 'Concurrency', 'NoSQL Basics'] },
+            { code: 'CS603', name: 'Operating Systems', credits: 3, faculty: 'Dr. Dipak Kumae Chaudhary', progress: 60, topics: ['Process Management', 'Memory Allocation', 'File Systems', 'Virtualization', 'Deadlocks', 'I/O Systems'] },
+            { code: 'CS604', name: 'Cloud Computing Infrastructure', credits: 3, faculty: 'Prof. Shweta Kumari', progress: 45, topics: ['SaaS/PaaS/IaaS', 'Virtual Machines', 'Serverless', 'Microservices', 'AWS/Azure Tools', 'Cloud Security'] },
+            { code: 'CS605', name: 'Software Engineering & Design', credits: 4, faculty: 'Dr. Nancy Priya', progress: 80, topics: ['Agile Methodology', 'UML Diagrams', 'Software Testing', 'DevOps', 'SDLC Models', 'System Design'] }
         ]
     },
     {
@@ -487,7 +487,7 @@ const StudentSelfDashboard = () => {
                             <div class="watermark">${assignment.department || 'OFFICIAL WORKSHEET'}</div>
                             
                             <div class="header-block">
-                                <h1 class="college-name">${user?.college?.name || 'All Campus Digital College'}</h1>
+                                <h1 class="college-name">${user?.college?.name || 'IntelliQ College'}</h1>
                                 <p class="college-address">${user?.college?.address || user?.college?.location || 'Blockchain Verified Campus Registry'}</p>
                                 <span class="doc-title">Assignment Worksheet</span>
                             </div>
@@ -618,7 +618,7 @@ const StudentSelfDashboard = () => {
         return [
             {
                 id: 'default-notice-1',
-                title: 'Welcome to All Campus Digital student portal. Track curriculum progress, manage projects, and access the exam sessional tools.',
+                title: 'Welcome to IntelliQ student portal. Track curriculum progress, manage projects, and access the exam sessional tools powered by ML-driven Question Novelty Check.',
                 date: new Date().toLocaleDateString(),
                 type: 'General'
             },
@@ -1399,7 +1399,7 @@ const StudentSelfDashboard = () => {
                     <body>
                         <div class="badge">
                             <div class="header">
-                                <div class="logo">URP</div>
+                                <div class="logo">IQ</div>
                                 <span class="verified">VERIFIED</span>
                             </div>
                             <div class="photo-container">
@@ -1423,7 +1423,7 @@ const StudentSelfDashboard = () => {
                             </div>
                             <div class="footer">
                                 <span class="footer-text"><span class="dot"></span>Active Enrollment</span>
-                                <div class="qr">URP</div>
+                                <div class="qr">IQ</div>
                             </div>
                         </div>
                         <script>
@@ -1664,7 +1664,7 @@ const StudentSelfDashboard = () => {
 
                             <div className="text-center space-y-1.5 font-serif">
                                 <h2 className="text-xl sm:text-2xl font-black uppercase tracking-wide leading-none">
-                                    {user.university?.name || 'All Campus Technical University'}
+                                    {user.university?.name || 'IntelliQ University'}
                                 </h2>
                                 <p className="text-[10px] font-bold tracking-widest uppercase text-slate-500 font-sans">
                                     {mockTestPaper.branch} &bull; {mockTestPaper.batch}
@@ -2014,7 +2014,7 @@ const StudentSelfDashboard = () => {
                     </div>
                     <div className="min-w-0">
                         <h1 className="text-sm font-black text-slate-950 truncate leading-none uppercase mb-1 tracking-tight">
-                            {user.university?.name || 'All Campus Digital'}
+                            {user.university?.name || 'IntelliQ'}
                         </h1>
                         <p className="text-[9px] font-black text-slate-400 truncate uppercase tracking-[0.2em]">
                             {user.college?.name}
@@ -2107,9 +2107,7 @@ const StudentSelfDashboard = () => {
                                                     key={n.id}
                                                     onClick={async (e) => {
                                                         e.stopPropagation();
-                                                        if (isRead) {
-                                                            setReadAlertIds(prev => prev.filter(id => id !== n.id));
-                                                        } else {
+                                                        if (!isRead) {
                                                             setReadAlertIds(prev => [...prev, n.id]);
                                                             if (n.isBackend) {
                                                                 try {
@@ -2123,6 +2121,18 @@ const StudentSelfDashboard = () => {
                                                                     console.error('Error marking notification read:', err);
                                                                 }
                                                             }
+                                                        }
+                                                        
+                                                        // Smart navigation based on notification type
+                                                        if (n.type === 'FACULTY' || n.type === 'Project') {
+                                                            setActiveTab('curriculum');
+                                                            setShowNotificationMenu(false);
+                                                        } else if (n.type === 'Schedule') {
+                                                            setActiveTab('schedule');
+                                                            setShowNotificationMenu(false);
+                                                        } else if (n.type === 'Notice') {
+                                                            navigate('/student-notices');
+                                                            setShowNotificationMenu(false);
                                                         }
                                                     }}
                                                     className={`px-4 py-3 cursor-pointer hover:bg-slate-50/50 transition-colors flex items-start gap-3 ${!isRead ? 'bg-indigo-50/15' : ''}`}
@@ -2382,7 +2392,11 @@ const StudentSelfDashboard = () => {
 
                                     <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
                                         {notices.slice(0, 4).map((notice: any, idx: number) => (
-                                            <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl hover:bg-slate-100/50 transition-colors">
+                                            <div 
+                                                key={idx} 
+                                                onClick={() => navigate('/student-notices')} 
+                                                className="p-3.5 bg-slate-50 border border-slate-200/50 rounded-2xl hover:bg-slate-100/50 transition-colors cursor-pointer"
+                                            >
                                                 <div className="flex items-center justify-between mb-1.5">
                                                     <span className="px-2 py-0.5 bg-indigo-50 border border-indigo-100/30 text-indigo-650 text-[8px] font-black uppercase tracking-wider rounded">
                                                         {notice.category || 'Academic'}
@@ -3784,7 +3798,7 @@ const StudentSelfDashboard = () => {
                                         <div className="pt-3 border-t border-white/10">
                                             <p className="text-[8px] text-slate-400 uppercase tracking-widest">College</p>
                                             <p className="text-xs font-extrabold text-indigo-300">
-                                                {user.college?.name || 'My Digital Campus'}
+                                                {user.college?.name || 'IntelliQ Partner College'}
                                             </p>
                                             {(user.college?.address || user.college?.location) && (
                                                 <p className="text-[9px] text-slate-450 mt-0.5 font-semibold">
@@ -3802,7 +3816,7 @@ const StudentSelfDashboard = () => {
                                         </div>
                                         <div className="w-10 h-10 bg-white rounded-lg p-0.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                             {/* Simulated QR Code */}
-                                            <div className="w-full h-full bg-slate-900 rounded-sm flex items-center justify-center text-[7px] text-white font-black uppercase select-none">URP</div>
+                                            <div className="w-full h-full bg-slate-900 rounded-sm flex items-center justify-center text-[7px] text-white font-black uppercase select-none">IQ</div>
                                         </div>
                                     </div>
                                 </div>

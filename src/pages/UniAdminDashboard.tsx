@@ -29,6 +29,28 @@ type College = {
     };
 };
 
+
+const DEFAULT_MOCK_NOTICES = [
+    {
+        _id: 'mock-notice-1',
+        title: 'Revised End-Semester Exam Schedule 2026',
+        createdAt: new Date().toISOString(),
+        description: 'The controller of examinations has released the revised academic guidelines and timetables for the upcoming semester examinations. Department deans should ensure compliance.'
+    },
+    {
+        _id: 'mock-notice-2',
+        title: "Bloom's Taxonomy Credit Directives",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        description: "University-wide guidelines are now active requiring all question paper setters to align exam papers with IntelliQ Bloom's cognitive rigor mapping (Levels 1–5)."
+    },
+    {
+        _id: 'mock-notice-3',
+        title: 'Centralized PYQ Database Integration',
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+        description: 'Mock data and live exam history vectors have been successfully indexed. Novelty checking modules are now fully operational for affiliated college paper setters.'
+    }
+];
+
 const MODULE_LIST = [
     { key: 'examination', label: 'Examination Controller', desc: 'Access to Examination module' },
     { key: 'addQuestions', label: 'Add Questions', desc: 'Add questions to question bank' },
@@ -94,14 +116,50 @@ const UniAdminDashboard = () => {
 
     const [professorsList, setProfessorsList] = useState<any[]>(() => {
         const stored = localStorage.getItem('urp_professors_credits');
-        if (stored) return JSON.parse(stored);
-        return [
-            { id: '1', name: 'Dr. Alan Turing', subject: 'CS601 (Computer Networks)', submitted: 18, approved: 18, novel: 6, dept: 'Computer Science', credits: 150 },
-            { id: '2', name: 'Prof. Grace Hopper', subject: 'CS602 (DBMS)', submitted: 16, approved: 15, novel: 4, dept: 'Computer Science', credits: 115 },
-            { id: '3', name: 'Dr. Linus Torvalds', subject: 'CS603 (Operating Systems)', submitted: 12, approved: 12, novel: 1, dept: 'Computer Science', credits: 70 },
-            { id: '4', name: 'Prof. Satya Nadella', subject: 'CS604 (Cloud Computing)', submitted: 10, approved: 8, novel: 0, dept: 'Computer Science', credits: 40 },
-            { id: '5', name: 'Dr. Margaret Hamilton', subject: 'CS605 (Software Engineering)', submitted: 15, approved: 14, novel: 3, dept: 'Computer Science', credits: 100 }
+        let list = [];
+        if (stored) {
+            try {
+                list = JSON.parse(stored);
+            } catch (e) {
+                list = [];
+            }
+        }
+
+        const defaultList = [
+            { id: '1', name: 'Dr. Vijay Kumar', subject: 'CS601 (Computer Networks)', submitted: 18, approved: 18, novel: 6, dept: 'Computer Science', credits: 150 },
+            { id: '2', name: 'Prof. Ashish Kumar', subject: 'CS602 (DBMS)', submitted: 16, approved: 15, novel: 4, dept: 'Computer Science', credits: 115 },
+            { id: '3', name: 'Dr. Dipak Kumar Chaudhary', subject: 'CS603 (Operating Systems)', submitted: 12, approved: 12, novel: 1, dept: 'Computer Science', credits: 70 },
+            { id: '4', name: 'Prof. Shweta Kumari', subject: 'CS604 (Cloud Computing)', submitted: 10, approved: 8, novel: 0, dept: 'Computer Science', credits: 40 },
+            { id: '5', name: 'Dr. Nancy Priya', subject: 'CS605 (Software Engineering)', submitted: 15, approved: 14, novel: 3, dept: 'Computer Science', credits: 100 }
         ];
+
+        if (!list || list.length === 0) {
+            return defaultList;
+        }
+
+        // Migrate any old names in local storage
+        const nameMap: Record<string, string> = {
+            'Dr. Alan Turing': 'Dr. Vijay Kumar',
+            'Prof. Grace Hopper': 'Prof. Ashish Kumar',
+            'Dr. Linus Torvalds': 'Dr. Dipak Kumae Chaudhary',
+            'Prof. Satya Nadella': 'Prof. Shweta Kumari',
+            'Dr. Margaret Hamilton': 'Dr. Nancy Priya'
+        };
+
+        let modified = false;
+        const migratedList = list.map((p: any) => {
+            if (nameMap[p.name]) {
+                modified = true;
+                return { ...p, name: nameMap[p.name] };
+            }
+            return p;
+        });
+
+        if (modified) {
+            localStorage.setItem('urp_professors_credits', JSON.stringify(migratedList));
+        }
+
+        return migratedList;
     });
 
     useEffect(() => {
@@ -206,8 +264,19 @@ const UniAdminDashboard = () => {
         try {
             const res = await fetch(BASE_URL + '/api/notice', { headers });
             const data = await res.json();
-            if (Array.isArray(data)) setNotices(data);
-        } catch (e) { console.error('Failed to load notices', e); }
+            if (Array.isArray(data)) {
+                if (data.length > 0) {
+                    setNotices(data);
+                } else {
+                    setNotices(DEFAULT_MOCK_NOTICES);
+                }
+            } else {
+                setNotices(DEFAULT_MOCK_NOTICES);
+            }
+        } catch (e) {
+            console.error('Failed to load notices', e);
+            setNotices(DEFAULT_MOCK_NOTICES);
+        }
     };
 
     const loadResults = async () => {

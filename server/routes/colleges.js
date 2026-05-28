@@ -76,7 +76,7 @@ router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
     // Dispatch credentials via email
     const message = `Hello, ${principalName || name}!
 
-Your college has been registered on All Campus Digital by the University Administrator.
+Your college has been registered on IntelliQ by the University Administrator.
 
 ========================================
   YOUR COLLEGE LOGIN CREDENTIALS
@@ -95,11 +95,11 @@ Note:
 - You can change your password after logging in.
 - Contact your University Admin if you face any issues.
 
-All Campus Digital Team`;
+IntelliQ Team`;
 
     await sendEmail({
       email,
-      subject: 'All Campus Digital - Your College Login Credentials',
+      subject: 'IntelliQ - Your College Login Credentials',
       message
     });
 
@@ -149,7 +149,7 @@ router.post('/:id/credentials', protect, authorize('SUPER_ADMIN'), async (req, r
     // Dispatch email
     const message = `Hello, ${college.principalName || college.name}!
 
-Your college credentials on All Campus Digital have been updated by the University Administrator.
+Your college credentials on IntelliQ have been updated by the University Administrator.
 
 ========================================
   YOUR NEW COLLEGE LOGIN CREDENTIALS
@@ -162,11 +162,11 @@ Your college credentials on All Campus Digital have been updated by the Universi
   Login URL      : http://localhost:5173/login
 ========================================
 
-All Campus Digital Team`;
+IntelliQ Team`;
 
     await sendEmail({
       email: collegeAdmin.email,
-      subject: 'All Campus Digital - Your Updated Login Credentials',
+      subject: 'IntelliQ - Your Updated Login Credentials',
       message
     });
 

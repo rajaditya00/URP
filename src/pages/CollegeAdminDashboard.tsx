@@ -379,10 +379,10 @@ const CollegeAdminDashboard = () => {
                     <div className="flex space-x-1 overflow-x-auto no-scrollbar">
                         {[
                             { id: 'overview', label: 'Dashboard Overview', icon: <LayoutDashboard className="w-4 h-4" /> },
+                            { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
                             { id: 'faculty', label: 'Faculty & Staff', icon: <Users className="w-4 h-4" /> },
                             { id: 'students', label: 'Student Directory', icon: <GraduationCap className="w-4 h-4" /> },
                             { id: 'departments', label: 'Departments', icon: <Building className="w-4 h-4" /> },
-                            { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
                                 className="flex items-center gap-2 px-5 py-[14px] text-sm whitespace-nowrap transition-all relative"
@@ -407,14 +407,37 @@ const CollegeAdminDashboard = () => {
                     {/* OVERVIEW TAB */}
                     {activeTab === 'overview' && (
                         <div className="animate-fade-in">
-                            <div className="bg-gradient-to-br from-[#1e3a5f] to-indigo-900 rounded-3xl p-8 text-white shadow-xl mb-8 relative overflow-hidden">
-                                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-                                <div className="absolute -right-20 -top-20 w-[300px] h-[300px] bg-white opacity-5 rounded-full blur-3xl pointer-events-none"></div>
-                                <div className="relative z-10 max-w-3xl">
-                                    <h2 className="text-3xl font-black tracking-tight mb-3 text-white">Welcome to your Management Portal</h2>
-                                    <p className="text-blue-100/90 text-base leading-relaxed">
-                                        College Overview Dashboard. View key metrics including faculty strength, student enrollment, and active departments at a glance to manage your institutional data effortlessly.
+                            <div className="bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] border border-slate-800 rounded-3xl p-8 text-white shadow-2xl mb-8 relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                {/* Atmospheric orbs */}
+                                <div className="absolute right-0 top-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                                <div className="absolute left-1/3 bottom-0 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl -ml-24 -mb-24 pointer-events-none"></div>
+                                
+                                <div className="relative z-10 max-w-3xl space-y-4">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-300 text-[9px] font-black uppercase tracking-wider rounded-lg flex items-center gap-1.5 shadow-sm">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                                            Partner Campus Console
+                                        </span>
+                                        <span className="px-3 py-1 bg-white/5 border border-white/10 text-slate-350 text-[9px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+                                            Affiliated to {user?.university?.name || 'IntelliQ University'}
+                                        </span>
+                                    </div>
+                                    
+                                    <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white leading-tight">
+                                        Welcome to {user?.college?.name || 'your Management Portal'}
+                                    </h2>
+                                    <p className="text-slate-400 text-sm sm:text-base font-medium leading-relaxed max-w-2xl">
+                                        Overview Command Center. View real-time institutional metrics, dispatch faculty credentials, register students, and publish department notices effortlessly.
                                     </p>
+                                </div>
+
+                                <div className="relative z-10 bg-slate-900/60 border border-slate-800 rounded-2xl p-4.5 shrink-0 hidden lg:block text-right">
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">Security Access Ledger</p>
+                                    <p className="text-xs font-bold mt-1 text-slate-300">Node ID: <span className="font-mono text-blue-400">{user?.college?.generatedCredential || 'CL-9201'}</span></p>
+                                    <div className="flex items-center gap-1.5 justify-end mt-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400">Secure Connection</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -442,6 +465,51 @@ const CollegeAdminDashboard = () => {
                                         <p className="text-5xl font-black text-slate-900 mb-2">{DEPARTMENTS.length}</p>
                                         <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Active Departments</p>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* EMS Feature Overviews & Core Capabilities */}
+                            <div className="mt-8">
+                                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-[#1e3a5f] animate-pulse"></span>
+                                    Integrated Institutional Modules & Features
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {[
+                                        {
+                                            icon: <Layers className="w-5 h-5 text-blue-600" />,
+                                            title: "Examination Control",
+                                            desc: "Coordinate sessional exams, register semester enrollment papers, and monitor university-aligned evaluation tracks.",
+                                            bg: "bg-blue-50 border-blue-100"
+                                        },
+                                        {
+                                            icon: <Users className="w-5 h-5 text-emerald-600" />,
+                                            title: "Faculty Planning",
+                                            desc: "Register educators, assign custom HOD privileges, allot student mentors, and review academic performance logs.",
+                                            bg: "bg-emerald-50 border-emerald-100"
+                                        },
+                                        {
+                                            icon: <Building className="w-5 h-5 text-purple-600" />,
+                                            title: "Dynamic Departments",
+                                            desc: "Plan class curriculums, organize student profiles, and update semester-wise batch schedules in real-time.",
+                                            bg: "bg-purple-50 border-purple-100"
+                                        },
+                                        {
+                                            icon: <Megaphone className="w-5 h-5 text-rose-600" />,
+                                            title: "Direct Broadcasting",
+                                            desc: "Broadcast immediate notices, attach official documents, and deliver instant alerts directly to student and faculty portals.",
+                                            bg: "bg-rose-50 border-rose-100"
+                                        }
+                                    ].map((feat, i) => (
+                                        <div key={i} className="bg-white border border-slate-200 rounded-[24px] p-6 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 relative overflow-hidden group">
+                                            <div className="absolute top-0 left-0 w-full h-[3px] bg-slate-150 group-hover:bg-[#1e3a5f] transition-all duration-300" />
+                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-5 border ${feat.bg} group-hover:scale-105 transition-transform`}>
+                                                {feat.icon}
+                                            </div>
+                                            <h4 className="font-extrabold text-slate-800 text-sm mb-2 group-hover:text-[#1e3a5f] transition-colors">{feat.title}</h4>
+                                            <p className="text-slate-500 text-xs font-semibold leading-relaxed">{feat.desc}</p>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
 

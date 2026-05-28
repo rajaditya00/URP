@@ -247,12 +247,12 @@ router.put('/:id/validate', async (req, res) => {
 
     const message = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  🎓 Welcome to All Campus Digital!
+  🎓 Welcome to IntelliQ!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Hello, ${uni.name}!
 
-Congratulations! Your university has been successfully verified and approved on All Campus Digital — the unified platform for managing your entire academic ecosystem.
+Congratulations! Your university has been successfully verified and approved on IntelliQ — the unified platform for managing your entire academic ecosystem.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   YOUR UNIVERSITY LOGIN CREDENTIALS
@@ -286,12 +286,12 @@ Congratulations! Your university has been successfully verified and approved on 
 - You can change your password after logging in for security.
 
 Welcome aboard! 🚀
-— The All Campus Digital Team
+— The IntelliQ Team
 `;
 
     await sendEmail({
       email: uni.email,
-      subject: '🎓 Welcome to All Campus Digital — Your University Credentials',
+      subject: '🎓 Welcome to IntelliQ — Your University Credentials',
       message: message
     });
 

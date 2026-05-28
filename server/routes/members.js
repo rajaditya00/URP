@@ -200,7 +200,7 @@ router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
 
     const message = `Hello, ${name}!
 
-You have been registered as a Professor/Faculty on All Campus Digital.
+You have been registered as a Professor/Faculty on IntelliQ.
 
 ========================================
   YOUR LOGIN CREDENTIALS
@@ -219,10 +219,10 @@ Note:
 - Use the email and password above to sign in.
 - You MUST change your password after your first login.
 
-All Campus Digital Team`;
+IntelliQ Team`;
 
     try {
-      await sendEmail({ email, subject: 'All Campus Digital - Your Professor Login Credentials', message });
+      await sendEmail({ email, subject: 'IntelliQ - Your Professor Login Credentials', message });
     } catch (emailErr) {
       console.error('Email dispatch failed:', emailErr.message);
     }
@@ -274,7 +274,7 @@ router.post('/student', protect, authorize('COLLEGE'), async (req, res) => {
 
     const message = `Hello, ${name}!
 
-You have been registered as a Student on All Campus Digital.
+You have been registered as a Student on IntelliQ.
 
 ========================================
   YOUR LOGIN CREDENTIALS
@@ -293,10 +293,10 @@ Note:
 - Use the email and password above to sign in.
 - You MUST change your password after your first login.
 
-All Campus Digital Team`;
+IntelliQ Team`;
 
     try {
-      await sendEmail({ email, subject: 'All Campus Digital - Your Student Login Credentials', message });
+      await sendEmail({ email, subject: 'IntelliQ - Your Student Login Credentials', message });
     } catch (emailErr) {
       console.error('Email dispatch failed:', emailErr.message);
     }
@@ -343,7 +343,7 @@ router.post('/staff', protect, authorize('COLLEGE'), async (req, res) => {
 
     const message = `Hello, ${name}!
 
-You have been registered as a Staff member on All Campus Digital.
+You have been registered as a Staff member on IntelliQ.
 
 ========================================
   YOUR LOGIN CREDENTIALS
@@ -362,10 +362,10 @@ Note:
 - Use the email and password above to sign in.
 - You MUST change your password after your first login.
 
-All Campus Digital Team`;
+IntelliQ Team`;
 
     try {
-      await sendEmail({ email, subject: 'All Campus Digital - Your Staff Login Credentials', message });
+      await sendEmail({ email, subject: 'IntelliQ - Your Staff Login Credentials', message });
     } catch (emailErr) {
       console.error('Email dispatch failed:', emailErr.message);
     }

@@ -2,7 +2,7 @@ import { Plus, MoreVertical, Search, Filter } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 
 const departments = [
-  { id: 1, name: 'Computer Science & Engineering', hod: 'Dr. Alan Turing', faculty: 45, students: 1200, status: 'Active' },
+  { id: 1, name: 'Computer Science & Engineering', hod: 'Dr. Vijay Kumar', faculty: 45, students: 1200, status: 'Active' },
   { id: 2, name: 'Electrical Engineering', hod: 'Dr. Nikola Tesla', faculty: 38, students: 850, status: 'Active' },
   { id: 3, name: 'Mechanical Engineering', hod: 'Dr. Henry Ford', faculty: 42, students: 920, status: 'Active' },
   { id: 4, name: 'Civil Engineering', hod: 'Dr. John Smeaton', faculty: 35, students: 780, status: 'Active' },

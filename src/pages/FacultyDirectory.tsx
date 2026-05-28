@@ -2,12 +2,12 @@ import { Card } from '../components/UI/Card';
 import { Search, Filter, Mail, Phone, BookOpen, Presentation, ChevronRight, UserRound } from 'lucide-react';
 
 const facultyList = [
-    { id: 1, name: 'Dr. Alan Turing', role: 'Head of Department', dept: 'Computer Science', email: 'a.turing@urp.edu', ext: 'x4021', publications: 42, image: 'A' },
-    { id: 2, name: 'Prof. Grace Hopper', role: 'Senior Professor', dept: 'Computer Science', email: 'g.hopper@urp.edu', ext: 'x4022', publications: 38, image: 'G' },
-    { id: 3, name: 'Dr. Richard Feynman', role: 'Distinguished Prof.', dept: 'Physics', email: 'r.feynman@urp.edu', ext: 'x5105', publications: 85, image: 'R' },
-    { id: 4, name: 'Dr. Marie Curie', role: 'Associate Professor', dept: 'Chemistry', email: 'm.curie@urp.edu', ext: 'x3201', publications: 64, image: 'M' },
-    { id: 5, name: 'Prof. John Nash', role: 'Assistant Professor', dept: 'Mathematics', email: 'j.nash@urp.edu', ext: 'x2190', publications: 18, image: 'J' },
-    { id: 6, name: 'Dr. Ada Lovelace', role: 'Research Fellow', dept: 'Artificial Intelligence', email: 'a.lovelace@urp.edu', ext: 'x4099', publications: 22, image: 'A' },
+    { id: 1, name: 'Dr. Vijay Kumar', role: 'Head of Department', dept: 'Computer Science', email: 'v.kumar@intelliq.edu', ext: 'x4021', publications: 42, image: 'V' },
+    { id: 2, name: 'Prof. Ashish Kumar', role: 'Senior Professor', dept: 'Computer Science', email: 'a.kumar@intelliq.edu', ext: 'x4022', publications: 38, image: 'A' },
+    { id: 3, name: 'Dr. Richard Feynman', role: 'Distinguished Prof.', dept: 'Physics', email: 'r.feynman@intelliq.edu', ext: 'x5105', publications: 85, image: 'R' },
+    { id: 4, name: 'Dr. Marie Curie', role: 'Associate Professor', dept: 'Chemistry', email: 'm.curie@intelliq.edu', ext: 'x3201', publications: 64, image: 'M' },
+    { id: 5, name: 'Prof. John Nash', role: 'Assistant Professor', dept: 'Mathematics', email: 'j.nash@intelliq.edu', ext: 'x2190', publications: 18, image: 'J' },
+    { id: 6, name: 'Dr. Ada Lovelace', role: 'Research Fellow', dept: 'Artificial Intelligence', email: 'a.lovelace@intelliq.edu', ext: 'x4099', publications: 22, image: 'A' },
 ];
 
 const FacultyDirectory = () => {

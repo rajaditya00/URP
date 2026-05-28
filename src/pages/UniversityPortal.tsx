@@ -217,7 +217,7 @@ const UniversityPortal = () => {
             <footer className="bg-slate-900 py-12 text-center text-slate-400 font-medium">
                 <div className="max-w-7xl mx-auto px-6">
                     <p>© {new Date().getFullYear()} {uniName}. All rights reserved.</p>
-                    <p className="text-sm mt-2">Technology powered by <span className="font-bold text-slate-200">CampusCore URP</span>.</p>
+                    <p className="text-sm mt-2">Technology powered by <span className="font-bold text-slate-200">IntelliQ</span> — An ML-Powered Question Paper Generation &amp; Academic Resource Platform.</p>
                 </div>
             </footer>
         </div>
