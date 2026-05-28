@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
@@ -232,7 +233,7 @@ const FacultySelfDashboard = () => {
         setSavingLecturePlan(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/class-sessions/${id}`, {
+            const res = await fetch(`{BASE_URL}/api/class-sessions/${id}`, {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -259,7 +260,7 @@ const FacultySelfDashboard = () => {
         setLoadingSessions(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/class-sessions', {
+            const res = await fetch(BASE_URL + '/api/class-sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -290,7 +291,7 @@ const FacultySelfDashboard = () => {
         setLoadingAssignments(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/assignments', {
+            const res = await fetch(BASE_URL + '/api/assignments', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -308,7 +309,7 @@ const FacultySelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             const dept = user?.department || 'Computer Science';
-            const res = await fetch(`http://localhost:5000/api/questions?department=${encodeURIComponent(dept)}`, {
+            const res = await fetch(`{BASE_URL}/api/questions?department=${encodeURIComponent(dept)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -332,7 +333,7 @@ const FacultySelfDashboard = () => {
             let successCount = 0;
 
             for (const d of selectedBulkDates) {
-                const res = await fetch('http://localhost:5000/api/class-sessions', {
+                const res = await fetch(BASE_URL + '/api/class-sessions', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -383,7 +384,7 @@ const FacultySelfDashboard = () => {
         }
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/class-sessions/${markingCompleteId}/complete`, {
+            const res = await fetch(`{BASE_URL}/api/class-sessions/${markingCompleteId}/complete`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -422,7 +423,7 @@ const FacultySelfDashboard = () => {
 
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/assignments', {
+            const res = await fetch(BASE_URL + '/api/assignments', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -462,7 +463,7 @@ const FacultySelfDashboard = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/assignments/${gradingAssignmentId}/grade/${gradingSubmissionId}`, {
+            const res = await fetch(`{BASE_URL}/api/assignments/${gradingAssignmentId}/grade/${gradingSubmissionId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -496,7 +497,7 @@ const FacultySelfDashboard = () => {
 
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/class-sessions/${id}?reason=${encodeURIComponent(reason.trim())}`, {
+            const res = await fetch(`{BASE_URL}/api/class-sessions/${id}?reason=${encodeURIComponent(reason.trim())}`, {
                 method: 'DELETE',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -617,7 +618,7 @@ const FacultySelfDashboard = () => {
                 form.append('profileImage', editPhotoFile);
             }
 
-            const res = await fetch('http://localhost:5000/api/auth/profile', {
+            const res = await fetch(BASE_URL + '/api/auth/profile', {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -647,7 +648,7 @@ const FacultySelfDashboard = () => {
         setLoadingStudents(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/projects/mentored-students', {
+            const res = await fetch(BASE_URL + '/api/projects/mentored-students', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -658,7 +659,7 @@ const FacultySelfDashboard = () => {
                 if (data.length > 0 && !selectedStudent) {
                     setSelectedStudent(data[0]);
                     // Direct fetch for that student
-                    const projRes = await fetch(`http://localhost:5000/api/projects/student-projects/${data[0]._id}`, {
+                    const projRes = await fetch(`{BASE_URL}/api/projects/student-projects/${data[0]._id}`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -688,7 +689,7 @@ const FacultySelfDashboard = () => {
         setLoadingProjects(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/projects/student-projects/${studentId}`, {
+            const res = await fetch(`{BASE_URL}/api/projects/student-projects/${studentId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -723,7 +724,7 @@ const FacultySelfDashboard = () => {
         setEvaluatingProjectId(projectId);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/projects/evaluate', {
+            const res = await fetch(BASE_URL + '/api/projects/evaluate', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -810,7 +811,7 @@ const FacultySelfDashboard = () => {
                                         {editPhotoFile ? (
                                             <img src={URL.createObjectURL(editPhotoFile)} alt="Preview" className="w-full h-full object-cover" />
                                         ) : user?.profileImage ? (
-                                            <img src={user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:5000/${user.profileImage}`} alt="Current" className="w-full h-full object-cover" />
+                                            <img src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`} alt="Current" className="w-full h-full object-cover" />
                                         ) : (
                                             <span>{user?.name?.charAt(0).toUpperCase()}</span>
                                         )}
@@ -1054,7 +1055,7 @@ const FacultySelfDashboard = () => {
                             >
                                 {user?.profileImage ? (
                                     <img
-                                        src={user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:5000/${user.profileImage}`}
+                                        src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`}
                                         alt={user?.name || 'Profile'}
                                         className="w-full h-full object-cover"
                                     />
@@ -1319,7 +1320,7 @@ const FacultySelfDashboard = () => {
                                     <div className="flex items-center gap-6">
                                         <div className="w-24 h-24 rounded-2xl bg-white/10 border border-white/20 overflow-hidden flex items-center justify-center text-4xl font-black shadow-2xl">
                                             {user?.profileImage ? (
-                                                <img src={user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:5000/${user.profileImage}`} alt={user.name} className="w-full h-full object-cover" />
+                                                <img src={user.profileImage.startsWith('http') ? user.profileImage : `{BASE_URL}/${user.profileImage}`} alt={user.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span>{user?.name?.charAt(0)}</span>
                                             )}
@@ -1683,7 +1684,7 @@ const FacultySelfDashboard = () => {
                                                                                                         setSavingLecturePlan(true);
                                                                                                         try {
                                                                                                             const token = localStorage.getItem('urp_token');
-                                                                                                            const res = await fetch(`http://localhost:5000/api/class-sessions/${session._id}`, {
+                                                                                                            const res = await fetch(`{BASE_URL}/api/class-sessions/${session._id}`, {
                                                                                                                 method: 'PUT',
                                                                                                                 headers: {
                                                                                                                     'Content-Type': 'application/json',

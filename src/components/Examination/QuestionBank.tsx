@@ -1,3 +1,4 @@
+import BASE_URL from '../../config/api';
 import { useState, useEffect } from 'react';
 import {
     Plus, Search, Filter, Trash2, Eye, FileText, Download,
@@ -754,7 +755,7 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 2500);
                     
-                    const res = await fetch('http://localhost:5000/api/questions', {
+                    const res = await fetch(BASE_URL + '/api/questions', {
                         signal: controller.signal,
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -1265,7 +1266,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                 const userObj = JSON.parse(storedUser);
                 if (userObj.university && userObj.university.logoUrl) {
                     const cleanPath = userObj.university.logoUrl.replace(/^\/+/g, '');
-                    return `http://localhost:5000/${cleanPath}`;
+                    return `{BASE_URL}/${cleanPath}`;
                 }
             }
         } catch (e) {
@@ -2219,7 +2220,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 2500);
                 
-                const res = await fetch('http://localhost:5000/api/questions', {
+                const res = await fetch(BASE_URL + '/api/questions', {
                     signal: controller.signal,
                     headers: {
                         'Authorization': `Bearer ${token}`

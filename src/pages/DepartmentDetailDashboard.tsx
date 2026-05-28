@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -77,7 +78,7 @@ const DepartmentDetailDashboard = () => {
             if (!token) { navigate('/login'); return; }
 
             // Fetch members
-            const membersResp = await fetch('http://localhost:5000/api/members', {
+            const membersResp = await fetch(BASE_URL + '/api/members', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (membersResp.ok) {
@@ -88,7 +89,7 @@ const DepartmentDetailDashboard = () => {
             }
 
             // Fetch schedules
-            const schedulesResp = await fetch(`http://localhost:5000/api/members/schedules/${encodeURIComponent(deptName || '')}`, {
+            const schedulesResp = await fetch(`{BASE_URL}/api/members/schedules/${encodeURIComponent(deptName || '')}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (schedulesResp.ok) {
@@ -126,7 +127,7 @@ const DepartmentDetailDashboard = () => {
         setAllottingStudentId(studentId);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/allot-mentor', {
+            const res = await fetch(BASE_URL + '/api/members/allot-mentor', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ const DepartmentDetailDashboard = () => {
 
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/schedules', {
+            const res = await fetch(BASE_URL + '/api/members/schedules', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -186,7 +187,7 @@ const DepartmentDetailDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this schedule entry?')) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/members/schedules/${id}`, {
+            const res = await fetch(`{BASE_URL}/api/members/schedules/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -297,7 +298,7 @@ const DepartmentDetailDashboard = () => {
                                         <div className="relative w-22 h-22 rounded-3xl overflow-hidden border-2 border-white/20 shadow-md bg-slate-950 flex items-center justify-center">
                                             {hod.profileImage ? (
                                                 <img 
-                                                    src={`http://localhost:5000${hod.profileImage}`} 
+                                                    src={`{BASE_URL}${hod.profileImage}`} 
                                                     alt={hod.name} 
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-110"
                                                     onError={(e) => {

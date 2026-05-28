@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PlayCircle, CheckCircle, MessageSquare, Send, ArrowLeft, Video, Circle, FileText, Check } from 'lucide-react';
@@ -28,7 +29,7 @@ const CourseDetail: React.FC = () => {
   const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/elearning/${courseId}`)
+    fetch(`{BASE_URL}/api/elearning/${courseId}`)
       .then(res => res.json())
       .then(data => {
          if(data && !data.title?.includes('Not found')) {

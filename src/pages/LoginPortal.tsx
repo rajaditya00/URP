@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -184,7 +185,7 @@ const LoginPortal = () => {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 2500);
 
-            const res = await fetch('http://localhost:5000/api/auth/login', {
+            const res = await fetch(BASE_URL + '/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),

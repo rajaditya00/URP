@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Mail, ShieldCheck, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
@@ -30,7 +31,7 @@ const SystemAdminDashboard = () => {
         setLoginLoading(true);
         setStatusMsg(null);
         try {
-            const res = await fetch('http://localhost:5000/api/auth/system-admin/login', {
+            const res = await fetch(BASE_URL + '/api/auth/system-admin/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, securityCode }),
@@ -64,8 +65,8 @@ const SystemAdminDashboard = () => {
         setLoading(true);
         try {
             const [pRes, vRes] = await Promise.all([
-                fetch('http://localhost:5000/api/university/pending'),
-                fetch('http://localhost:5000/api/university/verified'),
+                fetch(BASE_URL + '/api/university/pending'),
+                fetch(BASE_URL + '/api/university/verified'),
             ]);
             const pData = await pRes.json();
             const vData = await vRes.json();
@@ -84,7 +85,7 @@ const SystemAdminDashboard = () => {
         const confirmCheck = window.confirm(`Verify "${name}" and dispatch credentials to their registered email?`);
         if (!confirmCheck) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/university/${id}/validate`, {
+            const res = await fetch(`{BASE_URL}/api/university/${id}/validate`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -264,7 +265,7 @@ const SystemAdminDashboard = () => {
                                 <div className="px-6 py-4 border-b border-border-color flex items-center justify-between bg-amber-50">
                                     <div className="flex items-center gap-3">
                                         {uni.logoUrl
-                                            ? <img src={`http://localhost:5000/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
+                                            ? <img src={`{BASE_URL}/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
                                             : <div className="h-9 w-9 rounded-full bg-amber-200 text-amber-800 flex items-center justify-center font-bold text-sm">{uni.name?.charAt(0)}</div>
                                         }
                                         <div>
@@ -290,7 +291,7 @@ const SystemAdminDashboard = () => {
                                         <div className="flex flex-wrap gap-3">
                                             {uni.affiliationDocUrl ? (
                                                 <a
-                                                    href={`http://localhost:5000/${uni.affiliationDocUrl?.replace(/^\/+/g, '')}`}
+                                                    href={`{BASE_URL}/${uni.affiliationDocUrl?.replace(/^\/+/g, '')}`}
                                                     target="_blank" rel="noreferrer" download
                                                     className="inline-flex items-center gap-2 px-4 py-2 border border-[#3b82f6] text-[#3b82f6] hover:bg-[#eff6ff] rounded-lg text-sm font-semibold transition-colors"
                                                 >
@@ -350,7 +351,7 @@ const SystemAdminDashboard = () => {
                                 <div className="px-6 py-4 border-b border-green-100 flex items-center justify-between bg-green-50">
                                     <div className="flex items-center gap-3">
                                         {uni.logoUrl
-                                            ? <img src={`http://localhost:5000/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
+                                            ? <img src={`{BASE_URL}/${uni.logoUrl?.replace(/^\/+/g, '')}`} alt="logo" className="h-9 w-9 object-contain rounded border bg-white p-0.5" />
                                             : <div className="h-9 w-9 rounded-full bg-green-200 text-green-800 flex items-center justify-center font-bold text-sm">{uni.name?.charAt(0)}</div>
                                         }
                                         <div>

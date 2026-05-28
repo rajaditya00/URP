@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { X, Mail, Lock, User, Briefcase } from 'lucide-react';
@@ -17,7 +18,7 @@ const AuthModal: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen,
     e.preventDefault();
     setError('');
 
-    const url = isLogin ? 'http://localhost:5000/api/auth/login' : 'http://localhost:5000/api/auth/signup';
+    const url = isLogin ? BASE_URL + '/api/auth/login' : BASE_URL + '/api/auth/signup';
     
     try {
        const res = await fetch(url, {

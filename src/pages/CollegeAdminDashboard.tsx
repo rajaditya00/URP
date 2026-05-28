@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
@@ -74,7 +75,7 @@ const CollegeAdminDashboard = () => {
     const loadMembers = async (searchVal = '', batchVal = 'All', semesterVal = 'All', deptVal = 'All') => {
         try {
             const token = localStorage.getItem('urp_token');
-            let url = 'http://localhost:5000/api/members?';
+            let url = BASE_URL + '/api/members?';
             if (searchVal.trim()) url += `search=${encodeURIComponent(searchVal.trim())}&`;
             if (batchVal !== 'All') url += `batch=${encodeURIComponent(batchVal)}&`;
             if (semesterVal !== 'All') url += `semester=${encodeURIComponent(semesterVal)}&`;
@@ -142,7 +143,7 @@ const CollegeAdminDashboard = () => {
         setScheduleLoading(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/members/schedules/${encodeURIComponent(deptName)}`, {
+            const res = await fetch(`{BASE_URL}/api/members/schedules/${encodeURIComponent(deptName)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -174,7 +175,7 @@ const CollegeAdminDashboard = () => {
 
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/schedules', {
+            const res = await fetch(BASE_URL + '/api/members/schedules', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -205,7 +206,7 @@ const CollegeAdminDashboard = () => {
         if (!expandedDept) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/members/schedules/${scheduleId}`, {
+            const res = await fetch(`{BASE_URL}/api/members/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -238,7 +239,7 @@ const CollegeAdminDashboard = () => {
         setQuickAllotting(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/allot-mentor', {
+            const res = await fetch(BASE_URL + '/api/members/allot-mentor', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -267,7 +268,7 @@ const CollegeAdminDashboard = () => {
         setAllottingStudentId(studentId);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/allot-mentor', {
+            const res = await fetch(BASE_URL + '/api/members/allot-mentor', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -294,7 +295,7 @@ const CollegeAdminDashboard = () => {
         if (!newFaculty.name || !newFaculty.email) return showToastMsg('Name and Email are required.');
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/professor', {
+            const res = await fetch(BASE_URL + '/api/members/professor', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newFaculty)
@@ -316,7 +317,7 @@ const CollegeAdminDashboard = () => {
         if (!newStudent.name || !newStudent.rollNo || !newStudent.email) return showToastMsg('Name, Email and Roll Number are required.');
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members/student', {
+            const res = await fetch(BASE_URL + '/api/members/student', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(newStudent)

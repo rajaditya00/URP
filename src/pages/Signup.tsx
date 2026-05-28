@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Building2, Globe, CheckCircle2, Crown, BookOpen, Camera, ChevronRight, ChevronLeft, ShieldCheck, Mail, Lock, Phone, MapPin, Navigation, Check, FileText, X, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
@@ -173,7 +174,7 @@ const Signup = () => {
         if (!formData.email) { setOtpError('Please enter your email first.'); return; }
         setOtpLoading('email'); setOtpError('');
         try {
-            const res = await fetch('http://localhost:5000/api/university/send-otp', {
+            const res = await fetch(BASE_URL + '/api/university/send-otp', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: formData.email, type: 'email' })
             });
@@ -187,7 +188,7 @@ const Signup = () => {
         if (!emailOtpValue) { setOtpError('Please enter the email OTP.'); return; }
         setOtpLoading('email'); setOtpError('');
         try {
-            const res = await fetch('http://localhost:5000/api/university/verify-otp', {
+            const res = await fetch(BASE_URL + '/api/university/verify-otp', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: formData.email, emailOtp: emailOtpValue })
             });
@@ -202,7 +203,7 @@ const Signup = () => {
         if (!formData.phone) { setOtpError('Please enter your phone number first.'); return; }
         setOtpLoading('phone'); setOtpError('');
         try {
-            const res = await fetch('http://localhost:5000/api/university/send-otp', {
+            const res = await fetch(BASE_URL + '/api/university/send-otp', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: `${formData.countryCode}${formData.phone}`, type: 'phone' })
             });
@@ -217,7 +218,7 @@ const Signup = () => {
         setOtpLoading('phone'); setOtpError('');
         try {
             const phone = `${formData.countryCode}${formData.phone}`;
-            const res = await fetch('http://localhost:5000/api/university/verify-otp', {
+            const res = await fetch(BASE_URL + '/api/university/verify-otp', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone, phoneOtp: phoneOtpValue })
             });
@@ -308,7 +309,7 @@ const Signup = () => {
         });
 
         try {
-            const res = await fetch('http://localhost:5000/api/university/register', {
+            const res = await fetch(BASE_URL + '/api/university/register', {
                 method: 'POST',
                 body: data
             });

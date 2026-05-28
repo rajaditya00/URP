@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
@@ -184,7 +185,7 @@ const UniAdminDashboard = () => {
         setSaving(true);
         try {
             const body = type === 'overview' ? editUni : editLeadership;
-            const res = await fetch(`http://localhost:5000/api/university/${uniData._id}/details`, {
+            const res = await fetch(`{BASE_URL}/api/university/${uniData._id}/details`, {
                 method: 'PUT', headers, body: JSON.stringify(body)
             });
             const data = await res.json();
@@ -203,7 +204,7 @@ const UniAdminDashboard = () => {
 
     const loadNotices = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/notice', { headers });
+            const res = await fetch(BASE_URL + '/api/notice', { headers });
             const data = await res.json();
             if (Array.isArray(data)) setNotices(data);
         } catch (e) { console.error('Failed to load notices', e); }
@@ -211,7 +212,7 @@ const UniAdminDashboard = () => {
 
     const loadResults = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/result', { headers });
+            const res = await fetch(BASE_URL + '/api/result', { headers });
             const data = await res.json();
             if (Array.isArray(data)) setResults(data);
         } catch (e) { console.error('Failed to load results', e); }
@@ -219,7 +220,7 @@ const UniAdminDashboard = () => {
 
     const loadColleges = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/college', { headers });
+            const res = await fetch(BASE_URL + '/api/college', { headers });
             const data = await res.json();
             if (Array.isArray(data)) setColleges(data);
         } catch (e) { console.error(e); }
@@ -232,7 +233,7 @@ const UniAdminDashboard = () => {
         }
         setSaving(true);
         try {
-            const res = await fetch('http://localhost:5000/api/college', {
+            const res = await fetch(BASE_URL + '/api/college', {
                 method: 'POST', headers, body: JSON.stringify(newCollege)
             });
             const data = await res.json();
@@ -254,7 +255,7 @@ const UniAdminDashboard = () => {
     const handleToggleModule = async (college: College, moduleKey: string, val: boolean) => {
         try {
             const updated = { ...college, modules: { ...college.modules, [moduleKey]: val } };
-            const res = await fetch(`http://localhost:5000/api/college/${college._id}`, {
+            const res = await fetch(`{BASE_URL}/api/college/${college._id}`, {
                 method: 'PUT', headers, body: JSON.stringify({ modules: updated.modules })
             });
             if (res.ok) {
@@ -266,7 +267,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteCollege = async (id: string) => {
         if (!window.confirm('Remove this college and its admin account?')) return;
-        await fetch(`http://localhost:5000/api/college/${id}`, { method: 'DELETE', headers });
+        await fetch(`{BASE_URL}/api/college/${id}`, { method: 'DELETE', headers });
         setColleges(prev => prev.filter(c => c._id !== id));
         showToast('College removed');
     };
@@ -275,7 +276,7 @@ const UniAdminDashboard = () => {
         if (!window.confirm(`Generate new login credentials for ${collegeName} and immediately email them to the college admin?`)) return;
         setSaving(true);
         try {
-            const res = await fetch(`http://localhost:5000/api/college/${id}/credentials`, { method: 'POST', headers });
+            const res = await fetch(`{BASE_URL}/api/college/${id}/credentials`, { method: 'POST', headers });
             const data = await res.json();
             if (res.ok) {
                 await loadColleges();
@@ -302,7 +303,7 @@ const UniAdminDashboard = () => {
             const fetchHeaders = new Headers();
             fetchHeaders.append('Authorization', `Bearer ${token}`);
 
-            const res = await fetch('http://localhost:5000/api/notice', {
+            const res = await fetch(BASE_URL + '/api/notice', {
                 method: 'POST', headers: fetchHeaders, body: form
             });
             if (res.ok) {
@@ -316,7 +317,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteNotice = async (id: string) => {
         if (!window.confirm('Delete this notice?')) return;
-        await fetch(`http://localhost:5000/api/notice/${id}`, { method: 'DELETE', headers });
+        await fetch(`{BASE_URL}/api/notice/${id}`, { method: 'DELETE', headers });
         await loadNotices(); showToast('Notice deleted');
     };
 
@@ -328,7 +329,7 @@ const UniAdminDashboard = () => {
                 ...newResult,
                 linkText: newResult.linkText || 'View Result Document'
             };
-            const res = await fetch('http://localhost:5000/api/result', {
+            const res = await fetch(BASE_URL + '/api/result', {
                 method: 'POST', headers, body: JSON.stringify(body)
             });
             if (res.ok) {
@@ -341,7 +342,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteResult = async (id: string) => {
         if (!window.confirm('Delete this result record?')) return;
-        await fetch(`http://localhost:5000/api/result/${id}`, { method: 'DELETE', headers });
+        await fetch(`{BASE_URL}/api/result/${id}`, { method: 'DELETE', headers });
         await loadResults(); showToast('Result deleted');
     };
 
@@ -398,7 +399,7 @@ const UniAdminDashboard = () => {
                 <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full relative">
                     <div className="flex items-center gap-4">
                         {uniData?.logoUrl
-                            ? <img src={`http://localhost:5000/${uniData.logoUrl?.replace(/^\/+/, '')}`} alt="logo" className="h-9 max-w-20 object-contain" />
+                            ? <img src={`{BASE_URL}/${uniData.logoUrl?.replace(/^\/+/, '')}`} alt="logo" className="h-9 max-w-20 object-contain" />
                             : <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-sm flex items-center justify-center shadow-inner">{uniData?.name?.charAt(0)}</div>
                         }
                         <div>
@@ -550,7 +551,7 @@ const UniAdminDashboard = () => {
                                         </p>
                                         <p className="text-sm text-text-secondary leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100/50 mb-3">{n.description}</p>
                                         {n.pdfUrl && (
-                                            <a href={`http://localhost:5000/${n.pdfUrl?.replace(/^\/+/, '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold border border-red-200/60 transition-colors shadow-sm">
+                                            <a href={`{BASE_URL}/${n.pdfUrl?.replace(/^\/+/, '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold border border-red-200/60 transition-colors shadow-sm">
                                                 <span>📄</span>
                                                 <span>View Attachment PDF</span>
                                             </a>

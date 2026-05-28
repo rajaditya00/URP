@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
@@ -229,7 +230,7 @@ const StudentSelfDashboard = () => {
         setLoadingSessions(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/class-sessions', {
+            const res = await fetch(BASE_URL + '/api/class-sessions', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -247,7 +248,7 @@ const StudentSelfDashboard = () => {
         setLoadingAssignments(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/assignments', {
+            const res = await fetch(BASE_URL + '/api/assignments', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -266,7 +267,7 @@ const StudentSelfDashboard = () => {
         setSubmittingAssignment(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`http://localhost:5000/api/assignments/${solvingAssignmentId}/submit`, {
+            const res = await fetch(`{BASE_URL}/api/assignments/${solvingAssignmentId}/submit`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -315,7 +316,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/facilitys', {
+            const resp = await fetch(BASE_URL + '/api/facilitys', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -417,7 +418,7 @@ const StudentSelfDashboard = () => {
                 const token = localStorage.getItem('urp_token');
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 5000);
-                const resp = await fetch('http://localhost:5000/api/questions/trends', {
+                const resp = await fetch(BASE_URL + '/api/questions/trends', {
                     signal: controller.signal,
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -546,7 +547,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/projects/mentors', {
+            const resp = await fetch(BASE_URL + '/api/projects/mentors', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -565,7 +566,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/projects', {
+            const resp = await fetch(BASE_URL + '/api/projects', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -632,7 +633,7 @@ const StudentSelfDashboard = () => {
         setResultsLoading(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const resp = await fetch('http://localhost:5000/api/result', {
+            const resp = await fetch(BASE_URL + '/api/result', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -790,7 +791,7 @@ const StudentSelfDashboard = () => {
         if (!newProjName.trim() || !newProjStack.trim()) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const resp = await fetch('http://localhost:5000/api/projects', {
+            const resp = await fetch(BASE_URL + '/api/projects', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -826,7 +827,7 @@ const StudentSelfDashboard = () => {
         if (!newAchTitle.trim() || !newAchOrg.trim()) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const resp = await fetch('http://localhost:5000/api/projects/achievement', {
+            const resp = await fetch(BASE_URL + '/api/projects/achievement', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -857,7 +858,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/auth/profile', {
+            const resp = await fetch(BASE_URL + '/api/auth/profile', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -876,7 +877,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/notice', {
+            const resp = await fetch(BASE_URL + '/api/notice', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -895,7 +896,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/notifications', {
+            const resp = await fetch(BASE_URL + '/api/notifications', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -916,7 +917,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/academic', {
+            const resp = await fetch(BASE_URL + '/api/academic', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -966,7 +967,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/academic/locker', {
+            const resp = await fetch(BASE_URL + '/api/academic/locker', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -987,7 +988,7 @@ const StudentSelfDashboard = () => {
         try {
             const token = localStorage.getItem('urp_token');
             if (!token) return;
-            const resp = await fetch('http://localhost:5000/api/academic/locker/request', {
+            const resp = await fetch(BASE_URL + '/api/academic/locker/request', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1137,7 +1138,7 @@ const StudentSelfDashboard = () => {
                                 <span class="verified">VERIFIED</span>
                             </div>
                             <div class="photo-container">
-                                <img class="photo" src="${user?.profileImage ? 'http://localhost:5000/' + user.profileImage : 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(user?.name || 'Student')}" alt="Photo" />
+                                <img class="photo" src="${user?.profileImage ? BASE_URL + '/' + user.profileImage : 'https://api.dicebear.com/7.x/initials/svg?seed=' + encodeURIComponent(user?.name || 'Student')}" alt="Photo" />
                                 <div>
                                     <p class="info-title">Student Name</p>
                                     <p class="info-value" style="font-size: 15px; margin-bottom: 0;">${user?.name}</p>
@@ -1928,7 +1929,7 @@ const StudentSelfDashboard = () => {
                                                 setReadAlertIds(allNotifications.map(n => n.id));
                                                 try {
                                                     const token = localStorage.getItem('urp_token');
-                                                    await fetch('http://localhost:5000/api/notifications/mark-all-read', {
+                                                    await fetch(BASE_URL + '/api/notifications/mark-all-read', {
                                                         method: 'PUT',
                                                         headers: { 'Authorization': `Bearer ${token}` }
                                                     });
@@ -1963,7 +1964,7 @@ const StudentSelfDashboard = () => {
                                                             if (n.isBackend) {
                                                                 try {
                                                                     const token = localStorage.getItem('urp_token');
-                                                                    await fetch(`http://localhost:5000/api/notifications/${n.id}/read`, {
+                                                                    await fetch(`{BASE_URL}/api/notifications/${n.id}/read`, {
                                                                         method: 'PUT',
                                                                         headers: { 'Authorization': `Bearer ${token}` }
                                                                     });
@@ -3291,7 +3292,7 @@ const StudentSelfDashboard = () => {
                                                     const token = localStorage.getItem('urp_token');
                                                     if (!token) return;
                                                     triggerToast('Seeding comprehensive 8-semester blueprint...');
-                                                    const res = await fetch('http://localhost:5000/api/academic/seed', {
+                                                    const res = await fetch(BASE_URL + '/api/academic/seed', {
                                                         headers: { 'Authorization': `Bearer ${token}` }
                                                     });
                                                     if (res.ok) {
@@ -3755,7 +3756,7 @@ const StudentSelfDashboard = () => {
                                     <div className="flex gap-4 items-center mb-6 pt-2 border-t border-white/5">
                                         <div className="w-14 h-14 rounded-2xl border border-white/15 overflow-hidden shrink-0 bg-slate-800 flex items-center justify-center relative">
                                             {user.profileImage ? (
-                                                <img src={`http://localhost:5000/${user.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
+                                                <img src={`{BASE_URL}/${user.profileImage}`} alt="Profile" className="w-full h-full object-cover" />
                                             ) : (
                                                 <User size={24} className="text-white/30" />
                                             )}

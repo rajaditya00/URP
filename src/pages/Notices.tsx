@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -51,7 +52,7 @@ const Notices = () => {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        const res = await fetch('http://localhost:5000/api/notice', { headers });
+        const res = await fetch(BASE_URL + '/api/notice', { headers });
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -211,7 +212,7 @@ const Notices = () => {
               <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end">
                 {notice.pdfUrl ? (
                   <a 
-                    href={`http://localhost:5000/${notice.pdfUrl.replace(/^\/+/, '')}`} 
+                    href={`{BASE_URL}/${notice.pdfUrl.replace(/^\/+/, '')}`} 
                     target="_blank" 
                     rel="noreferrer" 
                     className="text-[10px] font-black text-indigo-600 hover:text-indigo-850 uppercase tracking-widest flex items-center gap-0.5 hover:underline"

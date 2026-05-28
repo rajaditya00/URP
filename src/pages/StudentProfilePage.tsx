@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Printer, ArrowLeft } from 'lucide-react';
@@ -44,7 +45,7 @@ export default function StudentProfilePage() {
     const fetchStudent = async () => {
       try {
         const token = localStorage.getItem('urp_token');
-        const res = await fetch(`http://localhost:5000/api/members/${id}`, {
+        const res = await fetch(`{BASE_URL}/api/members/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Student not found');

@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Lock, X, CheckCircle2, Eye, EyeOff, Loader2 } from 'lucide-react';
@@ -90,7 +91,7 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ isOpen, onClose, tokenO
         setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/change-password', {
+            const res = await fetch(BASE_URL + '/api/auth/change-password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

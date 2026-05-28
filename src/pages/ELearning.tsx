@@ -1,3 +1,4 @@
+import BASE_URL from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -170,7 +171,7 @@ const ELearning: React.FC = () => {
   const uploadFile = async (file: File) => {
     const data = new FormData();
     data.append('file', file);
-    const res = await fetch('http://localhost:5000/api/upload', {
+    const res = await fetch(BASE_URL + '/api/upload', {
       method: 'POST',
       body: data
     });
@@ -197,7 +198,7 @@ const ELearning: React.FC = () => {
         return { title: topic.title, description: topic.description, videoUrl: finalUrl };
       }));
 
-      const response = await fetch('http://localhost:5000/api/elearning', {
+      const response = await fetch(BASE_URL + '/api/elearning', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, image: finalImageUrl, topics: processedTopics, rating: 0, enrolled: 0, progress: 0 })
@@ -219,7 +220,7 @@ const ELearning: React.FC = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/elearning');
+        const response = await fetch(BASE_URL + '/api/elearning');
         if (response.ok) {
           const data = await response.json();
           if (data && data.length > 0) {
