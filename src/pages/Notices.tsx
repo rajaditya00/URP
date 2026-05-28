@@ -212,7 +212,7 @@ const Notices = () => {
               <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-end">
                 {notice.pdfUrl ? (
                   <a 
-                    href={`{BASE_URL}/${notice.pdfUrl.replace(/^\/+/, '')}`} 
+                    href={`${BASE_URL}/${notice.pdfUrl.replace(/^\/+/, '')}`} 
                     target="_blank" 
                     rel="noreferrer" 
                     className="text-[10px] font-black text-indigo-600 hover:text-indigo-850 uppercase tracking-widest flex items-center gap-0.5 hover:underline"

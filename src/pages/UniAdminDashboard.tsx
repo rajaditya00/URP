@@ -1,8 +1,8 @@
 import BASE_URL from '../config/api';
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-    BookOpen, Bell, FileText, Globe, Award, ShieldCheck, 
+import {
+    BookOpen, Bell, FileText, Globe, Award, ShieldCheck,
     Calendar, Sparkles, Trophy, CheckCircle2, ChevronRight, Info, AlertTriangle, List, Check,
     Plus, Trash2, Shield, Lock, Key, Server, Upload, Send, School, Building, Loader2
 } from 'lucide-react';
@@ -185,7 +185,7 @@ const UniAdminDashboard = () => {
         setSaving(true);
         try {
             const body = type === 'overview' ? editUni : editLeadership;
-            const res = await fetch(`{BASE_URL}/api/university/${uniData._id}/details`, {
+            const res = await fetch(`${BASE_URL}/api/university/${uniData._id}/details`, {
                 method: 'PUT', headers, body: JSON.stringify(body)
             });
             const data = await res.json();
@@ -255,7 +255,7 @@ const UniAdminDashboard = () => {
     const handleToggleModule = async (college: College, moduleKey: string, val: boolean) => {
         try {
             const updated = { ...college, modules: { ...college.modules, [moduleKey]: val } };
-            const res = await fetch(`{BASE_URL}/api/college/${college._id}`, {
+            const res = await fetch(`${BASE_URL}/api/college/${college._id}`, {
                 method: 'PUT', headers, body: JSON.stringify({ modules: updated.modules })
             });
             if (res.ok) {
@@ -267,7 +267,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteCollege = async (id: string) => {
         if (!window.confirm('Remove this college and its admin account?')) return;
-        await fetch(`{BASE_URL}/api/college/${id}`, { method: 'DELETE', headers });
+        await fetch(`${BASE_URL}/api/college/${id}`, { method: 'DELETE', headers });
         setColleges(prev => prev.filter(c => c._id !== id));
         showToast('College removed');
     };
@@ -276,7 +276,7 @@ const UniAdminDashboard = () => {
         if (!window.confirm(`Generate new login credentials for ${collegeName} and immediately email them to the college admin?`)) return;
         setSaving(true);
         try {
-            const res = await fetch(`{BASE_URL}/api/college/${id}/credentials`, { method: 'POST', headers });
+            const res = await fetch(`${BASE_URL}/api/college/${id}/credentials`, { method: 'POST', headers });
             const data = await res.json();
             if (res.ok) {
                 await loadColleges();
@@ -317,7 +317,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteNotice = async (id: string) => {
         if (!window.confirm('Delete this notice?')) return;
-        await fetch(`{BASE_URL}/api/notice/${id}`, { method: 'DELETE', headers });
+        await fetch(`${BASE_URL}/api/notice/${id}`, { method: 'DELETE', headers });
         await loadNotices(); showToast('Notice deleted');
     };
 
@@ -342,7 +342,7 @@ const UniAdminDashboard = () => {
 
     const handleDeleteResult = async (id: string) => {
         if (!window.confirm('Delete this result record?')) return;
-        await fetch(`{BASE_URL}/api/result/${id}`, { method: 'DELETE', headers });
+        await fetch(`${BASE_URL}/api/result/${id}`, { method: 'DELETE', headers });
         await loadResults(); showToast('Result deleted');
     };
 
@@ -399,7 +399,7 @@ const UniAdminDashboard = () => {
                 <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full relative">
                     <div className="flex items-center gap-4">
                         {uniData?.logoUrl
-                            ? <img src={`{BASE_URL}/${uniData.logoUrl?.replace(/^\/+/, '')}`} alt="logo" className="h-9 max-w-20 object-contain" />
+                            ? <img src={`${BASE_URL}/${uniData.logoUrl?.replace(/^\/+/, '')}`} alt="logo" className="h-9 max-w-20 object-contain" />
                             : <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 text-white font-bold text-sm flex items-center justify-center shadow-inner">{uniData?.name?.charAt(0)}</div>
                         }
                         <div>
@@ -478,8 +478,8 @@ const UniAdminDashboard = () => {
                                         <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                                             <Sparkles size={12} className="text-[#1e3a5f]/60" /> Notice Category / Tag *
                                         </label>
-                                        <select 
-                                            value={newNotice.type || 'Important'} 
+                                        <select
+                                            value={newNotice.type || 'Important'}
                                             onChange={e => setNewNotice(p => ({ ...p, type: e.target.value }))}
                                             className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
                                         >
@@ -530,7 +530,7 @@ const UniAdminDashboard = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between border-b border-slate-200/50 pb-2.5">
                                     <h4 className="font-bold text-[#1e3a5f] text-sm tracking-wide">Recent Broadcasts</h4>
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/notices')}
                                         className="text-[10px] font-black text-indigo-600 hover:text-indigo-850 uppercase tracking-widest flex items-center gap-0.5 hover:underline"
                                     >
@@ -551,7 +551,7 @@ const UniAdminDashboard = () => {
                                         </p>
                                         <p className="text-sm text-text-secondary leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100/50 mb-3">{n.description}</p>
                                         {n.pdfUrl && (
-                                            <a href={`{BASE_URL}/${n.pdfUrl?.replace(/^\/+/, '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold border border-red-200/60 transition-colors shadow-sm">
+                                            <a href={`${BASE_URL}/${n.pdfUrl?.replace(/^\/+/, '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold border border-red-200/60 transition-colors shadow-sm">
                                                 <span>📄</span>
                                                 <span>View Attachment PDF</span>
                                             </a>
@@ -559,7 +559,7 @@ const UniAdminDashboard = () => {
                                     </div>
                                 ))}
                                 {notices.length > 3 && (
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/notices')}
                                         className="w-full py-3 bg-white/60 hover:bg-white border border-slate-200/50 hover:border-slate-300 rounded-2xl text-[10px] font-black text-slate-500 hover:text-slate-800 uppercase tracking-widest transition-all cursor-pointer text-center shadow-sm"
                                     >
@@ -573,110 +573,110 @@ const UniAdminDashboard = () => {
                     {/* RESULTS TAB */}
                     {activeTab === 'results' && (
                         <div className="w-full animate-fade-in space-y-6">
-                                <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:bg-white/85 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
-                                    <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-100">
-                                        <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                            <Award size={16} />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-[#1e3a5f] text-base leading-none">Publish Exam Result</h3>
-                                            <p className="text-[10px] text-text-muted mt-1">Publish semester sheets and links to portals</p>
-                                        </div>
+                            <div className="bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200/60 p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all hover:bg-white/85 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
+                                <div className="flex items-center gap-2 mb-6 pb-3 border-b border-slate-100">
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                        <Award size={16} />
                                     </div>
-                                    <div className="space-y-4 mb-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                    <Trophy size={12} className="text-[#1e3a5f]/60" /> Title *
-                                                </label>
-                                                <input placeholder="e.g. B.Tech Sem 4" value={newResult.title} onChange={e => setNewResult(p => ({ ...p, title: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                    <Calendar size={12} className="text-[#1e3a5f]/60" /> Semester *
-                                                </label>
-                                                <select 
-                                                    value={newResult.semester} 
-                                                    onChange={e => setNewResult(p => ({ ...p, semester: e.target.value }))}
-                                                    className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
-                                                >
-                                                    <option value="">Select Semester</option>
-                                                    <option value="Semester 1">Semester 1 (First Year)</option>
-                                                    <option value="Semester 2">Semester 2 (First Year)</option>
-                                                    <option value="Semester 3">Semester 3 (Second Year)</option>
-                                                    <option value="Semester 4">Semester 4 (Second Year)</option>
-                                                    <option value="Semester 5">Semester 5 (Third Year)</option>
-                                                    <option value="Semester 6">Semester 6 (Third Year)</option>
-                                                    <option value="Semester 7">Semester 7 (Final Year)</option>
-                                                    <option value="Semester 8">Semester 8 (Final Year)</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                    <Globe size={12} className="text-[#1e3a5f]/60" /> Result Link URL *
-                                                </label>
-                                                <input placeholder="https://..." value={newResult.link} onChange={e => setNewResult(p => ({ ...p, link: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                    <FileText size={12} className="text-[#1e3a5f]/60" /> Link Text Label *
-                                                </label>
-                                                <input placeholder="e.g. View Grade Sheet Document" value={newResult.linkText} onChange={e => setNewResult(p => ({ ...p, linkText: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
-                                            </div>
+                                    <div>
+                                        <h3 className="font-bold text-[#1e3a5f] text-base leading-none">Publish Exam Result</h3>
+                                        <p className="text-[10px] text-text-muted mt-1">Publish semester sheets and links to portals</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-4 mb-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                <Trophy size={12} className="text-[#1e3a5f]/60" /> Title *
+                                            </label>
+                                            <input placeholder="e.g. B.Tech Sem 4" value={newResult.title} onChange={e => setNewResult(p => ({ ...p, title: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
-                                                <Info size={12} className="text-[#1e3a5f]/60" /> Description
+                                                <Calendar size={12} className="text-[#1e3a5f]/60" /> Semester *
                                             </label>
-                                            <textarea value={newResult.description} onChange={e => setNewResult(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450 resize-none" placeholder="Enter optional result details..." />
+                                            <select
+                                                value={newResult.semester}
+                                                onChange={e => setNewResult(p => ({ ...p, semester: e.target.value }))}
+                                                className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all font-semibold text-slate-700 cursor-pointer"
+                                            >
+                                                <option value="">Select Semester</option>
+                                                <option value="Semester 1">Semester 1 (First Year)</option>
+                                                <option value="Semester 2">Semester 2 (First Year)</option>
+                                                <option value="Semester 3">Semester 3 (Second Year)</option>
+                                                <option value="Semester 4">Semester 4 (Second Year)</option>
+                                                <option value="Semester 5">Semester 5 (Third Year)</option>
+                                                <option value="Semester 6">Semester 6 (Third Year)</option>
+                                                <option value="Semester 7">Semester 7 (Final Year)</option>
+                                                <option value="Semester 8">Semester 8 (Final Year)</option>
+                                            </select>
                                         </div>
                                     </div>
-                                    <button onClick={handleAddResult} disabled={saving} className="w-full py-3 bg-gradient-to-r from-[#1e3a5f] to-[#2b4b7a] text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:shadow-lg hover:shadow-indigo-900/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                                        {saving ? (
-                                            <>
-                                                <Loader2 size={14} className="animate-spin" />
-                                                <span>Publishing result links...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Award size={14} />
-                                                <span>Publish Semester Result</span>
-                                            </>
-                                        )}
-                                    </button>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                <Globe size={12} className="text-[#1e3a5f]/60" /> Result Link URL *
+                                            </label>
+                                            <input placeholder="https://..." value={newResult.link} onChange={e => setNewResult(p => ({ ...p, link: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
+                                                <FileText size={12} className="text-[#1e3a5f]/60" /> Link Text Label *
+                                            </label>
+                                            <input placeholder="e.g. View Grade Sheet Document" value={newResult.linkText} onChange={e => setNewResult(p => ({ ...p, linkText: e.target.value }))} className="w-full h-10 px-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
+                                            <Info size={12} className="text-[#1e3a5f]/60" /> Description
+                                        </label>
+                                        <textarea value={newResult.description} onChange={e => setNewResult(p => ({ ...p, description: e.target.value }))} rows={2} className="w-full p-3.5 bg-white/60 border border-slate-200 rounded-xl text-sm focus:border-[#1e3a5f] focus:ring-4 focus:ring-[#1e3a5f]/5 outline-none transition-all placeholder:text-slate-450 resize-none" placeholder="Enter optional result details..." />
+                                    </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <h4 className="font-bold text-text-muted uppercase text-xs tracking-wider">Published Results</h4>
-                                    {results.map(r => (
-                                        <div key={r._id} className="bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200/50 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] flex flex-col transition-all hover:bg-white hover:shadow-[0_8px_25px_rgb(0,0,0,0.05)] hover:border-slate-300/60">
-                                            <div className="flex justify-between items-start gap-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                                                        <Trophy size={18} />
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-text-primary text-base">{r.title}</h4>
-                                                        <div className="flex gap-2 mt-1">
-                                                            <span className="text-[9px] bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-black px-2 py-0.5 rounded shadow-[0_2px_8px_rgba(59,130,246,0.15)] uppercase">{r.semester}</span>
-                                                        </div>
+                                <button onClick={handleAddResult} disabled={saving} className="w-full py-3 bg-gradient-to-r from-[#1e3a5f] to-[#2b4b7a] text-white font-bold text-xs uppercase tracking-wider rounded-xl hover:shadow-lg hover:shadow-indigo-900/10 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                                    {saving ? (
+                                        <>
+                                            <Loader2 size={14} className="animate-spin" />
+                                            <span>Publishing result links...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Award size={14} />
+                                            <span>Publish Semester Result</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <div className="space-y-4">
+                                <h4 className="font-bold text-text-muted uppercase text-xs tracking-wider">Published Results</h4>
+                                {results.map(r => (
+                                    <div key={r._id} className="bg-white/70 backdrop-blur-md rounded-2xl border border-slate-200/50 p-5 shadow-[0_4px_20px_rgb(0,0,0,0.02)] flex flex-col transition-all hover:bg-white hover:shadow-[0_8px_25px_rgb(0,0,0,0.05)] hover:border-slate-300/60">
+                                        <div className="flex justify-between items-start gap-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                                                    <Trophy size={18} />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-text-primary text-base">{r.title}</h4>
+                                                    <div className="flex gap-2 mt-1">
+                                                        <span className="text-[9px] bg-gradient-to-r from-blue-500 to-indigo-500 text-white font-black px-2 py-0.5 rounded shadow-[0_2px_8px_rgba(59,130,246,0.15)] uppercase">{r.semester}</span>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteResult(r._id)} className="text-xs text-red-500 hover:text-red-750 font-black transition-colors flex items-center gap-1">
-                                                    <Trash2 size={11} /> Remove
-                                                </button>
                                             </div>
-                                            {r.description && <p className="text-xs text-text-secondary mt-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">{r.description}</p>}
-                                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center">
-                                                <a href={r.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#1e3a5f]/5 text-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white rounded-xl text-xs font-bold transition-all border border-[#1e3a5f]/10 shadow-sm">
-                                                    <span>{r.linkText || 'View Portal Link'} 🔗</span>
-                                                    <ChevronRight size={13} />
-                                                </a>
-                                            </div>
+                                            <button onClick={() => handleDeleteResult(r._id)} className="text-xs text-red-500 hover:text-red-750 font-black transition-colors flex items-center gap-1">
+                                                <Trash2 size={11} /> Remove
+                                            </button>
                                         </div>
-                                    ))}
-                                </div>
+                                        {r.description && <p className="text-xs text-text-secondary mt-3 bg-slate-50/50 p-2.5 rounded-xl border border-slate-100/50">{r.description}</p>}
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center">
+                                            <a href={r.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[#1e3a5f]/5 text-[#1e3a5f] hover:bg-[#1e3a5f] hover:text-white rounded-xl text-xs font-bold transition-all border border-[#1e3a5f]/10 shadow-sm">
+                                                <span>{r.linkText || 'View Portal Link'} 🔗</span>
+                                                <ChevronRight size={13} />
+                                            </a>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -877,7 +877,7 @@ const UniAdminDashboard = () => {
                                             <h3 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                                                 <Bell size={14} className="text-indigo-600 animate-pulse" /> Faculty Directives Broadcast
                                             </h3>
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     if (editingDirectives) {
                                                         handleSaveDirectives();
@@ -899,7 +899,7 @@ const UniAdminDashboard = () => {
                                             <div className="space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
                                                 <div className="flex items-center justify-between border-b border-slate-200/50 pb-2">
                                                     <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Directive Status</label>
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         onClick={() => setInputDirectiveActive(!inputDirectiveActive)}
                                                         className={`px-2.5 py-1 text-[9px] font-black uppercase rounded-lg border transition-colors ${inputDirectiveActive ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}
@@ -909,7 +909,7 @@ const UniAdminDashboard = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Minimum Questions Per Course</label>
-                                                    <input 
+                                                    <input
                                                         type="number"
                                                         value={inputMinQuestions}
                                                         onChange={e => setInputMinQuestions(Math.max(1, Number(e.target.value)))}
@@ -918,7 +918,7 @@ const UniAdminDashboard = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Submission Deadline</label>
-                                                    <input 
+                                                    <input
                                                         type="date"
                                                         value={inputDeadlineDate}
                                                         onChange={e => setInputDeadlineDate(e.target.value)}
@@ -927,7 +927,7 @@ const UniAdminDashboard = () => {
                                                 </div>
                                                 <div>
                                                     <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Custom Message / Announcement (Optional)</label>
-                                                    <textarea 
+                                                    <textarea
                                                         value={inputDirectiveMessage}
                                                         onChange={e => setInputDirectiveMessage(e.target.value)}
                                                         placeholder="Enter custom text to override the default countdown guidelines banner..."
@@ -949,7 +949,7 @@ const UniAdminDashboard = () => {
                                                     </div>
                                                     <div className="p-3 bg-slate-50 border border-slate-200/50 rounded-xl">
                                                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Deadline</span>
-                                                        <span className="text-xs font-bold text-indigo-600">{new Date(deadlineDate).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                                                        <span className="text-xs font-bold text-indigo-600">{new Date(deadlineDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center justify-between p-2.5 bg-slate-50 border border-slate-200/40 rounded-xl">
@@ -973,7 +973,7 @@ const UniAdminDashboard = () => {
                                                     directiveMessage ? (
                                                         <>📢 <strong>CONTROLLER DIRECTIVE:</strong> {directiveMessage}</>
                                                     ) : (
-                                                        <>📢 <strong>CONTROLLER DIRECTIVE:</strong> All affiliated course instructors are requested to submit a minimum of <strong>{minQuestions} questions</strong> before <strong>{new Date(deadlineDate).toLocaleDateString(undefined, {month: 'long', day: 'numeric'})}</strong>. Each accepted submission adds academic credits matching its AI novelty level.</>
+                                                        <>📢 <strong>CONTROLLER DIRECTIVE:</strong> All affiliated course instructors are requested to submit a minimum of <strong>{minQuestions} questions</strong> before <strong>{new Date(deadlineDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}</strong>. Each accepted submission adds academic credits matching its AI novelty level.</>
                                                     )
                                                 ) : (
                                                     <span className="text-rose-600 font-bold">❌ DIRECTIVE INACTIVE: Professor banner and deadline notifications are currently suspended.</span>
@@ -1029,7 +1029,7 @@ const UniAdminDashboard = () => {
                                                                         {prof.submitted} / {minQuestions} Qs
                                                                     </span>
                                                                     <div className="w-20 bg-slate-100 rounded-full h-1 overflow-hidden">
-                                                                        <div 
+                                                                        <div
                                                                             className={`h-full rounded-full ${targetMet ? 'bg-emerald-500' : 'bg-amber-500'}`}
                                                                             style={{ width: `${Math.min(100, (prof.submitted / minQuestions) * 100)}%` }}
                                                                         />
@@ -1047,7 +1047,7 @@ const UniAdminDashboard = () => {
                                                             </td>
                                                             <td className="py-3 text-center">
                                                                 {pending > 0 ? (
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleApproveProfessorQuestions(prof.id)}
                                                                         className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-[9px] font-black uppercase tracking-wider cursor-pointer"
                                                                     >

@@ -278,7 +278,7 @@ const StudentSelfDashboard = () => {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
             const totalMarks = assignment.questions?.reduce((acc: number, q: any) => acc + (q.marks || 0), 0) || 0;
-            const qListHTML = assignment.questions && assignment.questions.length > 0 
+            const qListHTML = assignment.questions && assignment.questions.length > 0
                 ? assignment.questions.map((q: any, idx: number) => `
                     <div class="question-block" style="margin-bottom: 24px; page-break-inside: avoid;">
                         <div class="question-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 10px;">
@@ -299,31 +299,38 @@ const StudentSelfDashboard = () => {
                         <style>
                             @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap');
                             * { box-sizing: border-box; margin: 0; padding: 0; }
+                            @page {
+                                size: A4;
+                                margin: 15mm 15mm 20mm 15mm;
+                            }
                             body {
                                 font-family: 'Inter', sans-serif;
                                 color: #1e293b;
-                                padding: 20px;
+                                padding: 10px;
                                 background-color: #ffffff;
-                                line-height: 1.4;
+                                line-height: 1.45;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
                             }
                             .sheet-container {
                                 max-width: 800px;
                                 margin: 0 auto;
                                 border: 2px solid #0f172a;
-                                padding: 40px;
+                                padding: 30px;
                                 border-radius: 16px;
                                 position: relative;
                                 background: #fff;
+                                z-index: 1;
                             }
                             .header-block {
                                 text-align: center;
                                 border-bottom: 3px double #0f172a;
-                                padding-bottom: 20px;
-                                margin-bottom: 24px;
+                                padding-bottom: 15px;
+                                margin-bottom: 20px;
                             }
                             .college-name {
                                 font-family: 'Outfit', sans-serif;
-                                font-size: 20px;
+                                font-size: 22px;
                                 font-weight: 900;
                                 text-transform: uppercase;
                                 color: #0f172a;
@@ -340,24 +347,25 @@ const StudentSelfDashboard = () => {
                             }
                             .doc-title {
                                 font-family: 'Outfit', sans-serif;
-                                font-size: 14px;
+                                font-size: 13px;
                                 font-weight: 900;
                                 display: inline-block;
-                                border: 1px solid #0f172a;
-                                padding: 6px 16px;
+                                border: 1.5px solid #0f172a;
+                                padding: 5px 14px;
                                 background: #f8fafc;
                                 color: #0f172a;
-                                letter-spacing: 2px;
+                                letter-spacing: 1.5px;
                                 border-radius: 6px;
+                                text-transform: uppercase;
                             }
                             .info-grid {
                                 display: grid;
                                 grid-template-cols: 1fr 1fr;
-                                gap: 14px;
-                                margin-bottom: 24px;
+                                gap: 10px;
+                                margin-bottom: 20px;
                                 border: 1px solid #cbd5e1;
                                 border-radius: 8px;
-                                padding: 16px;
+                                padding: 12px;
                                 background-color: #f8fafc;
                             }
                             .info-item {
@@ -367,9 +375,9 @@ const StudentSelfDashboard = () => {
                                 font-weight: 800;
                                 color: #64748b;
                                 text-transform: uppercase;
-                                font-size: 9px;
+                                font-size: 8.5px;
                                 letter-spacing: 0.5px;
-                                margin-bottom: 2px;
+                                margin-bottom: 1px;
                             }
                             .info-value {
                                 font-weight: 700;
@@ -381,8 +389,8 @@ const StudentSelfDashboard = () => {
                                 gap: 16px;
                                 border: 1px dashed #cbd5e1;
                                 border-radius: 8px;
-                                padding: 16px;
-                                margin-bottom: 24px;
+                                padding: 12px;
+                                margin-bottom: 20px;
                             }
                             .form-field {
                                 display: flex;
@@ -399,8 +407,8 @@ const StudentSelfDashboard = () => {
                                 height: 16px;
                             }
                             .desc-block {
-                                margin-bottom: 28px;
-                                padding: 14px;
+                                margin-bottom: 20px;
+                                padding: 12px;
                                 border-left: 4px solid #0f172a;
                                 background: #f8fafc;
                                 border-radius: 0 8px 8px 0;
@@ -427,13 +435,14 @@ const StudentSelfDashboard = () => {
                                 letter-spacing: 1px;
                                 border-bottom: 2px solid #0f172a;
                                 padding-bottom: 4px;
-                                margin-bottom: 20px;
+                                margin-bottom: 16px;
+                                page-break-after: avoid;
                             }
                             .signature-block {
                                 display: flex;
                                 justify-content: space-between;
-                                margin-top: 40px;
-                                padding-top: 24px;
+                                margin-top: 35px;
+                                padding-top: 20px;
                                 border-top: 1px dashed #cbd5e1;
                                 page-break-inside: avoid;
                             }
@@ -442,7 +451,7 @@ const StudentSelfDashboard = () => {
                                 width: 200px;
                             }
                             .sig-space {
-                                height: 40px;
+                                height: 35px;
                             }
                             .sig-text {
                                 font-size: 10px;
@@ -458,11 +467,11 @@ const StudentSelfDashboard = () => {
                                 top: 50%;
                                 left: 50%;
                                 transform: translate(-50%, -50%) rotate(-45deg);
-                                font-size: 50px;
+                                font-size: 44px;
                                 font-weight: 900;
-                                color: rgba(226, 232, 240, 0.28);
+                                color: rgba(226, 232, 240, 0.22);
                                 pointer-events: none;
-                                z-index: 0;
+                                z-index: -1;
                                 white-space: nowrap;
                                 text-transform: uppercase;
                                 letter-spacing: 8px;
@@ -492,19 +501,19 @@ const StudentSelfDashboard = () => {
                                     <p class="info-label">Faculty Instructor</p>
                                     <p class="info-value">${assignment.faculty?.name || 'Academic Faculty'}</p>
                                 </div>
-                                <div class="info-item" style="margin-top: 10px;">
+                                <div class="info-item" style="margin-top: 8px;">
                                     <p class="info-label">Department / Branch</p>
                                     <p class="info-value">${assignment.department}</p>
                                 </div>
-                                <div class="info-item" style="margin-top: 10px;">
+                                <div class="info-item" style="margin-top: 8px;">
                                     <p class="info-label">Semester & Phase</p>
                                     <p class="info-value">${assignment.semester}</p>
                                 </div>
-                                <div class="info-item" style="margin-top: 10px;">
+                                <div class="info-item" style="margin-top: 8px;">
                                     <p class="info-label">Due Date Deadline</p>
                                     <p class="info-value">${new Date(assignment.dueDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                 </div>
-                                <div class="info-item" style="margin-top: 10px;">
+                                <div class="info-item" style="margin-top: 8px;">
                                     <p class="info-label">Evaluative Weightage</p>
                                     <p class="info-value" style="color: #4f46e5; font-weight: 800;">${totalMarks} Marks Total</p>
                                 </div>
@@ -3181,10 +3190,10 @@ const StudentSelfDashboard = () => {
                                                             <div className="space-y-4">
                                                                 {sessionsForActiveDate.map(session => (
                                                                     <div key={session._id} className={`border rounded-2xl p-5 transition-all duration-300 ${session.status === 'completed'
-                                                                            ? 'bg-emerald-50/10 hover:bg-emerald-50/20 border-emerald-200/60'
-                                                                            : session.status === 'cancelled'
-                                                                                ? 'bg-rose-50/10 hover:bg-rose-50/20 border-rose-200/60 shadow-sm shadow-rose-100/50'
-                                                                                : 'bg-slate-50/40 hover:bg-slate-50 border-slate-200/40 hover:border-slate-250'
+                                                                        ? 'bg-emerald-50/10 hover:bg-emerald-50/20 border-emerald-200/60'
+                                                                        : session.status === 'cancelled'
+                                                                            ? 'bg-rose-50/10 hover:bg-rose-50/20 border-rose-200/60 shadow-sm shadow-rose-100/50'
+                                                                            : 'bg-slate-50/40 hover:bg-slate-50 border-slate-200/40 hover:border-slate-250'
                                                                         }`}>
                                                                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 border-b border-slate-100 pb-3">
                                                                             <div>
@@ -3192,10 +3201,10 @@ const StudentSelfDashboard = () => {
                                                                                 <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight mt-0.5">{session.subject}</h4>
                                                                             </div>
                                                                             <span className={`text-[8px] font-black uppercase tracking-widest px-2.5 py-1 rounded-xl self-start sm:self-auto border ${session.status === 'completed'
-                                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-150'
-                                                                                    : session.status === 'cancelled'
-                                                                                        ? 'bg-rose-50 text-rose-700 border-rose-150'
-                                                                                        : 'bg-indigo-50 text-indigo-700 border-indigo-150'
+                                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-150'
+                                                                                : session.status === 'cancelled'
+                                                                                    ? 'bg-rose-50 text-rose-700 border-rose-150'
+                                                                                    : 'bg-indigo-50 text-indigo-700 border-indigo-150'
                                                                                 }`}>
                                                                                 {session.status}
                                                                             </span>
@@ -3251,10 +3260,10 @@ const StudentSelfDashboard = () => {
                                                                                 type="button"
                                                                                 onClick={() => setStudentSlideIndex(idx)}
                                                                                 className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${idx === studentSlideIndex
-                                                                                        ? 'w-5 bg-indigo-650'
-                                                                                        : isTodaySlide
-                                                                                            ? 'w-1.5 bg-green-500 hover:bg-green-600'
-                                                                                            : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                                                                                    ? 'w-5 bg-indigo-650'
+                                                                                    : isTodaySlide
+                                                                                        ? 'w-1.5 bg-green-500 hover:bg-green-600'
+                                                                                        : 'w-1.5 bg-slate-200 hover:bg-slate-300'
                                                                                     }`}
                                                                             />
                                                                         );
@@ -3299,10 +3308,10 @@ const StudentSelfDashboard = () => {
                                                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-0.5 block">By: {assignment.faculty?.name}</span>
                                                             </div>
                                                             <span className={`text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${mySubmission
-                                                                    ? mySubmission.grade !== 'Pending'
-                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                        : 'bg-blue-50 text-blue-700 border-blue-200'
-                                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                                ? mySubmission.grade !== 'Pending'
+                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                    : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                : 'bg-amber-50 text-amber-700 border-amber-200'
                                                                 }`}>
                                                                 {mySubmission ? (mySubmission.grade !== 'Pending' ? `Graded: ${mySubmission.grade}` : 'Submitted') : 'Pending'}
                                                             </span>
@@ -3716,7 +3725,7 @@ const StudentSelfDashboard = () => {
                     </div>
                 )}
 
-{activeTab === 'locker' && (
+                {activeTab === 'locker' && (
                     <div className="space-y-10 animate-fade-in">
                         <SectionHeader title="Digital Credentials Wallet" desc="Verified documents ledger, secure transcripts, blockchain certificate hashes and digitally signed locker downloads." />
 

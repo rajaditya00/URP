@@ -1266,7 +1266,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
                 const userObj = JSON.parse(storedUser);
                 if (userObj.university && userObj.university.logoUrl) {
                     const cleanPath = userObj.university.logoUrl.replace(/^\/+/g, '');
-                    return `{BASE_URL}/${cleanPath}`;
+                    return `${BASE_URL}/${cleanPath}`;
                 }
             }
         } catch (e) {

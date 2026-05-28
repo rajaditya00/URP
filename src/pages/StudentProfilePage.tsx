@@ -45,7 +45,7 @@ export default function StudentProfilePage() {
     const fetchStudent = async () => {
       try {
         const token = localStorage.getItem('urp_token');
-        const res = await fetch(`{BASE_URL}/api/members/${id}`, {
+        const res = await fetch(`${BASE_URL}/api/members/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Student not found');

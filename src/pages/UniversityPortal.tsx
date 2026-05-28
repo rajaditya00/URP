@@ -10,7 +10,7 @@ const UniversityPortal = () => {
     const [activeTab, setActiveTab] = useState<'departments' | 'labs' | 'sports' | 'auditorium'>('departments');
 
     useEffect(() => {
-        fetch(`{BASE_URL}/api/university/${uniSlug}`)
+        fetch(`${BASE_URL}/api/university/${uniSlug}`)
             .then(res => res.json())
             .then(data => {
                 if (data.name) setUniData(data);
@@ -63,7 +63,7 @@ const UniversityPortal = () => {
                 <div className="max-w-7xl mx-auto px-6 h-20 flex flex-col sm:flex-row items-center justify-between gap-4 py-4 sm:py-0">
                     <div className="flex items-center gap-4">
                         {uniData.logoUrl ? (
-                            <img src={`{BASE_URL}/${uniData.logoUrl?.replace(/^\/+/g, '')}`} alt="Institutional Crest" className="h-12 w-auto object-contain drop-shadow-sm" />
+                            <img src={`${BASE_URL}/${uniData.logoUrl?.replace(/^\/+/g, '')}`} alt="Institutional Crest" className="h-12 w-auto object-contain drop-shadow-sm" />
                         ) : (
                             <div className="w-12 h-12 bg-slate-800 text-white rounded-md flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-sm">
                                 {uniData.name.charAt(0)}
@@ -99,7 +99,7 @@ const UniversityPortal = () => {
                 <div className="max-w-4xl mx-auto px-6 relative z-10 flex flex-col items-center text-center animate-slide-up">
                     {uniData.logoUrl && (
                         <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-xl p-3 shadow-2xl mb-8 border border-slate-200">
-                            <img src={`{BASE_URL}/${uniData.logoUrl?.replace(/^\/+/g, '')}`} alt="Institutional Crest" className="w-full h-full object-contain" />
+                            <img src={`${BASE_URL}/${uniData.logoUrl?.replace(/^\/+/g, '')}`} alt="Institutional Crest" className="w-full h-full object-contain" />
                         </div>
                     )}
 
@@ -192,7 +192,7 @@ const UniversityPortal = () => {
                                 <div key={i} className="group relative overflow-hidden rounded-xl shadow-sm border border-slate-200 bg-white cursor-pointer">
                                     <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100">
                                         <img
-                                            src={`{BASE_URL}/${img?.replace(/^\/+/g, '')}`}
+                                            src={`${BASE_URL}/${img?.replace(/^\/+/g, '')}`}
                                             alt={`Facility ${i + 1}`}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-in-out"
                                             loading="lazy"

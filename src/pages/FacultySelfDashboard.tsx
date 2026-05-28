@@ -32,28 +32,7 @@ export const getActiveBatches = () => {
     ];
 };
 
-const PENDING_APPROVALS = [
-    {
-        id: 'PA001', type: 'project', student: 'Rahul Verma', rollNo: '21CS045', subject: 'CS601',
-        title: 'Network Topology Visualiser', description: 'A React + D3.js tool to visualise OSI model packet flow.',
-        submittedOn: '2026-05-20', creditSuggested: 10, status: 'pending'
-    },
-    {
-        id: 'PA002', type: 'assignment', student: 'Priya Nair', rollNo: '21CS067', subject: 'CS603',
-        title: 'Memory Management Report', description: 'Comparative study of paging vs segmentation with simulation.',
-        submittedOn: '2026-05-21', creditSuggested: 5, status: 'pending'
-    },
-    {
-        id: 'PA003', type: 'project', student: 'Arjun Mehta', rollNo: '21CS012', subject: 'CS405',
-        title: 'DFA/NFA Converter', description: 'Web-based automata simulator with step-by-step transitions.',
-        submittedOn: '2026-05-22', creditSuggested: 12, status: 'pending'
-    },
-    {
-        id: 'PA004', type: 'assignment', student: 'Sneha Pillai', rollNo: '21CS089', subject: 'CS601',
-        title: 'Routing Algorithms Analysis', description: 'Performance benchmarks for Dijkstra vs Bellman-Ford.',
-        submittedOn: '2026-05-23', creditSuggested: 5, status: 'pending'
-    },
-];
+
 
 /* ─────────────────────────── HELPERS ─────────────────────────── */
 
@@ -106,7 +85,7 @@ const CountdownBox = ({ value, label }: { value: number; label: string }) => (
 const FacultySelfDashboard = () => {
     const navigate = useNavigate();
     const [user, setUser] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'questionbank' | 'approvals' | 'schedule' | 'curriculum'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'questionbank' | 'schedule'>('overview');
     const [showChangePassword, setShowChangePassword] = useState(false);
     const [toast, setToast] = useState('');
     const [notifOpen, setNotifOpen] = useState(false);
@@ -120,12 +99,7 @@ const FacultySelfDashboard = () => {
     const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
     const [editProfileSaving, setEditProfileSaving] = useState(false);
 
-    // Approval state
-    const [approvals, setApprovals] = useState(PENDING_APPROVALS);
-    const [creditInputs, setCreditInputs] = useState<Record<string, number>>(
-        Object.fromEntries(PENDING_APPROVALS.map(a => [a.id, a.creditSuggested]))
-    );
-    const [expandedApproval, setExpandedApproval] = useState<string | null>(null);
+
 
     // Class Schedule & Assignments States
     const [classSessions, setClassSessions] = useState<any[]>([]);
@@ -218,6 +192,7 @@ const FacultySelfDashboard = () => {
     });
     const [questionsForSelector, setQuestionsForSelector] = useState<any[]>([]);
     const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
+    const [questionSearchQuery, setQuestionSearchQuery] = useState<string>('');
     const [assignmentsList, setAssignmentsList] = useState<any[]>([]);
     const [loadingAssignments, setLoadingAssignments] = useState(false);
     const [gradingAssignmentId, setGradingAssignmentId] = useState<string | null>(null);
@@ -227,11 +202,7 @@ const FacultySelfDashboard = () => {
     const [currentPlanText, setCurrentPlanText] = useState<string>('');
     const [savingLecturePlan, setSavingLecturePlan] = useState<boolean>(false);
 
-    // Curriculum select-and-view states
-    const [curriculum, setCurriculum] = useState<any[]>([]);
-    const [curriculumLoading, setCurriculumLoading] = useState<boolean>(false);
-    const [selectedCurriculumSem, setSelectedCurriculumSem] = useState<string>('');
-    const [selectedCurriculumCourseCode, setSelectedCurriculumCourseCode] = useState<string>('');
+
 
     const handleSaveLecturePlan = async (id: string) => {
         if (!currentPlanText.trim()) {
@@ -264,61 +235,7 @@ const FacultySelfDashboard = () => {
         }
     };
 
-    const fetchCurriculum = async () => {
-        setCurriculumLoading(true);
-        try {
-            const token = localStorage.getItem('urp_token');
-            if (!token) return;
-            const resp = await fetch(BASE_URL + '/api/academic', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await resp.json();
-            if (Array.isArray(data)) {
-                const semestersMap: Record<string, any> = {};
 
-                data.forEach((course: any) => {
-                    const sem = course.semester || 'Semester 1';
-                    if (!semestersMap[sem]) {
-                        semestersMap[sem] = {
-                            sem,
-                            status: course.status || 'Completed',
-                            isCurrent: course.status === 'Ongoing',
-                            gpa: course.gpa || '',
-                            credits: 0,
-                            courses: []
-                        };
-                    }
-                    semestersMap[sem].courses.push(course);
-                    semestersMap[sem].credits += course.credits;
-
-                    if (course.status === 'Ongoing') {
-                        semestersMap[sem].status = 'Ongoing';
-                        semestersMap[sem].isCurrent = true;
-                    }
-                });
-
-                const sortedSemesters = Object.values(semestersMap).sort((a: any, b: any) => {
-                    const numA = parseInt(a.sem.replace(/[^0-9]/g, '')) || 1;
-                    const numB = parseInt(b.sem.replace(/[^0-9]/g, '')) || 1;
-                    return numB - numA;
-                });
-
-                setCurriculum(sortedSemesters);
-                if (sortedSemesters.length > 0) {
-                    setSelectedCurriculumSem(sortedSemesters[0].sem);
-                    if (sortedSemesters[0].courses.length > 0) {
-                        setSelectedCurriculumCourseCode(sortedSemesters[0].courses[0].code);
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Failed to fetch curriculum:', e);
-        } finally {
-            setCurriculumLoading(false);
-        }
-    };
 
     const fetchClassSessions = async () => {
         setLoadingSessions(true);
@@ -524,6 +441,7 @@ const FacultySelfDashboard = () => {
                     dueDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
                 });
                 setSelectedQuestions([]);
+                setQuestionSearchQuery('');
                 fetchAssignments();
             } else {
                 triggerToast(`❌ Error: ${data.error || 'Failed to allot assignment'}`);
@@ -531,6 +449,300 @@ const FacultySelfDashboard = () => {
         } catch (err) {
             console.error(err);
             triggerToast('❌ Server communication error');
+        }
+    };
+
+    const handleDownloadAssignment = (assignment: any) => {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            const totalMarks = assignment.questions?.reduce((acc: number, q: any) => acc + (q.marks || 0), 0) || 0;
+            const qListHTML = assignment.questions && assignment.questions.length > 0
+                ? assignment.questions.map((q: any, idx: number) => `
+                    <div class="question-block" style="margin-bottom: 24px; page-break-inside: avoid;">
+                        <div class="question-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #cbd5e1; padding-bottom: 6px; margin-bottom: 10px;">
+                            <span class="q-title" style="font-weight: 800; font-size: 13px; color: #0f172a; text-transform: uppercase;">Question ${idx + 1} <span style="font-size: 10px; font-weight: 600; color: #64748b;">[Code: ${q.code || 'Q-' + idx}]</span></span>
+                            <span class="q-marks" style="font-weight: 800; font-size: 11px; background: #f1f5f9; color: #1e293b; padding: 2px 8px; border: 1px solid #e2e8f0; border-radius: 4px;">[${q.marks || 10} Marks]</span>
+                        </div>
+                        <p class="q-text" style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 12px; line-height: 1.5;">${q.text}</p>
+                        <div class="answer-ruled" style="height: 120px; border: 1px solid #e2e8f0; border-radius: 8px; background: linear-gradient(180deg, transparent, transparent 29px, #e2e8f0 30px); background-size: 100% 30px; margin-top: 10px; padding: 10px;"></div>
+                    </div>
+                `).join('')
+                : '<p style="text-align: center; color: #64748b; font-size: 12px; font-weight: bold; padding: 20px;">No subjective questions enrolled in this sessional assignment ledger.</p>';
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <title>Assignment: ${assignment.title}</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@400;700;900&display=swap');
+                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                            @page {
+                                size: A4;
+                                margin: 15mm 15mm 20mm 15mm;
+                            }
+                            body {
+                                font-family: 'Inter', sans-serif;
+                                color: #1e293b;
+                                padding: 10px;
+                                background-color: #ffffff;
+                                line-height: 1.45;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                            }
+                            .sheet-container {
+                                max-width: 800px;
+                                margin: 0 auto;
+                                border: 2px solid #0f172a;
+                                padding: 30px;
+                                border-radius: 16px;
+                                position: relative;
+                                background: #fff;
+                                z-index: 1;
+                            }
+                            .header-block {
+                                text-align: center;
+                                border-bottom: 3px double #0f172a;
+                                padding-bottom: 15px;
+                                margin-bottom: 20px;
+                            }
+                            .college-name {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 22px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 0.5px;
+                                margin-bottom: 4px;
+                            }
+                            .college-address {
+                                font-size: 10px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                color: #64748b;
+                                letter-spacing: 1px;
+                                margin-bottom: 12px;
+                            }
+                            .doc-title {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 13px;
+                                font-weight: 900;
+                                display: inline-block;
+                                border: 1.5px solid #0f172a;
+                                padding: 5px 14px;
+                                background: #f8fafc;
+                                color: #0f172a;
+                                letter-spacing: 1.5px;
+                                border-radius: 6px;
+                                text-transform: uppercase;
+                            }
+                            .info-grid {
+                                display: grid;
+                                grid-template-cols: 1fr 1fr;
+                                gap: 10px;
+                                margin-bottom: 20px;
+                                border: 1px solid #cbd5e1;
+                                border-radius: 8px;
+                                padding: 12px;
+                                background-color: #f8fafc;
+                            }
+                            .info-item {
+                                font-size: 11px;
+                            }
+                            .info-label {
+                                font-weight: 800;
+                                color: #64748b;
+                                text-transform: uppercase;
+                                font-size: 8.5px;
+                                letter-spacing: 0.5px;
+                                margin-bottom: 1px;
+                            }
+                            .info-value {
+                                font-weight: 700;
+                                color: #0f172a;
+                            }
+                            .student-form {
+                                display: grid;
+                                grid-template-cols: 1fr 1fr;
+                                gap: 16px;
+                                border: 1px dashed #cbd5e1;
+                                border-radius: 8px;
+                                padding: 12px;
+                                margin-bottom: 20px;
+                            }
+                            .form-field {
+                                display: flex;
+                                align-items: flex-end;
+                                font-size: 11px;
+                                font-weight: 800;
+                                color: #0f172a;
+                                text-transform: uppercase;
+                            }
+                            .form-line {
+                                flex: 1;
+                                border-bottom: 1px solid #94a3b8;
+                                margin-left: 8px;
+                                height: 16px;
+                            }
+                            .desc-block {
+                                margin-bottom: 20px;
+                                padding: 12px;
+                                border-left: 4px solid #0f172a;
+                                background: #f8fafc;
+                                border-radius: 0 8px 8px 0;
+                            }
+                            .desc-title {
+                                font-size: 10px;
+                                font-weight: 800;
+                                text-transform: uppercase;
+                                color: #64748b;
+                                margin-bottom: 4px;
+                                letter-spacing: 0.5px;
+                            }
+                            .desc-text {
+                                font-size: 11px;
+                                font-weight: 600;
+                                color: #334155;
+                            }
+                            .section-heading {
+                                font-family: 'Outfit', sans-serif;
+                                font-size: 13px;
+                                font-weight: 900;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 1px;
+                                border-bottom: 2px solid #0f172a;
+                                padding-bottom: 4px;
+                                margin-bottom: 16px;
+                                page-break-after: avoid;
+                            }
+                            .signature-block {
+                                display: flex;
+                                justify-content: space-between;
+                                margin-top: 35px;
+                                padding-top: 20px;
+                                border-top: 1px dashed #cbd5e1;
+                                page-break-inside: avoid;
+                            }
+                            .sig-line {
+                                text-align: center;
+                                width: 200px;
+                            }
+                            .sig-space {
+                                height: 35px;
+                            }
+                            .sig-text {
+                                font-size: 10px;
+                                font-weight: 800;
+                                border-top: 1.5px solid #0f172a;
+                                padding-top: 6px;
+                                text-transform: uppercase;
+                                color: #0f172a;
+                                letter-spacing: 0.5px;
+                            }
+                            .watermark {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%) rotate(-45deg);
+                                font-size: 44px;
+                                font-weight: 900;
+                                color: rgba(226, 232, 240, 0.22);
+                                pointer-events: none;
+                                z-index: -1;
+                                white-space: nowrap;
+                                text-transform: uppercase;
+                                letter-spacing: 8px;
+                            }
+                            @media print {
+                                body { padding: 0; background-color: #ffffff; }
+                                .sheet-container { border: none; padding: 0; max-width: 100%; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="sheet-container">
+                            <div class="watermark">${assignment.department || 'OFFICIAL WORKSHEET'}</div>
+                            
+                            <div class="header-block">
+                                <h1 class="college-name">${user?.college?.name || 'All Campus Digital College'}</h1>
+                                <p class="college-address">${user?.college?.address || user?.college?.location || 'Blockchain Verified Campus Registry'}</p>
+                                <span class="doc-title">Assignment Worksheet</span>
+                            </div>
+
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <p class="info-label">Assignment Title</p>
+                                    <p class="info-value">${assignment.title}</p>
+                                </div>
+                                <div class="info-item">
+                                    <p class="info-label">Faculty Instructor</p>
+                                    <p class="info-value">${user?.name || 'Academic Faculty'}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 8px;">
+                                    <p class="info-label">Department / Branch</p>
+                                    <p class="info-value">${assignment.department}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 8px;">
+                                    <p class="info-label">Semester & Phase</p>
+                                    <p class="info-value">${assignment.semester}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 8px;">
+                                    <p class="info-label">Due Date Deadline</p>
+                                    <p class="info-value">${new Date(assignment.dueDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                </div>
+                                <div class="info-item" style="margin-top: 8px;">
+                                    <p class="info-label">Evaluative Weightage</p>
+                                    <p class="info-value" style="color: #4f46e5; font-weight: 800;">${totalMarks} Marks Total</p>
+                                </div>
+                            </div>
+
+                            <div class="student-form">
+                                <div class="form-field">
+                                    <span>Student Name:</span>
+                                    <div class="form-line"></div>
+                                </div>
+                                <div class="form-field">
+                                    <span>Roll Number:</span>
+                                    <div class="form-line"></div>
+                                </div>
+                            </div>
+
+                            ${assignment.description ? `
+                            <div class="desc-block">
+                                <p class="desc-title">Instructions / Description</p>
+                                <p class="desc-text">${assignment.description}</p>
+                            </div>
+                            ` : ''}
+
+                            <h2 class="section-heading">Assigned Questions Booklet</h2>
+                            
+                            <div class="questions-container">
+                                ${qListHTML}
+                            </div>
+
+                            <div class="signature-block">
+                                <div class="sig-line">
+                                    <div class="sig-space"></div>
+                                    <p class="sig-text">Student Signature</p>
+                                </div>
+                                <div class="sig-line">
+                                    <div class="sig-space"></div>
+                                    <p class="sig-text">Faculty Assessor Signature</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            window.onload = function() {
+                                window.print();
+                                setTimeout(function() { window.close(); }, 500);
+                            };
+                        </script>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
         }
     };
 
@@ -724,23 +936,8 @@ const FacultySelfDashboard = () => {
             fetchClassSessions();
             fetchAssignments();
             fetchQuestionsForSelector();
-        } else if (activeTab === 'curriculum') {
-            fetchCurriculum();
         }
     }, [activeTab, user]);
-
-    const handleApprove = (id: string) => {
-        const credits = creditInputs[id];
-        setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'approved', creditSuggested: credits } : a));
-        triggerToast(`Approved! ${credits} credit(s) awarded to student.`);
-    };
-
-    const handleReject = (id: string) => {
-        setApprovals(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' } : a));
-        triggerToast('Submission rejected.');
-    };
-
-    const pendingCount = approvals.filter(a => a.status === 'pending').length;
     const rank = getRankBadge(myStats.novel);
     const deadlineFmt = new Date(deadlineDate).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
     const progressToMin = Math.min(100, Math.round((myStats.submitted / minQuestions) * 100));
@@ -939,9 +1136,9 @@ const FacultySelfDashboard = () => {
                                 }}
                             >
                                 <Bell size={16} />
-                                {(pendingCount > 0 || true) && (
+                                {directiveActive && (
                                     <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-black flex items-center justify-center" style={{ boxShadow: '0 0 8px rgba(239,68,68,0.6)' }}>
-                                        {pendingCount + 1}
+                                        1
                                     </span>
                                 )}
                             </button>
@@ -976,26 +1173,6 @@ const FacultySelfDashboard = () => {
                                                             )}
                                                         </div>
                                                     )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Pending approvals notification */}
-                                    {pendingCount > 0 && (
-                                        <div className="p-4 border-b border-slate-100 bg-blue-50">
-                                            <div className="flex items-start gap-3">
-                                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                                                    <ClipboardList size={14} className="text-blue-600" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs font-black text-slate-800">Pending Approvals</p>
-                                                    <p className="text-[11px] text-slate-600 mt-0.5">
-                                                        <strong>{pendingCount}</strong> student submission{pendingCount > 1 ? 's' : ''} awaiting your review.
-                                                    </p>
-                                                    <button onClick={() => { setActiveTab('approvals'); setNotifOpen(false); }} className="mt-2 text-[10px] font-black text-blue-600 hover:underline">
-                                                        Review Now →
-                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -1076,9 +1253,7 @@ const FacultySelfDashboard = () => {
                         {[
                             { id: 'overview', label: 'Dashboard', icon: <TrendingUp size={15} /> },
                             { id: 'schedule', label: 'Class Schedule', icon: <Calendar size={15} /> },
-                            { id: 'approvals', label: `Approvals${pendingCount > 0 ? ` (${pendingCount})` : ''}`, icon: <ClipboardList size={15} /> },
                             { id: 'questionbank', label: 'Question Bank', icon: <Layers size={15} /> },
-                            { id: 'curriculum', label: 'Curriculum', icon: <BookOpen size={15} /> },
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -1143,13 +1318,12 @@ const FacultySelfDashboard = () => {
                     <div className="space-y-8 animate-fade-in">
 
                         {/* Top stat cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {[
                                 { label: 'Questions Submitted', value: myStats.submitted, sub: `of ${minQuestions} required`, color: 'from-blue-500 to-blue-700', icon: <FileText size={18} /> },
                                 { label: 'Questions Approved', value: myStats.approved, sub: 'by Exam Controller', color: 'from-emerald-500 to-emerald-700', icon: <CheckCircle size={18} /> },
                                 { label: 'Novel Questions', value: myStats.novel, sub: 'highly unique contributions', color: 'from-amber-500 to-amber-600', icon: <Star size={18} /> },
                                 { label: 'Academic Credits', value: `${myStats.credits} pts`, sub: 'real-time merit score', color: 'from-indigo-500 to-purple-600', icon: <Award size={18} /> },
-                                { label: 'Pending Approvals', value: pendingCount, sub: 'student submissions', color: 'from-rose-500 to-rose-700', icon: <ClipboardList size={18} /> },
                             ].map(stat => (
                                 <div key={stat.label} className={`bg-gradient-to-br ${stat.color} text-white rounded-2xl p-5 shadow-lg`}>
                                     <div className="flex items-center justify-between mb-3">
@@ -1843,8 +2017,16 @@ const FacultySelfDashboard = () => {
                                                     <p className="text-[11px] text-slate-500 font-medium mb-3">{assignment.description || 'No description.'}</p>
 
                                                     {/* QUESTIONS COUNT */}
-                                                    <div className="text-[9px] font-black text-[#1e3a5f] uppercase tracking-wider mb-3">
-                                                        📚 Questions Selected: {assignment.questions?.length || 0}
+                                                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                                                        <div className="text-[9px] font-black text-[#1e3a5f] uppercase tracking-wider">
+                                                            📚 Questions Selected: {assignment.questions?.length || 0}
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleDownloadAssignment(assignment)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-[9px] font-black uppercase bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white rounded-xl transition shadow cursor-pointer"
+                                                        >
+                                                            <Download size={10} /> Download PDF
+                                                        </button>
                                                     </div>
 
                                                     {/* SUBMISSIONS EXPANDABLE CONTAINER */}
@@ -1913,7 +2095,7 @@ const FacultySelfDashboard = () => {
                         {showScheduleModal && (
                             <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
                                 <div className="absolute inset-0 bg-[#1e3a5f]/40 backdrop-blur-md" onClick={() => setShowScheduleModal(false)} />
-                                <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[32px] max-w-lg w-full max-h-[82vh] flex flex-col p-6 shadow-2xl relative overflow-hidden animate-scale-up">
+                                <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[32px] max-w-lg w-full max-h-[85vh] flex flex-col p-6 shadow-2xl relative overflow-hidden animate-scale-up">
                                     <button onClick={() => setShowScheduleModal(false)} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 cursor-pointer z-10">
                                         <X size={20} />
                                     </button>
@@ -1922,7 +2104,7 @@ const FacultySelfDashboard = () => {
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Schedule a date-wise lecture and notify the students</p>
                                     </div>
 
-                                    <form onSubmit={handleScheduleClass} className="flex-1 overflow-y-auto space-y-3 pr-2 -mr-2 scrollbar-thin">
+                                    <form onSubmit={handleScheduleClass} className="flex-1 overflow-y-auto min-h-0 space-y-3 pr-2 -mr-2 scrollbar-thin">
                                         {/* 1. SUBJECT SELECTION */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
@@ -2234,15 +2416,15 @@ const FacultySelfDashboard = () => {
                         {/* ALLOT ASSIGNMENT MODAL WITH QUESTION BANK SELECTOR */}
                         {allottingAssignmentId && (
                             <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
-                                <div className="absolute inset-0 bg-[#1e3a5f]/40 backdrop-blur-md" onClick={() => setAllottingAssignmentId(null)} />
-                                <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[32px] max-w-2xl w-full p-8 shadow-2xl relative animate-scale-up flex flex-col max-h-[85vh]">
-                                    <button onClick={() => setAllottingAssignmentId(null)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer">
+                                <div className="absolute inset-0 bg-[#1e3a5f]/40 backdrop-blur-md" onClick={() => { setAllottingAssignmentId(null); setQuestionSearchQuery(''); }} />
+                                <div className="bg-white/90 backdrop-blur-xl border border-slate-200 rounded-[32px] max-w-2xl w-full p-8 shadow-2xl relative animate-scale-up flex flex-col max-h-[85vh] overflow-hidden">
+                                    <button onClick={() => { setAllottingAssignmentId(null); setQuestionSearchQuery(''); }} className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 cursor-pointer">
                                         <X size={20} />
                                     </button>
                                     <h3 className="text-xl font-black text-[#1e3a5f] uppercase tracking-tight mb-1">Allot Assignment</h3>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Compile assignments by selecting questions from the department question bank</p>
 
-                                    <form onSubmit={handleAllotAssignmentSubmit} className="space-y-4 overflow-y-auto flex-1 pr-2">
+                                    <form onSubmit={handleAllotAssignmentSubmit} className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-2">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Assignment Title</label>
@@ -2279,44 +2461,76 @@ const FacultySelfDashboard = () => {
                                         </div>
 
                                         <div>
-                                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 font-extrabold text-[#1e3a5f]">Select Questions from Central Question Bank</label>
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest font-extrabold text-[#1e3a5f]">Select Questions from Central Question Bank</label>
+                                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{selectedQuestions.length} Selected</span>
+                                            </div>
+
+                                            {questionsForSelector.length > 0 && (
+                                                <div className="relative mb-3">
+                                                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search questions by code, text, marks, difficulty..."
+                                                        value={questionSearchQuery}
+                                                        onChange={e => setQuestionSearchQuery(e.target.value)}
+                                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 font-bold text-xs text-slate-800 outline-none focus:border-[#1e3a5f] focus:bg-white transition-all shadow-sm"
+                                                    />
+                                                </div>
+                                            )}
+
                                             {questionsForSelector.length === 0 ? (
                                                 <p className="text-xs text-slate-400 italic py-2">No question bank questions found for your department.</p>
                                             ) : (
                                                 <div className="space-y-3 max-h-60 overflow-y-auto border border-slate-200/50 rounded-2xl p-4 bg-slate-50/50">
-                                                    {questionsForSelector.map(q => (
-                                                        <label key={q._id} className="flex items-start gap-3 p-3 bg-white border border-slate-150 rounded-xl cursor-pointer hover:border-slate-300 transition-all select-none">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedQuestions.includes(q._id)}
-                                                                onChange={e => {
-                                                                    if (e.target.checked) {
-                                                                        setSelectedQuestions(prev => [...prev, q._id]);
-                                                                    } else {
-                                                                        setSelectedQuestions(prev => prev.filter(id => id !== q._id));
-                                                                    }
-                                                                }}
-                                                                className="mt-1"
-                                                            />
-                                                            <div className="text-xs">
-                                                                <p className="font-extrabold text-slate-800">{q.text}</p>
-                                                                <div className="flex gap-2 mt-1.5">
-                                                                    <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-150">{q.code}</span>
-                                                                    <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-150">Marks: {q.marks}</span>
-                                                                    <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-150">{q.difficulty}</span>
+                                                    {(() => {
+                                                        const filtered = questionsForSelector.filter(q => {
+                                                            const query = questionSearchQuery.toLowerCase();
+                                                            return (
+                                                                (q.text || '').toLowerCase().includes(query) ||
+                                                                (q.code || '').toLowerCase().includes(query) ||
+                                                                (q.difficulty || '').toLowerCase().includes(query) ||
+                                                                String(q.marks || '').includes(query)
+                                                            );
+                                                        });
+                                                        if (filtered.length === 0) {
+                                                            return <p className="text-xs text-slate-400 italic py-4 text-center">No matching questions found.</p>;
+                                                        }
+                                                        return filtered.map(q => (
+                                                            <label key={q._id} className="flex items-start gap-3 p-3 bg-white border border-slate-150 rounded-xl cursor-pointer hover:border-slate-300 transition-all select-none">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedQuestions.includes(q._id)}
+                                                                    onChange={e => {
+                                                                        if (e.target.checked) {
+                                                                            setSelectedQuestions(prev => [...prev, q._id]);
+                                                                        } else {
+                                                                            setSelectedQuestions(prev => prev.filter(id => id !== q._id));
+                                                                        }
+                                                                    }}
+                                                                    className="mt-1"
+                                                                />
+                                                                <div className="text-xs">
+                                                                    <p className="font-extrabold text-slate-800">{q.text}</p>
+                                                                    <div className="flex gap-2 mt-1.5">
+                                                                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-150">{q.code}</span>
+                                                                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-purple-50 text-purple-600 border border-purple-150">Marks: {q.marks}</span>
+                                                                        <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-150">{q.difficulty}</span>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        </label>
-                                                    ))}
+                                                            </label>
+                                                        ));
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>
 
                                         <button
                                             type="submit"
-                                            className="w-full bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white font-black text-xs uppercase tracking-widest py-3 rounded-2xl shadow transition-all cursor-pointer mt-4"
+                                            disabled={selectedQuestions.length === 0}
+                                            className="w-full bg-[#1e3a5f] hover:bg-[#2d5a9e] text-white font-black text-xs uppercase tracking-widest py-3 rounded-2xl shadow transition-all cursor-pointer mt-4 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1e3a5f]"
                                         >
-                                            Allot Assignment ({selectedQuestions.length} Selected)
+                                            {selectedQuestions.length === 0 ? 'Select at least 1 Question' : `Allot Assignment (${selectedQuestions.length} Selected)`}
                                         </button>
                                     </form>
                                 </div>
@@ -2373,131 +2587,7 @@ const FacultySelfDashboard = () => {
                     </div>
                 )}
 
-                {/* ══════════════════ APPROVALS TAB ══════════════════ */}
-                {activeTab === 'approvals' && (
-                    <div className="animate-fade-in space-y-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h2 className="text-xl font-black text-slate-900">Project & Assignment Approvals</h2>
-                                <p className="text-sm font-bold text-slate-500 mt-0.5">Review submissions and award credits manually</p>
-                            </div>
-                            <div className="flex gap-2 text-[11px] font-black">
-                                <span className="px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full border border-amber-200">{pendingCount} Pending</span>
-                                <span className="px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full border border-emerald-200">{approvals.filter(a => a.status === 'approved').length} Approved</span>
-                                <span className="px-3 py-1.5 bg-rose-100 text-rose-700 rounded-full border border-rose-200">{approvals.filter(a => a.status === 'rejected').length} Rejected</span>
-                            </div>
-                        </div>
 
-                        <div className="space-y-4">
-                            {approvals.map(appr => {
-                                const isExpanded = expandedApproval === appr.id;
-                                const statusColors: Record<string, string> = {
-                                    pending: 'border-amber-200 bg-white',
-                                    approved: 'border-emerald-200 bg-emerald-50/30',
-                                    rejected: 'border-rose-200 bg-rose-50/30',
-                                };
-                                const badgeColors: Record<string, string> = {
-                                    pending: 'bg-amber-100 text-amber-700',
-                                    approved: 'bg-emerald-100 text-emerald-700',
-                                    rejected: 'bg-rose-100 text-rose-700',
-                                };
-                                return (
-                                    <div key={appr.id} className={`rounded-2xl border shadow-sm overflow-hidden transition-all ${statusColors[appr.status]}`}>
-                                        {/* Header row */}
-                                        <div
-                                            className="flex items-center justify-between p-5 cursor-pointer"
-                                            onClick={() => setExpandedApproval(isExpanded ? null : appr.id)}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm ${appr.type === 'project' ? 'bg-indigo-500' : 'bg-teal-500'}`}>
-                                                    {appr.type === 'project' ? <Target size={17} /> : <FileText size={17} />}
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-black text-slate-800 text-sm">{appr.title}</p>
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full capitalize ${badgeColors[appr.status]}`}>
-                                                            {appr.status}
-                                                        </span>
-                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 capitalize">
-                                                            {appr.type}
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[11px] font-bold text-slate-500 mt-0.5">
-                                                        {appr.student} · {appr.rollNo} · {appr.subject}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-[10px] font-bold text-slate-400">{appr.submittedOn}</span>
-                                                {isExpanded ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                                            </div>
-                                        </div>
-
-                                        {/* Expanded details */}
-                                        {isExpanded && (
-                                            <div className="border-t border-slate-100 px-5 pb-5 pt-4 space-y-4 bg-slate-50/50">
-                                                <p className="text-sm text-slate-600 font-medium leading-relaxed">{appr.description}</p>
-
-                                                {appr.status === 'pending' && (
-                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <label className="text-xs font-black text-slate-600 uppercase tracking-wider">Credits to Award:</label>
-                                                            <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
-                                                                <button
-                                                                    onClick={() => setCreditInputs(prev => ({ ...prev, [appr.id]: Math.max(0, (prev[appr.id] || 0) - 1) }))}
-                                                                    className="px-3 py-2 text-slate-500 hover:bg-slate-100 font-black text-lg leading-none"
-                                                                >−</button>
-                                                                <input
-                                                                    type="number"
-                                                                    min={0} max={20}
-                                                                    value={creditInputs[appr.id] ?? appr.creditSuggested}
-                                                                    onChange={e => setCreditInputs(prev => ({ ...prev, [appr.id]: Number(e.target.value) }))}
-                                                                    className="w-14 text-center text-sm font-black text-slate-800 border-0 outline-none py-2"
-                                                                />
-                                                                <button
-                                                                    onClick={() => setCreditInputs(prev => ({ ...prev, [appr.id]: Math.min(20, (prev[appr.id] || 0) + 1) }))}
-                                                                    className="px-3 py-2 text-slate-500 hover:bg-slate-100 font-black text-lg leading-none"
-                                                                >+</button>
-                                                            </div>
-                                                            <span className="text-[10px] font-bold text-slate-400">(suggested: {appr.creditSuggested})</span>
-                                                        </div>
-
-                                                        <div className="flex gap-2 sm:ml-auto">
-                                                            <button
-                                                                onClick={() => handleApprove(appr.id)}
-                                                                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl transition shadow"
-                                                            >
-                                                                <Check size={13} /> Approve & Award Credits
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleReject(appr.id)}
-                                                                className="flex items-center gap-1.5 px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-black rounded-xl transition"
-                                                            >
-                                                                <X size={13} /> Reject
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
-
-                                                {appr.status === 'approved' && (
-                                                    <div className="flex items-center gap-2 text-emerald-700 font-black text-sm">
-                                                        <CheckCircle size={16} />
-                                                        Approved — <span className="text-emerald-800">{creditInputs[appr.id] ?? appr.creditSuggested} credits</span> awarded to {appr.student}
-                                                    </div>
-                                                )}
-                                                {appr.status === 'rejected' && (
-                                                    <div className="flex items-center gap-2 text-rose-600 font-black text-sm">
-                                                        <XCircle size={16} /> Rejected
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
 
                 {/* ══════════════════ QUESTION BANK TAB ══════════════════ */}
                 {activeTab === 'questionbank' && (
@@ -2535,235 +2625,7 @@ const FacultySelfDashboard = () => {
                     </div>
                 )}
 
-                {/* ══════════════════ CURRICULUM TAB ══════════════════ */}
-                {activeTab === 'curriculum' && (
-                    <div className="animate-fade-in space-y-10">
-                        {/* Header block */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div>
-                                <h2 className="text-xl font-black text-[#1e3a5f] uppercase tracking-tight">Academic Curriculum</h2>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">Official syllabus, progress tracking, and lecture breakdown across all phases.</p>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                            <div className="lg:col-span-8 space-y-6">
-                                {curriculumLoading ? (
-                                    <div className="flex flex-col items-center justify-center py-16 space-y-4 bg-white border border-slate-200/60 rounded-[32px] shadow-sm">
-                                        <div className="w-10 h-10 border-4 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Loading Academic Curriculum...</p>
-                                    </div>
-                                ) : curriculum.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-5 bg-white border border-slate-200/60 rounded-[32px] shadow-sm">
-                                        <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-[22px] flex items-center justify-center text-slate-400">
-                                            <Library size={32} />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-base font-black text-slate-900 uppercase tracking-tight">Institutional Syllabus Empty</h4>
-                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide max-w-sm mt-1.5 leading-relaxed">
-                                                No sessional syllabus branches have been registered under this college registry ledger yet.
-                                            </p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={async () => {
-                                                try {
-                                                    const token = localStorage.getItem('urp_token');
-                                                    if (!token) return;
-                                                    triggerToast('Seeding comprehensive 8-semester blueprint...');
-                                                    const res = await fetch(BASE_URL + '/api/academic/seed', {
-                                                        headers: { 'Authorization': `Bearer ${token}` }
-                                                    });
-                                                    if (res.ok) {
-                                                        triggerToast('Syllabus seeder completed successfully!');
-                                                        fetchCurriculum();
-                                                    }
-                                                } catch (e) {
-                                                    console.error(e);
-                                                }
-                                            }}
-                                            className="px-5 py-2.5 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:shadow-xl transition-all cursor-pointer"
-                                        >
-                                            Seed 8-Semester Syllabus Blueprint
-                                        </button>
-                                    </div>
-                                ) : (
-                                    (() => {
-                                        const selectedSemObj = curriculum.find(s => s.sem === selectedCurriculumSem) || curriculum[0];
-                                        const availableCourses = selectedSemObj?.courses || [];
-                                        const selectedCourseObj = availableCourses.find((c: any) => c.code === selectedCurriculumCourseCode) || availableCourses[0];
-
-                                        return (
-                                            <div className="bg-white rounded-[32px] border border-slate-200/60 p-6 sm:p-8 shadow-sm space-y-6">
-                                                {/* Semester and Subject Selectors Row */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-slate-100">
-                                                    <div className="space-y-2">
-                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Semester</label>
-                                                        <select
-                                                            value={selectedCurriculumSem}
-                                                            onChange={(e) => {
-                                                                const semVal = e.target.value;
-                                                                setSelectedCurriculumSem(semVal);
-                                                                const semObj = curriculum.find(s => s.sem === semVal);
-                                                                if (semObj && semObj.courses.length > 0) {
-                                                                    setSelectedCurriculumCourseCode(semObj.courses[0].code);
-                                                                } else {
-                                                                    setSelectedCurriculumCourseCode('');
-                                                                }
-                                                            }}
-                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all cursor-pointer"
-                                                        >
-                                                            {curriculum.map((sem) => (
-                                                                <option key={sem.sem} value={sem.sem}>
-                                                                    {sem.sem} ({sem.credits} Credits)
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-
-                                                    <div className="space-y-2">
-                                                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Select Subject</label>
-                                                        <select
-                                                            value={selectedCurriculumCourseCode}
-                                                            onChange={(e) => setSelectedCurriculumCourseCode(e.target.value)}
-                                                            disabled={availableCourses.length === 0}
-                                                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-805 outline-none focus:border-slate-900 focus:bg-white transition-all disabled:opacity-50 cursor-pointer"
-                                                        >
-                                                            {availableCourses.map((c: any) => (
-                                                                <option key={c.code} value={c.code}>
-                                                                    {c.code} - {c.title || c.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                </div>
-
-                                                {/* Detailed Syllabus Rectangular Section Box */}
-                                                {selectedCourseObj ? (
-                                                    <div className="bg-slate-50/40 rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-6">
-                                                        {/* Course Header info */}
-                                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200/60">
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-indigo-600 flex items-center justify-center shrink-0 shadow-sm">
-                                                                    <Library size={20} />
-                                                                </div>
-                                                                <div>
-                                                                    <span className="font-mono text-[9px] font-black text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded uppercase tracking-wider">{selectedCourseObj.code}</span>
-                                                                    <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mt-1">{selectedCourseObj.title || selectedCourseObj.name}</h4>
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-[10px] font-black text-slate-500 bg-white border border-slate-200 px-3 py-1 rounded-xl shadow-sm">
-                                                                    Credits: {selectedCourseObj.credits}
-                                                                </span>
-                                                                <span className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl border shrink-0 ${selectedSemObj.status === 'Completed' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-indigo-50 border-indigo-100 text-indigo-700'}`}>
-                                                                    {selectedSemObj.status}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Instructor / Progress */}
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-bold text-slate-500">
-                                                            <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2.5">
-                                                                <User size={16} className="text-slate-400" />
-                                                                <div>
-                                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block">Instructor</span>
-                                                                    <span className="text-slate-800 font-extrabold">{selectedCourseObj.faculty || 'Senior Faculty Member'}</span>
-                                                                </div>
-                                                            </div>
-                                                            {selectedCourseObj.result ? (
-                                                                <div className="bg-indigo-50/50 p-3.5 rounded-xl border border-indigo-100 shadow-sm flex items-center gap-2.5 text-indigo-950">
-                                                                    <Award size={16} className="text-indigo-600" />
-                                                                    <div>
-                                                                        <span className="text-[8px] font-black text-indigo-500 uppercase tracking-widest block">Grade Allotted</span>
-                                                                        <span className="text-indigo-700 font-extrabold">{selectedCourseObj.result}</span>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-                                                                    <div className="flex justify-between text-[8px] text-slate-400 font-black uppercase tracking-widest">
-                                                                        <span>Syllabus Progress</span>
-                                                                        <span>{selectedCourseObj.progress || 0}%</span>
-                                                                    </div>
-                                                                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                                        <div className="h-full bg-slate-900 rounded-full" style={{ width: `${selectedCourseObj.progress || 0}%` }}></div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Topics / Syllabus covered */}
-                                                        {selectedCourseObj.topics && (
-                                                            <div className="space-y-2">
-                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">Syllabus Breakdown & Topics</span>
-                                                                <div className="grid grid-cols-1 gap-2 max-h-[180px] overflow-y-auto pr-1">
-                                                                    {selectedCourseObj.topics.map((t: string, idx: number) => (
-                                                                        <div key={idx} className="flex items-center gap-2.5 bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-700 hover:border-slate-350 transition-colors">
-                                                                            <span className="text-[9px] font-black text-slate-500 bg-slate-50 border border-slate-200 w-5 h-5 rounded-lg flex items-center justify-center shrink-0">{idx + 1}</span>
-                                                                            <span>{t}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Syllabus Download Action */}
-                                                        <div className="pt-4 border-t border-slate-200 flex justify-between items-center text-[10px]">
-                                                            <span className="text-slate-400 italic">Certified syllabus record</span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => triggerToast(`Downloading course unit syllabus for ${selectedCourseObj.code}...`)}
-                                                                className="font-black text-indigo-650 hover:underline flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 transition-colors"
-                                                            >
-                                                                <Download size={12} /> Syllabus PDF
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-center py-12 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-                                                        <p className="text-xs font-bold uppercase tracking-wider">No subjects found in selected semester</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })()
-                                )}
-                            </div>
-
-                            <div className="lg:col-span-4 space-y-6">
-                                <div className="bg-white rounded-[28px] p-6 border-[1px] border-slate-200/60 shadow-sm space-y-6">
-                                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                                        <Bookmark className="text-slate-900" size={15} /> Academic Utilities
-                                    </h3>
-                                    <div className="space-y-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerToast('Syllabus Handbook PDF download initiated.')}
-                                            className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                                                <FileBadge size={16} className="text-slate-500" />
-                                                <span>Syllabus Handbook (PDF)</span>
-                                            </div>
-                                            <ChevronRight size={14} className="text-slate-400" />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => triggerToast('Institutional Calendar download initiated.')}
-                                            className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition-colors cursor-pointer"
-                                        >
-                                            <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
-                                                <Calendar size={16} className="text-slate-500" />
-                                                <span>Institutional Calendar</span>
-                                            </div>
-                                            <ChevronRight size={14} className="text-slate-400" />
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
             </main>
         </div>

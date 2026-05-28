@@ -50,7 +50,7 @@ export default function MemberProfilePage() {
     const fetchMember = async () => {
       try {
         const token = localStorage.getItem('urp_token');
-        const res = await fetch(`{BASE_URL}/api/members/${id}`, {
+        const res = await fetch(`${BASE_URL}/api/members/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Member not found');
@@ -122,8 +122,8 @@ export default function MemberProfilePage() {
                 </h1>
                 <p className="text-sm font-bold text-slate-600">{member.college?.name || 'College Name'}</p>
                 <div className="flex gap-2 mt-1">
-                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded uppercase tracking-widest">{member.role}</span>
-                   {member.status && <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-black rounded uppercase tracking-widest">{member.status}</span>}
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded uppercase tracking-widest">{member.role}</span>
+                  {member.status && <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-black rounded uppercase tracking-widest">{member.status}</span>}
                 </div>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default function MemberProfilePage() {
           <section>
             <h2 className="text-[11px] font-black text-white bg-[#1e3a5f] px-3 py-1.5 rounded-lg mb-4 uppercase tracking-widest shadow-sm inline-block">Contact & Address</h2>
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-               <p className="text-xs font-bold text-slate-700 leading-relaxed">{member.address || 'No residential address provided in records.'}</p>
+              <p className="text-xs font-bold text-slate-700 leading-relaxed">{member.address || 'No residential address provided in records.'}</p>
             </div>
           </section>
 

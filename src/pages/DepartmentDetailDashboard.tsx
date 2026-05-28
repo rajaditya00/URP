@@ -8,35 +8,35 @@ import {
 } from 'lucide-react';
 
 type Member = {
-  _id: string;
-  name: string;
-  email: string;
-  role?: string;
-  profileImage?: string;
-  mobile?: string;
-  department?: string;
-  position?: string;
-  specialRole?: string;
-  rollNo?: string;
-  registrationNo?: string;
-  semester?: string;
-  batch?: string;
-  mentor?: {
-    _id?: string;
-    id?: string;
+    _id: string;
     name: string;
     email: string;
-  };
+    role?: string;
+    profileImage?: string;
+    mobile?: string;
+    department?: string;
+    position?: string;
+    specialRole?: string;
+    rollNo?: string;
+    registrationNo?: string;
+    semester?: string;
+    batch?: string;
+    mentor?: {
+        _id?: string;
+        id?: string;
+        name: string;
+        email: string;
+    };
 };
 
 type Schedule = {
-  _id: string;
-  semester: string;
-  title: string;
-  description?: string;
-  date?: string;
-  time?: string;
-  type: 'Class' | 'Exam' | 'Sessional' | 'Holiday';
+    _id: string;
+    semester: string;
+    title: string;
+    description?: string;
+    date?: string;
+    time?: string;
+    type: 'Class' | 'Exam' | 'Sessional' | 'Holiday';
 };
 
 const DepartmentDetailDashboard = () => {
@@ -89,7 +89,7 @@ const DepartmentDetailDashboard = () => {
             }
 
             // Fetch schedules
-            const schedulesResp = await fetch(`{BASE_URL}/api/members/schedules/${encodeURIComponent(deptName || '')}`, {
+            const schedulesResp = await fetch(`${BASE_URL}/api/members/schedules/${encodeURIComponent(deptName || '')}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (schedulesResp.ok) {
@@ -187,7 +187,7 @@ const DepartmentDetailDashboard = () => {
         if (!window.confirm('Are you sure you want to delete this schedule entry?')) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/members/schedules/${id}`, {
+            const res = await fetch(`${BASE_URL}/api/members/schedules/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -276,7 +276,7 @@ const DepartmentDetailDashboard = () => {
                         {/* Decorative background glows */}
                         <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
                         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-                        
+
                         <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
                             <div>
                                 <span className="px-3 py-1 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md">
@@ -297,19 +297,19 @@ const DepartmentDetailDashboard = () => {
                                         <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-3xl blur opacity-30 group-hover/avatar:opacity-60 transition duration-500" />
                                         <div className="relative w-22 h-22 rounded-3xl overflow-hidden border-2 border-white/20 shadow-md bg-slate-950 flex items-center justify-center">
                                             {hod.profileImage ? (
-                                                <img 
-                                                    src={`{BASE_URL}${hod.profileImage}`} 
-                                                    alt={hod.name} 
+                                                <img
+                                                    src={`${BASE_URL}${hod.profileImage}`}
+                                                    alt={hod.name}
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-110"
                                                     onError={(e) => {
                                                         (e.target as HTMLImageElement).src = "/hod_avatar_placeholder.png";
                                                     }}
                                                 />
                                             ) : (
-                                                <img 
-                                                    src="/hod_avatar_placeholder.png" 
-                                                    alt={hod.name} 
-                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-110" 
+                                                <img
+                                                    src="/hod_avatar_placeholder.png"
+                                                    alt={hod.name}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-110"
                                                 />
                                             )}
                                         </div>
@@ -384,7 +384,7 @@ const DepartmentDetailDashboard = () => {
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-black text-slate-900 text-xs truncate leading-snug">{prof.name}</h4>
                                         <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-0.5">{prof.position || 'Professor'}</p>
-                                        
+
                                         <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1.5 text-[9px] font-semibold text-slate-500">
                                             <div className="flex items-center gap-2">
                                                 <Mail size={10} className="text-slate-400 shrink-0" />
@@ -510,9 +510,8 @@ const DepartmentDetailDashboard = () => {
                                     <button
                                         key={s}
                                         onClick={() => setActiveSemTab(semVal)}
-                                        className={`flex-1 min-w-[70px] py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                                            active ? 'bg-white text-[#1e3a5f] shadow-sm' : 'text-slate-500 hover:text-slate-800'
-                                        }`}
+                                        className={`flex-1 min-w-[70px] py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${active ? 'bg-white text-[#1e3a5f] shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                                            }`}
                                     >
                                         Sem {s}
                                     </button>

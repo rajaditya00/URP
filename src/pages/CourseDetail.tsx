@@ -29,7 +29,7 @@ const CourseDetail: React.FC = () => {
   const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    fetch(`{BASE_URL}/api/elearning/${courseId}`)
+    fetch(`${BASE_URL}/api/elearning/${courseId}`)
       .then(res => res.json())
       .then(data => {
          if(data && !data.title?.includes('Not found')) {

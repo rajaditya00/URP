@@ -125,7 +125,7 @@ const CollegeAdminDashboard = () => {
     const [expandedDept, setExpandedDept] = useState<string | null>(null);
     const [allottingStudentId, setAllottingStudentId] = useState<string | null>(null);
 
-    const [deptModalTab, setDeptModalTab] = useState<'roster' | 'schedule' | 'directory'>('roster');
+    const [deptModalTab, setDeptModalTab] = useState<'schedule' | 'directory'>('schedule');
     const [schedules, setSchedules] = useState<any[]>([]);
     const [activeSemTab, setActiveSemTab] = useState<string>('Sem 1');
     const [showAddSchedule, setShowAddSchedule] = useState<boolean>(false);
@@ -143,7 +143,7 @@ const CollegeAdminDashboard = () => {
         setScheduleLoading(true);
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/members/schedules/${encodeURIComponent(deptName)}`, {
+            const res = await fetch(`${BASE_URL}/api/members/schedules/${encodeURIComponent(deptName)}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -162,7 +162,7 @@ const CollegeAdminDashboard = () => {
     useEffect(() => {
         if (expandedDept) {
             loadDeptSchedules(expandedDept);
-            setDeptModalTab('roster');
+            setDeptModalTab('schedule');
             setDeptStudentSearch('');
             setShowAddSchedule(false);
         }
@@ -206,7 +206,7 @@ const CollegeAdminDashboard = () => {
         if (!expandedDept) return;
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch(`{BASE_URL}/api/members/schedules/${scheduleId}`, {
+            const res = await fetch(`${BASE_URL}/api/members/schedules/${scheduleId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -226,70 +226,7 @@ const CollegeAdminDashboard = () => {
 
     const showToastMsg = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
-    const [quickRollNo, setQuickRollNo] = useState('');
-    const [quickMentorId, setQuickMentorId] = useState('');
-    const [quickAllotting, setQuickAllotting] = useState(false);
-
     const deptProfessors = expandedDept ? faculties.filter(f => f.department === expandedDept) : [];
-
-    const handleQuickAllot = async () => {
-        if (!quickRollNo.trim()) return showToastMsg('❌ Please enter a student Roll Number');
-        if (!quickMentorId) return showToastMsg('❌ Please select a faculty mentor');
-        
-        setQuickAllotting(true);
-        try {
-            const token = localStorage.getItem('urp_token');
-            const res = await fetch(BASE_URL + '/api/members/allot-mentor', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ rollNo: quickRollNo.trim(), mentorId: quickMentorId })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToastMsg('✅ Mentor successfully allotted via Roll Number!');
-                setQuickRollNo('');
-                setQuickMentorId('');
-                await loadMembers(); // Reload roster to sync state
-            } else {
-                showToastMsg(`❌ Allotment failed: ${data.error || 'Server error'}`);
-            }
-        } catch (e) {
-            console.error(e);
-            showToastMsg('❌ Server connection error');
-        } finally {
-            setQuickAllotting(false);
-        }
-    };
-
-    const handleAllotMentor = async (studentId: string, mentorId: string) => {
-        setAllottingStudentId(studentId);
-        try {
-            const token = localStorage.getItem('urp_token');
-            const res = await fetch(BASE_URL + '/api/members/allot-mentor', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ studentId, mentorId })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                showToastMsg('✅ Mentor successfully assigned to student!');
-                await loadMembers(); // Reload roster to sync state
-            } else {
-                showToastMsg(`❌ Allotment failed: ${data.error || 'Server error'}`);
-            }
-        } catch (e) {
-            console.error(e);
-            showToastMsg('❌ Server connection error');
-        } finally {
-            setAllottingStudentId(null);
-        }
-    };
 
     const handleAddFaculty = async () => {
         if (!newFaculty.name || !newFaculty.email) return showToastMsg('Name and Email are required.');
@@ -397,7 +334,7 @@ const CollegeAdminDashboard = () => {
                             <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(147,210,255,0.65)' }}>Management Dashboard</p>
                         </div>
                     </div>
-                    
+
                     {/* Role Indicator in the Middle — white glass pill */}
                     <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 -translate-x-1/2 z-10">
                         <span className="text-[9px] font-black tracking-[0.3em] uppercase mb-1" style={{ color: 'rgba(196,212,255,0.7)' }}>Access Role</span>
@@ -525,9 +462,8 @@ const CollegeAdminDashboard = () => {
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">PDF Attachment <span className="text-slate-400 normal-case font-semibold tracking-normal">(optional)</span></label>
-                                            <label className={`flex items-center gap-3 h-11 px-4 rounded-xl border cursor-pointer transition-all text-sm font-semibold ${
-                                                newNoticePdf ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-300 hover:bg-rose-50/50'
-                                            }`}>
+                                            <label className={`flex items-center gap-3 h-11 px-4 rounded-xl border cursor-pointer transition-all text-sm font-semibold ${newNoticePdf ? 'bg-rose-50 border-rose-300 text-rose-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-rose-300 hover:bg-rose-50/50'
+                                                }`}>
                                                 <input type="file" accept="application/pdf" className="hidden" onChange={handleNoticePdfUpload} />
                                                 {noticePdfLoading ? (
                                                     <span className="text-xs text-slate-400">Reading…</span>
@@ -648,7 +584,7 @@ const CollegeAdminDashboard = () => {
                                                         <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full ${f.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{f.status}</span>
                                                     </td>
                                                     <td className="px-6 py-4 text-right">
-                                                        <button 
+                                                        <button
                                                             onClick={() => navigate(`/college-admin/faculty/${f.id}`)}
                                                             className="text-xs font-bold text-[#1e3a5f] hover:underline"
                                                         >
@@ -857,16 +793,16 @@ const CollegeAdminDashboard = () => {
                                     {DEPARTMENTS.length} total departments
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                                 {DEPARTMENTS.map(d => {
                                     const deptStudents = students.filter(s => s.department === d);
                                     const deptFaculty = faculties.filter(f => f.department === d);
                                     const isSelected = expandedDept === d;
                                     return (
-                                        <button 
+                                        <button
                                             type="button"
-                                            key={d} 
+                                            key={d}
                                             onClick={() => setExpandedDept(d)}
                                             className="w-full text-left bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.01] duration-200 border-slate-200/80 cursor-pointer outline-none hover:border-[#1e3a5f]/40"
                                         >
@@ -875,16 +811,16 @@ const CollegeAdminDashboard = () => {
                                                     <Building className="w-6 h-6" />
                                                 </div>
                                                 <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-slate-100 rounded-lg text-slate-500 border border-slate-200">
-                                                    Manage Mentoring
+                                                    Manage Department
                                                 </span>
                                             </div>
                                             <h3 className="font-extrabold text-slate-900 text-lg mb-1 leading-snug">{d}</h3>
                                             <div className="mt-3.5 pt-3.5 border-t border-slate-150/60 flex items-center justify-between">
-                                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Roster (Ratio)</div>
+                                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Registry Statistics</div>
                                                 <div className="text-[11px] font-black bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner">
                                                     <span className="text-blue-700" title="Total Students">{deptStudents.length} Students</span>
                                                     <span className="text-slate-350 font-medium">/</span>
-                                                    <span className="text-indigo-700" title="Available Faculty Mentors">{deptFaculty.length} Mentors Available</span>
+                                                    <span className="text-indigo-700" title="Total Faculty">{deptFaculty.length} Faculty</span>
                                                 </div>
                                             </div>
                                         </button>
@@ -907,10 +843,10 @@ const CollegeAdminDashboard = () => {
                                                 </span>
                                                 <h3 className="font-extrabold text-2xl text-slate-950 tracking-tight mt-1.5">{expandedDept} Department</h3>
                                                 <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider leading-none">
-                                                    Manage Mentoring Roster &bull; Track Sessional Calendars &bull; View Faculty Directory
+                                                    Track Sessional Calendars &bull; View Faculty Directory
                                                 </p>
                                             </div>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={() => setExpandedDept(null)}
                                                 className="w-10 h-10 bg-slate-50 border border-slate-200/80 hover:bg-slate-100 rounded-2xl text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105"
@@ -923,7 +859,6 @@ const CollegeAdminDashboard = () => {
                                         <div className="px-8 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
                                             <div className="flex gap-2">
                                                 {[
-                                                    { id: 'roster', label: 'Mentorship Registry' },
                                                     { id: 'schedule', label: 'Sessional Timetable' },
                                                     { id: 'directory', label: 'Faculty Directory' }
                                                 ].map(tab => (
@@ -931,11 +866,10 @@ const CollegeAdminDashboard = () => {
                                                         key={tab.id}
                                                         type="button"
                                                         onClick={() => setDeptModalTab(tab.id as any)}
-                                                        className={`px-4.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                                                            deptModalTab === tab.id
-                                                                ? 'bg-[#1e3a5f] text-white shadow-sm'
-                                                                : 'text-slate-500 hover:text-slate-850 hover:bg-slate-150/40'
-                                                        }`}
+                                                        className={`px-4.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${deptModalTab === tab.id
+                                                            ? 'bg-[#1e3a5f] text-white shadow-sm'
+                                                            : 'text-slate-500 hover:text-slate-850 hover:bg-slate-150/40'
+                                                            }`}
                                                     >
                                                         {tab.label}
                                                     </button>
@@ -950,130 +884,7 @@ const CollegeAdminDashboard = () => {
 
                                         {/* Body Content */}
                                         <div className="flex-1 overflow-y-auto p-8 bg-slate-50/20">
-                                            {/* TAB 1: ROSTER REGISTRY (MENTOR ALLOTMENT) */}
-                                            {deptModalTab === 'roster' && (
-                                                <div className="space-y-6">
-                                                    {/* QUICK ALLOTMENT BY ROLL NUMBER */}
-                                                    <div className="p-5 bg-white border border-slate-200/70 rounded-2xl flex flex-col md:flex-row md:items-end gap-4 shadow-sm">
-                                                        <div className="flex-1">
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-0.5">Student Roll Number</label>
-                                                            <input
-                                                                type="text"
-                                                                placeholder="e.g. CS-2024-001"
-                                                                value={quickRollNo}
-                                                                onChange={(e) => setQuickRollNo(e.target.value)}
-                                                                className="w-full h-10 px-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-900 focus:border-[#1e3a5f] outline-none shadow-sm focus:bg-white transition-all"
-                                                            />
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-0.5">Select Faculty Mentor</label>
-                                                            <select
-                                                                value={quickMentorId}
-                                                                onChange={(e) => setQuickMentorId(e.target.value)}
-                                                                className="w-full h-10 px-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-900 focus:border-[#1e3a5f] outline-none shadow-sm focus:bg-white transition-all cursor-pointer"
-                                                            >
-                                                                <option value="">-- Choose Mentor --</option>
-                                                                {deptProfessors.map(prof => (
-                                                                    <option key={prof.id} value={prof.id}>
-                                                                        {prof.name} ({prof.position || 'Professor'})
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                        <button
-                                                            type="button"
-                                                            disabled={quickAllotting}
-                                                            onClick={handleQuickAllot}
-                                                            className="h-10 px-6 bg-slate-950 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-                                                        >
-                                                            {quickAllotting ? 'Allotting...' : 'Allot Mentor'}
-                                                        </button>
-                                                    </div>
 
-                                                    {/* Student Search & Roster list */}
-                                                    <div className="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden p-6">
-                                                        <div className="relative mb-5">
-                                                            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Search department students by Roll Number, Name..."
-                                                                value={deptStudentSearch}
-                                                                onChange={e => setDeptStudentSearch(e.target.value)}
-                                                                className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-[#1e3a5f] outline-none transition-all"
-                                                            />
-                                                        </div>
-
-                                                        <div className="overflow-x-auto border border-slate-100 rounded-xl">
-                                                            <table className="w-full text-left border-collapse text-xs">
-                                                                <thead>
-                                                                    <tr className="border-b border-slate-150/70 bg-slate-50">
-                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Student Details</th>
-                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Assigned Guide</th>
-                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400 text-right">Allot Mentorship</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody className="divide-y divide-slate-100">
-                                                                    {students
-                                                                        .filter(s => s.department === expandedDept && (
-                                                                            deptStudentSearch === '' ||
-                                                                            s.name.toLowerCase().includes(deptStudentSearch.toLowerCase()) ||
-                                                                            (s.rollNo && s.rollNo.toLowerCase().includes(deptStudentSearch.toLowerCase()))
-                                                                        ))
-                                                                        .map(student => {
-                                                                            const isSaving = allottingStudentId === student.id;
-                                                                            return (
-                                                                                <tr key={student.id} className="hover:bg-slate-50/30 transition-colors">
-                                                                                    <td className="px-5 py-3.5">
-                                                                                        <p className="font-black text-slate-900">{student.name}</p>
-                                                                                        <p className="text-[10px] text-slate-400 font-mono font-bold mt-0.5">Roll No: {student.rollNo} &bull; {student.semester}</p>
-                                                                                    </td>
-                                                                                    <td className="px-5 py-3.5">
-                                                                                        {student.mentor ? (
-                                                                                            <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-100/50 text-indigo-700 rounded-lg text-[10px] font-black uppercase inline-flex items-center gap-1">
-                                                                                                🎓 {student.mentor.name}
-                                                                                            </span>
-                                                                                        ) : (
-                                                                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-wider">
-                                                                                                ⚠ Unassigned
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td className="px-5 py-3.5 text-right">
-                                                                                        <div className="flex items-center justify-end gap-2">
-                                                                                            <select
-                                                                                                value={student.mentor?._id || student.mentor?.id || ''}
-                                                                                                disabled={isSaving}
-                                                                                                onChange={(e) => handleAllotMentor(student.id, e.target.value)}
-                                                                                                className="h-8.5 px-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase focus:border-[#1e3a5f] outline-none shadow-sm cursor-pointer"
-                                                                                            >
-                                                                                                <option value="">-- Unassigned --</option>
-                                                                                                {deptProfessors.map(prof => (
-                                                                                                    <option key={prof.id} value={prof.id}>
-                                                                                                        {prof.name} ({prof.position || 'Professor'})
-                                                                                                    </option>
-                                                                                                ))}
-                                                                                            </select>
-                                                                                            {isSaving && (
-                                                                                                <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0" />
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        })}
-                                                                    {students.filter(s => s.department === expandedDept).length === 0 && (
-                                                                        <tr>
-                                                                            <td colSpan={3} className="px-6 py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-wider">
-                                                                                No students registered under {expandedDept}
-                                                                            </td>
-                                                                        </tr>
-                                                                    )}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
 
                                             {/* TAB 2: SESSIONAL SCHEDULE TIMETABLE */}
                                             {deptModalTab === 'schedule' && (
@@ -1177,9 +988,8 @@ const CollegeAdminDashboard = () => {
                                                                     key={s}
                                                                     type="button"
                                                                     onClick={() => setActiveSemTab(semVal)}
-                                                                    className={`flex-1 min-w-[70px] py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
-                                                                        active ? 'bg-[#1e3a5f] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-150/30'
-                                                                    }`}
+                                                                    className={`flex-1 min-w-[70px] py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${active ? 'bg-[#1e3a5f] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-150/30'
+                                                                        }`}
                                                                 >
                                                                     Sem {s}
                                                                 </button>
@@ -1254,7 +1064,7 @@ const CollegeAdminDashboard = () => {
                                                     {/* HOD Profile Showcase Card */}
                                                     <div className="lg:col-span-5 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-7 text-white shadow-lg relative overflow-hidden border border-slate-800 flex flex-col justify-between">
                                                         <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-                                                        
+
                                                         <div>
                                                             <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
                                                                 <div>
@@ -1365,8 +1175,8 @@ const CollegeAdminDashboard = () => {
                                     <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">Question Bank & Paper Generator</span>
                                 </div>
                             </div>
-                            <QuestionBank 
-                                role={user?.role || 'COLLEGE'} 
+                            <QuestionBank
+                                role={user?.role || 'COLLEGE'}
                                 collegeId={user?.college?._id}
                                 facultyName={user?.name || 'College Admin'}
                             />
