@@ -26,6 +26,7 @@ interface MemberProfile {
   mustChangePassword?: boolean;
   college?: { name: string };
   university?: { name: string };
+  mentor?: { name: string; email: string; department?: string; position?: string };
   createdAt?: string;
 }
 
@@ -183,6 +184,7 @@ export default function MemberProfilePage() {
                       <Row label="Current Semester" value={member.semester} />
                       <Row label="College Roll No." value={member.rollNo} />
                       <Row label="Univ Reg. No." value={member.registrationNo} />
+                      <Row label="Assigned Mentor" value={member.mentor ? `${member.mentor.name} (${member.mentor.position || 'Professor'} - ${member.mentor.department || 'Faculty'})` : 'Not Allotted'} />
                     </>
                   ) : (
                     <>

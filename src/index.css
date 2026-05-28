@@ -58,6 +58,30 @@
         border-radius: 0.5rem;
     }
 
+    /* Premium glassy cards with corner shadows and vibrant depth */
+    .glass-card-premium {
+        background: rgba(255, 255, 255, 0.72) !important;
+        backdrop-filter: blur(16px) saturate(125%) !important;
+        -webkit-backdrop-filter: blur(16px) saturate(125%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.45) !important;
+        box-shadow: 
+            0 12px 40px rgba(31, 38, 135, 0.05) !important,
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6) !important,
+            0 2px 4px rgba(0, 0, 0, 0.02) !important;
+        border-radius: 24px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card-premium:hover {
+        background: rgba(255, 255, 255, 0.85) !important;
+        border-color: rgba(255, 255, 255, 0.65) !important;
+        box-shadow: 
+            0 20px 48px rgba(30, 58, 95, 0.08) !important,
+            inset 0 0 0 1px rgba(255, 255, 255, 0.8) !important,
+            0 4px 12px rgba(0, 0, 0, 0.03) !important;
+        transform: translateY(-2px);
+    }
+
     .flex-center {
         @apply flex items-center justify-center;
     }

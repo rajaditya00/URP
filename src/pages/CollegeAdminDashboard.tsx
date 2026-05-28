@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ChangePassword from '../components/ChangePassword';
-import { Users, GraduationCap, Building, LayoutDashboard, CheckCircle, Search, Plus, X, MoreVertical, Layers, Megaphone, Bell } from 'lucide-react';
+import { Users, GraduationCap, Building, LayoutDashboard, CheckCircle, Search, Plus, X, MoreVertical, Layers, Megaphone, Bell, Calendar, Clock, Trash, Mail, Phone, MapPin, Award, BookOpen } from 'lucide-react';
 import QuestionBank from '../components/Examination/QuestionBank';
 
 const DEPARTMENTS = ['Computer Science', 'Mechanical Engineering', 'Electrical Engineering', 'Civil Engineering', 'Business Administration'];
@@ -9,7 +9,7 @@ const FACULTY_POSITIONS = ['Professor', 'Associate Professor', 'Assistant Profes
 const SPECIAL_ROLES = ['None', 'Head of Department (HOD)', 'Examination Controller', 'Dean of Academics', 'Placement Coordinator'];
 
 type Faculty = { id: string; name: string; email: string; mobile?: string; department: string; position: string; specialRole: string; status: 'Active' | 'On Leave' };
-type Student = { id: string; name: string; email: string; rollNo: string; registrationNo?: string; department: string; semester: string; status: 'Active' | 'Graduated'; address?: string; fatherName?: string; motherName?: string; gender?: string; dob?: string; casteCategory?: string; mobile?: string; aadharNo?: string; programme?: string; };
+type Student = { id: string; name: string; email: string; rollNo: string; registrationNo?: string; department: string; semester: string; batch?: string; status: 'Active' | 'Graduated'; address?: string; fatherName?: string; motherName?: string; gender?: string; dob?: string; casteCategory?: string; mobile?: string; aadharNo?: string; programme?: string; mentor?: { id?: string; _id?: string; name: string; email: string; department?: string; position?: string; }; };
 
 const CollegeAdminDashboard = () => {
     const navigate = useNavigate();
@@ -27,11 +27,12 @@ const CollegeAdminDashboard = () => {
     const [newFaculty, setNewFaculty] = useState<Partial<Faculty>>({ name: '', email: '', mobile: '', department: DEPARTMENTS[0], position: FACULTY_POSITIONS[0], specialRole: 'None', status: 'Active' });
 
     const [showAddStudent, setShowAddStudent] = useState(false);
-    const [newStudent, setNewStudent] = useState<Partial<Student>>({ name: '', email: '', rollNo: '', registrationNo: '', department: DEPARTMENTS[0], semester: 'Sem 1', status: 'Active', programme: '', fatherName: '', motherName: '', gender: 'Male', dob: '', casteCategory: 'General', mobile: '', aadharNo: '', address: '' });
+    const [newStudent, setNewStudent] = useState<Partial<Student>>({ name: '', email: '', rollNo: '', registrationNo: '', department: DEPARTMENTS[0], semester: 'Sem 1', batch: '2023-2027', status: 'Active', programme: '', fatherName: '', motherName: '', gender: 'Male', dob: '', casteCategory: 'General', mobile: '', aadharNo: '', address: '' });
 
     const [studentSearch, setStudentSearch] = useState('');
     const [filterBatch, setFilterBatch] = useState('All');
     const [filterSemester, setFilterSemester] = useState('All');
+    const [filterDept, setFilterDept] = useState('All');
 
     // Notices State
     const [notices, setNotices] = useState<any[]>(() => {
@@ -70,10 +71,16 @@ const CollegeAdminDashboard = () => {
         showToastMsg('Notice published to student portals!');
     };
 
-    const loadMembers = async () => {
+    const loadMembers = async (searchVal = '', batchVal = 'All', semesterVal = 'All', deptVal = 'All') => {
         try {
             const token = localStorage.getItem('urp_token');
-            const res = await fetch('http://localhost:5000/api/members', {
+            let url = 'http://localhost:5000/api/members?';
+            if (searchVal.trim()) url += `search=${encodeURIComponent(searchVal.trim())}&`;
+            if (batchVal !== 'All') url += `batch=${encodeURIComponent(batchVal)}&`;
+            if (semesterVal !== 'All') url += `semester=${encodeURIComponent(semesterVal)}&`;
+            if (deptVal !== 'All') url += `department=${encodeURIComponent(deptVal)}&`;
+
+            const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -91,7 +98,9 @@ const CollegeAdminDashboard = () => {
                     registrationNo: m.registrationNo || 'N/A',
                     department: m.department || 'Not Assigned',
                     semester: m.semester || 'Sem 1',
-                    status: 'Active'
+                    batch: m.batch || 'Batch N/A',
+                    status: 'Active',
+                    mentor: m.mentor // Dynamic assigned mentor object
                 })));
             }
         } catch (err) { console.error(err); }
@@ -104,10 +113,182 @@ const CollegeAdminDashboard = () => {
         const u = JSON.parse(stored);
         if (u.role !== 'COLLEGE' && u.role !== 'COLLEGE_ADMIN') { navigate('/login'); return; }
         setUser(u);
-        loadMembers();
     }, [navigate]);
 
+    useEffect(() => {
+        if (user) {
+            loadMembers(studentSearch, filterBatch, filterSemester, filterDept);
+        }
+    }, [user, studentSearch, filterBatch, filterSemester, filterDept]);
+
+    const [expandedDept, setExpandedDept] = useState<string | null>(null);
+    const [allottingStudentId, setAllottingStudentId] = useState<string | null>(null);
+
+    const [deptModalTab, setDeptModalTab] = useState<'roster' | 'schedule' | 'directory'>('roster');
+    const [schedules, setSchedules] = useState<any[]>([]);
+    const [activeSemTab, setActiveSemTab] = useState<string>('Sem 1');
+    const [showAddSchedule, setShowAddSchedule] = useState<boolean>(false);
+    const [newSchedule, setNewSchedule] = useState({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        type: 'Class' as 'Class' | 'Exam' | 'Sessional' | 'Holiday'
+    });
+    const [scheduleLoading, setScheduleLoading] = useState<boolean>(false);
+    const [deptStudentSearch, setDeptStudentSearch] = useState<string>('');
+
+    const loadDeptSchedules = async (deptName: string) => {
+        setScheduleLoading(true);
+        try {
+            const token = localStorage.getItem('urp_token');
+            const res = await fetch(`http://localhost:5000/api/members/schedules/${encodeURIComponent(deptName)}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) {
+                    setSchedules(data);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load schedules:', e);
+        } finally {
+            setScheduleLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (expandedDept) {
+            loadDeptSchedules(expandedDept);
+            setDeptModalTab('roster');
+            setDeptStudentSearch('');
+            setShowAddSchedule(false);
+        }
+    }, [expandedDept]);
+
+    const handleAddScheduleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newSchedule.title.trim()) return showToastMsg('❌ Title is required');
+        if (!expandedDept) return;
+
+        try {
+            const token = localStorage.getItem('urp_token');
+            const res = await fetch('http://localhost:5000/api/members/schedules', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    department: expandedDept,
+                    semester: activeSemTab,
+                    ...newSchedule
+                })
+            });
+            if (res.ok) {
+                showToastMsg('✅ Schedule entry successfully posted!');
+                setNewSchedule({ title: '', description: '', date: '', time: '', type: 'Class' });
+                setShowAddSchedule(false);
+                await loadDeptSchedules(expandedDept);
+            } else {
+                showToastMsg('❌ Failed to post schedule');
+            }
+        } catch (e) {
+            console.error(e);
+            showToastMsg('❌ Connection error posting schedule');
+        }
+    };
+
+    const handleDeleteSchedule = async (scheduleId: string) => {
+        if (!window.confirm('Are you sure you want to delete this schedule entry?')) return;
+        if (!expandedDept) return;
+        try {
+            const token = localStorage.getItem('urp_token');
+            const res = await fetch(`http://localhost:5000/api/members/schedules/${scheduleId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (res.ok) {
+                showToastMsg('🗑 Schedule removed');
+                await loadDeptSchedules(expandedDept);
+            } else {
+                showToastMsg('❌ Deletion failed');
+            }
+        } catch (e) {
+            console.error(e);
+            showToastMsg('❌ Server error removing schedule');
+        }
+    };
+
     const showToastMsg = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
+
+    const [quickRollNo, setQuickRollNo] = useState('');
+    const [quickMentorId, setQuickMentorId] = useState('');
+    const [quickAllotting, setQuickAllotting] = useState(false);
+
+    const deptProfessors = expandedDept ? faculties.filter(f => f.department === expandedDept) : [];
+
+    const handleQuickAllot = async () => {
+        if (!quickRollNo.trim()) return showToastMsg('❌ Please enter a student Roll Number');
+        if (!quickMentorId) return showToastMsg('❌ Please select a faculty mentor');
+        
+        setQuickAllotting(true);
+        try {
+            const token = localStorage.getItem('urp_token');
+            const res = await fetch('http://localhost:5000/api/members/allot-mentor', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ rollNo: quickRollNo.trim(), mentorId: quickMentorId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToastMsg('✅ Mentor successfully allotted via Roll Number!');
+                setQuickRollNo('');
+                setQuickMentorId('');
+                await loadMembers(); // Reload roster to sync state
+            } else {
+                showToastMsg(`❌ Allotment failed: ${data.error || 'Server error'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            showToastMsg('❌ Server connection error');
+        } finally {
+            setQuickAllotting(false);
+        }
+    };
+
+    const handleAllotMentor = async (studentId: string, mentorId: string) => {
+        setAllottingStudentId(studentId);
+        try {
+            const token = localStorage.getItem('urp_token');
+            const res = await fetch('http://localhost:5000/api/members/allot-mentor', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ studentId, mentorId })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToastMsg('✅ Mentor successfully assigned to student!');
+                await loadMembers(); // Reload roster to sync state
+            } else {
+                showToastMsg(`❌ Allotment failed: ${data.error || 'Server error'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            showToastMsg('❌ Server connection error');
+        } finally {
+            setAllottingStudentId(null);
+        }
+    };
 
     const handleAddFaculty = async () => {
         if (!newFaculty.name || !newFaculty.email) return showToastMsg('Name and Email are required.');
@@ -144,7 +325,7 @@ const CollegeAdminDashboard = () => {
             if (res.ok) {
                 await loadMembers();
                 setShowAddStudent(false);
-                setNewStudent({ name: '', email: '', rollNo: '', department: DEPARTMENTS[0], semester: 'Sem 1', status: 'Active' });
+                setNewStudent({ name: '', email: '', rollNo: '', department: DEPARTMENTS[0], semester: 'Sem 1', batch: '2023-2027', status: 'Active' });
                 showToastMsg('Student added & credentials dispatched!');
                 if (data.credentials) setLastCredentials({ ...data.credentials, role: 'Student' });
             } else {
@@ -154,7 +335,7 @@ const CollegeAdminDashboard = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#f4f4f5] font-body h-screen overflow-hidden">
+        <div className="min-h-screen flex flex-col bg-[#f4f4f5] font-body">
             {toast && (
                 <div className="fixed top-4 right-4 z-[110] bg-[#16a34a] text-white px-5 py-3 rounded-lg shadow-xl text-sm font-bold animate-fade-in flex items-center gap-2 border border-[#14532d]/20">
                     <CheckCircle className="w-4 h-4" /> {toast}
@@ -187,36 +368,75 @@ const CollegeAdminDashboard = () => {
             <ChangePassword isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} />
 
             {/* HEADER */}
-            <header className="bg-[#1e3a5f] text-white sticky top-0 z-40 shadow-md flex-shrink-0 relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
+            <header className="sticky top-0 z-40 text-white overflow-hidden flex-shrink-0" style={{
+                background: 'linear-gradient(135deg, rgba(10,18,50,0.94) 0%, rgba(20,40,90,0.90) 45%, rgba(15,25,70,0.94) 100%)',
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.40), 0 1px 0 rgba(255,255,255,0.05) inset',
+            }}>
+                {/* Glass ambient light blobs */}
+                <div className="absolute -top-10 left-1/3 w-56 h-56 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%)' }} />
+                <div className="absolute -top-6 right-1/4 w-40 h-40 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.14) 0%, transparent 70%)' }} />
+                <div className="absolute top-1/2 left-0 w-24 h-24 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(79,209,197,0.08) 0%, transparent 70%)' }} />
+                {/* Bottom gradient line */}
+                <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(56,189,248,0.4) 25%, rgba(167,139,250,0.55) 50%, rgba(56,189,248,0.4) 75%, transparent 100%)' }} />
+
                 <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border border-blue-300/30">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{
+                            background: 'linear-gradient(135deg, rgba(56,189,248,0.75) 0%, rgba(59,130,246,0.85) 100%)',
+                            border: '1px solid rgba(147,210,255,0.3)',
+                            boxShadow: '0 0 16px rgba(56,189,248,0.35), inset 0 1px 0 rgba(255,255,255,0.15)'
+                        }}>
                             <Building className="text-white w-5 h-5" />
                         </div>
                         <div>
-                            <p className="font-extrabold text-sm tracking-wide">{user?.college?.name || 'College Administrator Portal'}</p>
-                            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-0.5">Management Dashboard</p>
+                            <p className="font-extrabold text-sm tracking-wide" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>{user?.college?.name || 'College Administrator Portal'}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(147,210,255,0.65)' }}>Management Dashboard</p>
                         </div>
                     </div>
                     
-                    {/* Role Indicator in the Middle */}
+                    {/* Role Indicator in the Middle — white glass pill */}
                     <div className="hidden lg:flex flex-col items-center justify-center absolute left-1/2 -translate-x-1/2 z-10">
-                        <span className="text-[9px] text-white/40 font-extrabold tracking-widest uppercase mb-1">Access Role</span>
-                        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-3.5 py-1 rounded-md backdrop-blur-md shadow-sm">
-                            <span className="text-[10px] font-bold text-amber-300 tracking-wider font-mono">EMS College Administration</span>
+                        <span className="text-[9px] font-black tracking-[0.3em] uppercase mb-1" style={{ color: 'rgba(196,212,255,0.7)' }}>Access Role</span>
+                        <div className="px-4 py-1.5 rounded-xl" style={{
+                            background: 'rgba(255,255,255,0.13)',
+                            border: '1px solid rgba(255,255,255,0.22)',
+                            backdropFilter: 'blur(12px)',
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.18)'
+                        }}>
+                            <span className="text-[12px] font-black tracking-wide text-white">EMS College Administration</span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-5">
-                        <button onClick={() => setShowChangePassword(true)} className="text-xs text-white/80 hover:text-white font-bold transition-colors">Change Password</button>
-                        <button onClick={() => { localStorage.clear(); navigate('/login'); }} className="text-xs px-4 py-2 bg-white/10 border border-white/20 rounded-lg hover:bg-white/20 font-bold transition-colors">Secure Logout</button>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setShowChangePassword(true)}
+                            className="text-xs font-bold transition-all hover:scale-105"
+                            style={{ color: 'rgba(203,213,225,0.8)' }}
+                        >Change Password</button>
+                        <button onClick={() => { localStorage.clear(); navigate('/login'); }}
+                            className="text-xs px-4 py-2 font-bold rounded-lg transition-all hover:scale-105 active:scale-95"
+                            style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.18)',
+                                backdropFilter: 'blur(8px)',
+                                color: 'rgba(226,232,240,0.9)',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)'
+                            }}
+                        >Secure Logout</button>
                     </div>
                 </div>
             </header>
 
             {/* HORIZONTAL NAVIGATION */}
-            <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+            <div className="sticky top-16 z-30" style={{
+                background: 'rgba(255,255,255,0.82)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                borderBottom: '1px solid rgba(203,213,225,0.5)',
+                boxShadow: '0 4px 24px rgba(30,58,95,0.08)'
+            }}>
                 <div className="max-w-[1600px] mx-auto px-6">
                     <div className="flex space-x-1 overflow-x-auto no-scrollbar">
                         {[
@@ -227,7 +447,13 @@ const CollegeAdminDashboard = () => {
                             { id: 'examination', label: 'Examination Mgmt', icon: <Layers className="w-4 h-4" /> },
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex items-center gap-2 px-5 py-4 text-sm font-bold transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id ? 'border-[#1e3a5f] text-[#1e3a5f]' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'}`}>
+                                className="flex items-center gap-2 px-5 py-[14px] text-sm whitespace-nowrap transition-all relative"
+                                style={{
+                                    color: activeTab === tab.id ? '#1e3a5f' : '#64748b',
+                                    borderBottom: activeTab === tab.id ? '2px solid #1e3a5f' : '2px solid transparent',
+                                    fontWeight: activeTab === tab.id ? 800 : 600,
+                                }}
+                            >
                                 {tab.icon}
                                 <span>{tab.label}</span>
                             </button>
@@ -236,7 +462,7 @@ const CollegeAdminDashboard = () => {
                 </div>
             </div>
 
-            <div className="flex flex-1 max-w-[1600px] w-full mx-auto overflow-hidden bg-white mt-4 sm:rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 mb-12">
+            <div className="flex flex-1 max-w-[1600px] w-full mx-auto bg-white mt-4 sm:rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 mb-12" style={{ minHeight: 0 }}>
                 {/* MAIN CONTENT AREA */}
                 <div className="flex-1 overflow-y-auto p-8 relative bg-white min-h-[500px]">
 
@@ -378,9 +604,11 @@ const CollegeAdminDashboard = () => {
                                             </select>
                                         </div>
                                     </div>
-                                    <div className="flex justify-end gap-3">
-                                        <button onClick={() => setShowAddFaculty(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
-                                        <button onClick={handleAddFaculty} className="px-6 py-2.5 bg-[#1e3a5f] text-white text-sm font-bold rounded-xl hover:bg-[#162d4a] transition-all shadow-md">Create Profile</button>
+                                    <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                                        <button onClick={() => setShowAddFaculty(false)} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">Cancel</button>
+                                        <button onClick={handleAddFaculty} className="flex items-center gap-2 px-6 py-2.5 bg-[#1e3a5f] text-white text-sm font-bold rounded-xl hover:bg-[#162d4a] transition-all shadow-md hover:-translate-y-0.5 cursor-pointer">
+                                            <CheckCircle className="w-4 h-4 text-emerald-400" /> Register Faculty Member
+                                        </button>
                                     </div>
                                 </div>
                             )}
@@ -493,6 +721,15 @@ const CollegeAdminDashboard = () => {
                                             </select>
                                         </div>
                                         <div>
+                                            <label className="block text-[11px] font-extrabold text-slate-500 uppercase tracking-widest mb-1.5">Sessional Batch *</label>
+                                            <select value={newStudent.batch || '2023-2027'} onChange={e => setNewStudent({ ...newStudent, batch: e.target.value })} className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-4 focus:ring-green-500/10 focus:border-green-500 outline-none transition-all cursor-pointer">
+                                                <option value="2023-2027">Batch 2023-2027</option>
+                                                <option value="2022-2026">Batch 2022-2026</option>
+                                                <option value="2021-2025">Batch 2021-2025</option>
+                                                <option value="2020-2024">Batch 2020-2024</option>
+                                            </select>
+                                        </div>
+                                        <div>
                                             <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">College (Auto)</label>
                                             <input disabled value={user?.college?.name || 'Default by Credential'} className="w-full h-11 px-4 bg-slate-100 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed outline-none" />
                                         </div>
@@ -551,27 +788,35 @@ const CollegeAdminDashboard = () => {
                             )}
 
 
-                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-5 mb-6 flex flex-col lg:flex-row gap-4 items-center justify-between">
                                 <div className="flex-1 relative w-full">
                                     <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                                    <input placeholder="Search Reg No, Roll No, or Name..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} className="w-full h-11 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-blue-500/10 transition-all" />
+                                    <input placeholder="Search Roll No, Reg No, or Name..." value={studentSearch} onChange={e => setStudentSearch(e.target.value)} className="w-full h-11 pl-9 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#1e3a5f] focus:ring-2 focus:ring-blue-500/10 transition-all font-bold text-slate-800" />
                                 </div>
-                                <select value={filterBatch} onChange={e => setFilterBatch(e.target.value)} className="w-full md:w-48 h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#1e3a5f]">
-                                    <option value="All">All Batches</option>
-                                    <option value="2023-2027">Batch 2023-2027</option>
-                                    <option value="2022-2026">Batch 2022-2026</option>
-                                    <option value="2021-2025">Batch 2021-2025</option>
-                                    <option value="2020-2024">Batch 2020-2024</option>
-                                </select>
-                                <select value={filterSemester} onChange={e => setFilterSemester(e.target.value)} className="w-full md:w-48 h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-[#1e3a5f]">
-                                    <option value="All">All Semesters</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={`Sem ${s}`}>Semester {s}</option>)}
-                                </select>
+                                <div className="flex flex-wrap md:flex-nowrap gap-3 w-full lg:w-auto">
+                                    <select value={filterBatch} onChange={e => setFilterBatch(e.target.value)} className="w-full md:w-40 h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider outline-none focus:border-[#1e3a5f] cursor-pointer">
+                                        <option value="All">All Batches</option>
+                                        <option value="2023-2027">Batch 2023-2027</option>
+                                        <option value="2022-2026">Batch 2022-2026</option>
+                                        <option value="2021-2025">Batch 2021-2025</option>
+                                        <option value="2020-2024">Batch 2020-2024</option>
+                                    </select>
+                                    <select value={filterDept} onChange={e => setFilterDept(e.target.value)} className="w-full md:w-44 h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider outline-none focus:border-[#1e3a5f] cursor-pointer">
+                                        <option value="All">All Departments</option>
+                                        {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
+                                    </select>
+                                    <select value={filterSemester} onChange={e => setFilterSemester(e.target.value)} className="w-full md:w-40 h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-black uppercase tracking-wider outline-none focus:border-[#1e3a5f] cursor-pointer">
+                                        <option value="All">All Semesters</option>
+                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={`Sem ${s}`}>Semester {s}</option>)}
+                                    </select>
+                                </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-8">
                                 {students.filter(s =>
                                     (filterSemester === 'All' || s.semester === filterSemester) &&
+                                    (filterBatch === 'All' || s.batch === filterBatch) &&
+                                    (filterDept === 'All' || s.department === filterDept) &&
                                     (studentSearch === '' || s.name.toLowerCase().includes(studentSearch.toLowerCase()) || s.rollNo.toLowerCase().includes(studentSearch.toLowerCase()))
                                 ).map(s => (
                                     <div key={s.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative group">
@@ -580,7 +825,7 @@ const CollegeAdminDashboard = () => {
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-bold text-slate-900 leading-tight truncate">{s.name}</h4>
                                                 <p className="text-[11px] text-slate-500 font-mono font-bold mt-0.5 tracking-wider truncate">Reg: {s.registrationNo || 'N/A'} • Roll: {s.rollNo}</p>
-                                                <span className="inline-block mt-2 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider">{s.semester} · {s.department}</span>
+                                                <span className="inline-block mt-2 px-2 py-0.5 bg-slate-100 text-slate-600 text-[10px] font-bold rounded uppercase tracking-wider">{s.semester} · {s.department} · {s.batch || 'Batch N/A'}</span>
                                             </div>
                                         </div>
                                         <button onClick={() => navigate(`/college-admin/student/${s.id}`)} className="mt-5 w-full py-2.5 bg-[#1e3a5f] hover:bg-[#162d4a] text-white text-xs font-bold rounded-xl transition-colors shadow-sm">
@@ -605,21 +850,504 @@ const CollegeAdminDashboard = () => {
                             <div className="flex items-center justify-between mb-6">
                                 <div>
                                     <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Active Departments</h2>
-                                    <p className="text-sm font-medium text-slate-500 mt-1">Review the list of established academic departments.</p>
+                                    <p className="text-sm font-medium text-slate-500 mt-1">Review student enrollment ratios and allot supervisors.</p>
                                 </div>
-                                <button className="px-4 py-2 bg-slate-100 text-slate-700 border border-slate-300 font-bold text-sm rounded-lg hover:bg-slate-200 transition-colors shadow-sm">
-                                    + Create Department
-                                </button>
+                                <div className="px-3.5 py-1.5 bg-slate-100 text-slate-500 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-200">
+                                    {DEPARTMENTS.length} total departments
+                                </div>
                             </div>
+                            
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {DEPARTMENTS.map(d => (
-                                    <div key={d} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4"><Building className="w-6 h-6" /></div>
-                                        <h3 className="font-bold text-slate-900 text-lg mb-1">{d}</h3>
-                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-4">Status: Active</p>
-                                    </div>
-                                ))}
+                                {DEPARTMENTS.map(d => {
+                                    const deptStudents = students.filter(s => s.department === d);
+                                    const deptFaculty = faculties.filter(f => f.department === d);
+                                    const isSelected = expandedDept === d;
+                                    return (
+                                        <button 
+                                            type="button"
+                                            key={d} 
+                                            onClick={() => setExpandedDept(d)}
+                                            className="w-full text-left bg-white border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all hover:scale-[1.01] duration-200 border-slate-200/80 cursor-pointer outline-none hover:border-[#1e3a5f]/40"
+                                        >
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isSelected ? 'bg-[#1e3a5f] text-white' : 'bg-blue-50 text-blue-600'}`}>
+                                                    <Building className="w-6 h-6" />
+                                                </div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 bg-slate-100 rounded-lg text-slate-500 border border-slate-200">
+                                                    Manage Mentoring
+                                                </span>
+                                            </div>
+                                            <h3 className="font-extrabold text-slate-900 text-lg mb-1 leading-snug">{d}</h3>
+                                            <div className="mt-3.5 pt-3.5 border-t border-slate-150/60 flex items-center justify-between">
+                                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Roster (Ratio)</div>
+                                                <div className="text-[11px] font-black bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner">
+                                                    <span className="text-blue-700" title="Total Students">{deptStudents.length} Students</span>
+                                                    <span className="text-slate-350 font-medium">/</span>
+                                                    <span className="text-indigo-700" title="Available Faculty Mentors">{deptFaculty.length} Mentors Available</span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
+
+                            {/* Unified Department Operations Glassy Modal overlay */}
+                            {expandedDept && (
+                                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md animate-fade-in font-sans">
+                                    <div className="bg-white rounded-[32px] border border-slate-200/80 shadow-2xl w-full max-w-6xl h-[88vh] flex flex-col overflow-hidden animate-scale-in relative">
+                                        {/* Accent Bar */}
+                                        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
+
+                                        {/* Header */}
+                                        <div className="px-8 pt-8 pb-5 border-b border-slate-100 flex items-center justify-between shrink-0">
+                                            <div>
+                                                <span className="px-2.5 py-0.5 bg-indigo-50 border border-indigo-100/50 text-indigo-700 rounded-md text-[9px] font-black uppercase tracking-widest shadow-inner">
+                                                    Department Management Console
+                                                </span>
+                                                <h3 className="font-extrabold text-2xl text-slate-950 tracking-tight mt-1.5">{expandedDept} Department</h3>
+                                                <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-1 tracking-wider leading-none">
+                                                    Manage Mentoring Roster &bull; Track Sessional Calendars &bull; View Faculty Directory
+                                                </p>
+                                            </div>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setExpandedDept(null)}
+                                                className="w-10 h-10 bg-slate-50 border border-slate-200/80 hover:bg-slate-100 rounded-2xl text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer shadow-sm hover:scale-105"
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+
+                                        {/* Internal Tab Menu */}
+                                        <div className="px-8 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between shrink-0">
+                                            <div className="flex gap-2">
+                                                {[
+                                                    { id: 'roster', label: 'Mentorship Registry' },
+                                                    { id: 'schedule', label: 'Sessional Timetable' },
+                                                    { id: 'directory', label: 'Faculty Directory' }
+                                                ].map(tab => (
+                                                    <button
+                                                        key={tab.id}
+                                                        type="button"
+                                                        onClick={() => setDeptModalTab(tab.id as any)}
+                                                        className={`px-4.5 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                                                            deptModalTab === tab.id
+                                                                ? 'bg-[#1e3a5f] text-white shadow-sm'
+                                                                : 'text-slate-500 hover:text-slate-850 hover:bg-slate-150/40'
+                                                        }`}
+                                                    >
+                                                        {tab.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="text-[10px] font-black bg-slate-150/50 border border-slate-200/80 rounded-xl px-3 py-1 flex items-center gap-1.5 shadow-inner text-slate-650">
+                                                <span className="text-blue-700">{students.filter(s => s.department === expandedDept).length} Students</span>
+                                                <span className="text-slate-350">/</span>
+                                                <span className="text-indigo-700">{faculties.filter(f => f.department === expandedDept).length} Faculty</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Body Content */}
+                                        <div className="flex-1 overflow-y-auto p-8 bg-slate-50/20">
+                                            {/* TAB 1: ROSTER REGISTRY (MENTOR ALLOTMENT) */}
+                                            {deptModalTab === 'roster' && (
+                                                <div className="space-y-6">
+                                                    {/* QUICK ALLOTMENT BY ROLL NUMBER */}
+                                                    <div className="p-5 bg-white border border-slate-200/70 rounded-2xl flex flex-col md:flex-row md:items-end gap-4 shadow-sm">
+                                                        <div className="flex-1">
+                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-0.5">Student Roll Number</label>
+                                                            <input
+                                                                type="text"
+                                                                placeholder="e.g. CS-2024-001"
+                                                                value={quickRollNo}
+                                                                onChange={(e) => setQuickRollNo(e.target.value)}
+                                                                className="w-full h-10 px-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-900 focus:border-[#1e3a5f] outline-none shadow-sm focus:bg-white transition-all"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 pl-0.5">Select Faculty Mentor</label>
+                                                            <select
+                                                                value={quickMentorId}
+                                                                onChange={(e) => setQuickMentorId(e.target.value)}
+                                                                className="w-full h-10 px-4 bg-slate-50/50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-900 focus:border-[#1e3a5f] outline-none shadow-sm focus:bg-white transition-all cursor-pointer"
+                                                            >
+                                                                <option value="">-- Choose Mentor --</option>
+                                                                {deptProfessors.map(prof => (
+                                                                    <option key={prof.id} value={prof.id}>
+                                                                        {prof.name} ({prof.position || 'Professor'})
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            disabled={quickAllotting}
+                                                            onClick={handleQuickAllot}
+                                                            className="h-10 px-6 bg-slate-950 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                                                        >
+                                                            {quickAllotting ? 'Allotting...' : 'Allot Mentor'}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Student Search & Roster list */}
+                                                    <div className="bg-white border border-slate-200/70 rounded-2xl shadow-sm overflow-hidden p-6">
+                                                        <div className="relative mb-5">
+                                                            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Search department students by Roll Number, Name..."
+                                                                value={deptStudentSearch}
+                                                                onChange={e => setDeptStudentSearch(e.target.value)}
+                                                                className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:bg-white focus:border-[#1e3a5f] outline-none transition-all"
+                                                            />
+                                                        </div>
+
+                                                        <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                                                            <table className="w-full text-left border-collapse text-xs">
+                                                                <thead>
+                                                                    <tr className="border-b border-slate-150/70 bg-slate-50">
+                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Student Details</th>
+                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Assigned Guide</th>
+                                                                        <th className="px-5 py-3 text-[9px] font-extrabold uppercase tracking-widest text-slate-400 text-right">Allot Mentorship</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-slate-100">
+                                                                    {students
+                                                                        .filter(s => s.department === expandedDept && (
+                                                                            deptStudentSearch === '' ||
+                                                                            s.name.toLowerCase().includes(deptStudentSearch.toLowerCase()) ||
+                                                                            (s.rollNo && s.rollNo.toLowerCase().includes(deptStudentSearch.toLowerCase()))
+                                                                        ))
+                                                                        .map(student => {
+                                                                            const isSaving = allottingStudentId === student.id;
+                                                                            return (
+                                                                                <tr key={student.id} className="hover:bg-slate-50/30 transition-colors">
+                                                                                    <td className="px-5 py-3.5">
+                                                                                        <p className="font-black text-slate-900">{student.name}</p>
+                                                                                        <p className="text-[10px] text-slate-400 font-mono font-bold mt-0.5">Roll No: {student.rollNo} &bull; {student.semester}</p>
+                                                                                    </td>
+                                                                                    <td className="px-5 py-3.5">
+                                                                                        {student.mentor ? (
+                                                                                            <span className="px-2.5 py-1 bg-indigo-50 border border-indigo-100/50 text-indigo-700 rounded-lg text-[10px] font-black uppercase inline-flex items-center gap-1">
+                                                                                                🎓 {student.mentor.name}
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                                                                                                ⚠ Unassigned
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td className="px-5 py-3.5 text-right">
+                                                                                        <div className="flex items-center justify-end gap-2">
+                                                                                            <select
+                                                                                                value={student.mentor?._id || student.mentor?.id || ''}
+                                                                                                disabled={isSaving}
+                                                                                                onChange={(e) => handleAllotMentor(student.id, e.target.value)}
+                                                                                                className="h-8.5 px-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase focus:border-[#1e3a5f] outline-none shadow-sm cursor-pointer"
+                                                                                            >
+                                                                                                <option value="">-- Unassigned --</option>
+                                                                                                {deptProfessors.map(prof => (
+                                                                                                    <option key={prof.id} value={prof.id}>
+                                                                                                        {prof.name} ({prof.position || 'Professor'})
+                                                                                                    </option>
+                                                                                                ))}
+                                                                                            </select>
+                                                                                            {isSaving && (
+                                                                                                <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin shrink-0" />
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            );
+                                                                        })}
+                                                                    {students.filter(s => s.department === expandedDept).length === 0 && (
+                                                                        <tr>
+                                                                            <td colSpan={3} className="px-6 py-12 text-center text-slate-400 font-bold text-xs uppercase tracking-wider">
+                                                                                No students registered under {expandedDept}
+                                                                            </td>
+                                                                        </tr>
+                                                                    )}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* TAB 2: SESSIONAL SCHEDULE TIMETABLE */}
+                                            {deptModalTab === 'schedule' && (
+                                                <div className="space-y-6">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-slate-200/70 p-5 rounded-2xl shadow-sm">
+                                                        <div>
+                                                            <h4 className="font-extrabold text-sm text-slate-900 uppercase">Sessional Timeline Posting</h4>
+                                                            <p className="text-[10px] text-slate-450 font-bold uppercase mt-0.5">Post new classes, mid-term sessionals, and holiday listings</p>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setShowAddSchedule(!showAddSchedule)}
+                                                            className="px-4 py-2 bg-[#1e3a5f] hover:bg-[#122844] text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                                                        >
+                                                            <Plus size={13} /> {showAddSchedule ? 'Close Editor' : 'Post Schedule'}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Add Timetable form */}
+                                                    {showAddSchedule && (
+                                                        <form onSubmit={handleAddScheduleSubmit} className="p-5 bg-white border border-slate-200/70 rounded-2xl space-y-4 shadow-sm animate-scale-in">
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                <div>
+                                                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 pl-0.5">Schedule Title *</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="e.g. Mid-Term Theory Exam"
+                                                                        value={newSchedule.title}
+                                                                        onChange={e => setNewSchedule({ ...newSchedule, title: e.target.value })}
+                                                                        className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:border-[#1e3a5f] focus:bg-white outline-none transition-all"
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 pl-0.5">Schedule Type</label>
+                                                                    <select
+                                                                        value={newSchedule.type}
+                                                                        onChange={e => setNewSchedule({ ...newSchedule, type: e.target.value as any })}
+                                                                        className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:border-[#1e3a5f] focus:bg-white outline-none transition-all cursor-pointer"
+                                                                    >
+                                                                        <option value="Class">Class Session</option>
+                                                                        <option value="Exam">Exam Schedule</option>
+                                                                        <option value="Sessional">Sessional Deadline</option>
+                                                                        <option value="Holiday">Institutional Holiday</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 pl-0.5">Schedule Date</label>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={newSchedule.date}
+                                                                        onChange={e => setNewSchedule({ ...newSchedule, date: e.target.value })}
+                                                                        className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:border-[#1e3a5f] focus:bg-white outline-none transition-all"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 pl-0.5">Timings / Hours</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        placeholder="e.g. 10:00 AM - 12:30 PM"
+                                                                        value={newSchedule.time}
+                                                                        onChange={e => setNewSchedule({ ...newSchedule, time: e.target.value })}
+                                                                        className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:border-[#1e3a5f] focus:bg-white outline-none transition-all"
+                                                                    />
+                                                                </div>
+                                                                <div className="md:col-span-2">
+                                                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1.5 pl-0.5">Description details</label>
+                                                                    <textarea
+                                                                        placeholder="Details instructions, syllabus coverage..."
+                                                                        value={newSchedule.description}
+                                                                        onChange={e => setNewSchedule({ ...newSchedule, description: e.target.value })}
+                                                                        className="w-full h-16 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:border-[#1e3a5f] focus:bg-white outline-none resize-none transition-all"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex justify-end gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowAddSchedule(false)}
+                                                                    className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+                                                                >
+                                                                    Cancel
+                                                                </button>
+                                                                <button
+                                                                    type="submit"
+                                                                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md transition-all cursor-pointer"
+                                                                >
+                                                                    Post Event
+                                                                </button>
+                                                            </div>
+                                                        </form>
+                                                    )}
+
+                                                    {/* Semesters tabs row */}
+                                                    <div className="flex flex-wrap gap-1.5 bg-slate-200/60 p-1 rounded-2xl">
+                                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(s => {
+                                                            const semVal = `Sem ${s}`;
+                                                            const active = activeSemTab === semVal;
+                                                            return (
+                                                                <button
+                                                                    key={s}
+                                                                    type="button"
+                                                                    onClick={() => setActiveSemTab(semVal)}
+                                                                    className={`flex-1 min-w-[70px] py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer ${
+                                                                        active ? 'bg-[#1e3a5f] text-white shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-150/30'
+                                                                    }`}
+                                                                >
+                                                                    Sem {s}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+
+                                                    {/* Timeline rendered cards */}
+                                                    <div className="space-y-4">
+                                                        {scheduleLoading ? (
+                                                            <div className="py-8 text-center text-slate-400 font-bold uppercase tracking-wider text-xs animate-pulse">
+                                                                Loading Schedules...
+                                                            </div>
+                                                        ) : (
+                                                            schedules.filter(s => s.semester === activeSemTab).map(sch => {
+                                                                const typeColors: Record<string, string> = {
+                                                                    Class: 'bg-blue-50 text-blue-700 border-blue-100',
+                                                                    Exam: 'bg-rose-50 text-rose-700 border-rose-100',
+                                                                    Sessional: 'bg-amber-50 text-amber-700 border-amber-100',
+                                                                    Holiday: 'bg-slate-50 text-slate-650 border-slate-200'
+                                                                };
+                                                                return (
+                                                                    <div key={sch._id} className="p-4 bg-white rounded-2xl border border-slate-200/80 flex items-start justify-between gap-4 group hover:shadow-md transition-all">
+                                                                        <div className="flex gap-4 items-start">
+                                                                            <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase border shrink-0 tracking-wider text-center ${typeColors[sch.type] || 'bg-slate-50'}`}>
+                                                                                {sch.type}
+                                                                            </div>
+                                                                            <div className="space-y-1">
+                                                                                <h4 className="text-xs font-black text-slate-905">{sch.title}</h4>
+                                                                                {sch.description && <p className="text-[10px] font-semibold text-slate-500 leading-relaxed">{sch.description}</p>}
+                                                                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-[9px] font-bold text-slate-400">
+                                                                                    {sch.date && (
+                                                                                        <span className="flex items-center gap-1">
+                                                                                            <Calendar size={10} /> {new Date(sch.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                                                        </span>
+                                                                                    )}
+                                                                                    {sch.time && (
+                                                                                        <span className="flex items-center gap-1">
+                                                                                            <Clock size={10} /> {sch.time}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteSchedule(sch._id)}
+                                                                            className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-150 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-pointer shadow-sm"
+                                                                            title="Delete Schedule Entry"
+                                                                        >
+                                                                            <Trash size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })
+                                                        )}
+
+                                                        {!scheduleLoading && schedules.filter(s => s.semester === activeSemTab).length === 0 && (
+                                                            <div className="py-12 text-center text-slate-400 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                                                                <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                                                                <p className="text-xs font-black uppercase tracking-wider">No Scheduled Timetable Entries</p>
+                                                                <p className="text-[9px] text-slate-550 mt-1">Post class sessions, sessional targets, and mid-term timings for {activeSemTab}.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* TAB 3: FACULTY DIRECTORY & HOD */}
+                                            {deptModalTab === 'directory' && (
+                                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                                                    {/* HOD Profile Showcase Card */}
+                                                    <div className="lg:col-span-5 bg-gradient-to-tr from-slate-950 via-slate-900 to-indigo-950 rounded-3xl p-7 text-white shadow-lg relative overflow-hidden border border-slate-800 flex flex-col justify-between">
+                                                        <div className="absolute top-0 right-0 w-36 h-36 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                                                        
+                                                        <div>
+                                                            <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
+                                                                <div>
+                                                                    <span className="px-2.5 py-0.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded text-[8px] font-black uppercase tracking-widest shadow-md">
+                                                                        ACADEMIC CHAIR
+                                                                    </span>
+                                                                    <h3 className="text-lg font-black tracking-tight mt-1 text-white">Department HOD</h3>
+                                                                </div>
+                                                                <div className="w-10 h-10 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center">
+                                                                    <Award className="text-amber-400 w-5 h-5" />
+                                                                </div>
+                                                            </div>
+
+                                                            {faculties.filter(f => f.department === expandedDept && f.specialRole === 'Head of Department (HOD)').map(hod => (
+                                                                <div key={hod.id} className="space-y-4 animate-fade-in">
+                                                                    <div className="flex gap-4 items-center">
+                                                                        <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/20 shadow-md bg-slate-950 flex items-center justify-center font-black text-xl text-indigo-300 shrink-0">
+                                                                            {hod.name.charAt(0)}
+                                                                        </div>
+                                                                        <div>
+                                                                            <h4 className="text-base font-black tracking-tight leading-tight text-white">{hod.name}</h4>
+                                                                            <p className="text-[10px] text-indigo-300 font-extrabold uppercase mt-1 tracking-wider leading-none">
+                                                                                {hod.position || 'Professor'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="space-y-2 pt-4 border-t border-white/5 text-[10px] font-semibold text-slate-350">
+                                                                        <div className="flex items-center gap-2.5 truncate">
+                                                                            <Mail size={12} className="text-slate-400 shrink-0" />
+                                                                            <span>{hod.email}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <Phone size={12} className="text-slate-400 shrink-0" />
+                                                                            <span>{hod.mobile || '+91 98765 43210'}</span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <MapPin size={12} className="text-slate-400 shrink-0" />
+                                                                            <span>Room 304, Block-B, Academic Complex</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+
+                                                            {faculties.filter(f => f.department === expandedDept && f.specialRole === 'Head of Department (HOD)').length === 0 && (
+                                                                <div className="py-8 text-center text-slate-400 space-y-2">
+                                                                    <BookOpen className="w-8 h-8 text-slate-500 mx-auto" />
+                                                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-300">No designated Head of Department</p>
+                                                                    <p className="text-[9px] text-slate-550 max-w-xs mx-auto">Assign a professor to the Head of Department role under the faculty registry tab to populate HOD credentials.</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="relative bg-white/5 border border-white/10 rounded-2xl p-4 text-[10px] text-slate-300 font-medium leading-relaxed italic shadow-inner mt-6">
+                                                            “ Fostering academic excellence, driving cutting-edge research, and mentoring dynamic innovators to construct the software and hardware frameworks of tomorrow. ”
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Faculty Grid List */}
+                                                    <div className="lg:col-span-7 space-y-4">
+                                                        <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Faculty & Guides Directory</h4>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-1">
+                                                            {faculties.filter(f => f.department === expandedDept).map(prof => (
+                                                                <div key={prof.id} className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-start gap-3 hover:-translate-y-0.5 transition-all">
+                                                                    <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-black text-indigo-700 text-sm shrink-0">
+                                                                        {prof.name.charAt(0)}
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <h4 className="font-black text-slate-900 text-xs truncate">{prof.name}</h4>
+                                                                        <p className="text-[9px] text-indigo-650 font-extrabold uppercase mt-0.5">{prof.position || 'Professor'}</p>
+                                                                        {prof.specialRole !== 'None' && (
+                                                                            <span className="inline-block mt-1 px-2 py-0.5 bg-amber-50 border border-amber-100 text-amber-700 text-[8px] font-black rounded uppercase tracking-wider leading-none">
+                                                                                {prof.specialRole}
+                                                                            </span>
+                                                                        )}
+                                                                        <div className="mt-3 pt-2.5 border-t border-slate-100 space-y-1 text-[9px] font-semibold text-slate-450">
+                                                                            <p className="truncate">📧 {prof.email}</p>
+                                                                            <p>📞 {prof.mobile || '+91 99887 76655'}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                            {faculties.filter(f => f.department === expandedDept).length === 0 && (
+                                                                <div className="col-span-2 py-8 bg-white border border-dashed border-slate-200 rounded-2xl text-center text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                                                    No faculty guides registered under {expandedDept}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 

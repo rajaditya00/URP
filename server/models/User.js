@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
   mustChangePassword: { type: Boolean, default: false },
   university: { type: mongoose.Schema.Types.ObjectId, ref: 'University' },
   college: { type: mongoose.Schema.Types.ObjectId, ref: 'College' },
+  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   // Additional fields for College members
   department: { type: String },
   position: { type: String },
@@ -21,6 +22,7 @@ const userSchema = new mongoose.Schema({
   rollNo: { type: String },
   registrationNo: { type: String },
   semester: { type: String },
+  batch: { type: String },
   programme: { type: String },
   address: { type: String },
   fatherName: { type: String },
@@ -30,6 +32,7 @@ const userSchema = new mongoose.Schema({
   casteCategory: { type: String },
   mobile: { type: String },
   aadharNo: { type: String },
+  profileImage: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

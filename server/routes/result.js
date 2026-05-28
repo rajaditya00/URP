@@ -6,12 +6,13 @@ const { protect, authorize } = require('../middleware/auth');
 // Create a Result (Super Admin)
 router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
     try {
-        const { title, description, semester, link } = req.body;
+        const { title, description, semester, link, linkText } = req.body;
         const result = new Result({
             title,
             description,
             semester,
             link,
+            linkText,
             university: req.user.university // Taken from authenticated user
         });
 

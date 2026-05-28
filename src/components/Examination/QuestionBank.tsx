@@ -3,7 +3,7 @@ import {
     Plus, Search, Filter, Trash2, Eye, FileText, Download,
     Image, CheckSquare, AlignLeft, List, Zap, BookOpen,
     ChevronDown, X, AlertCircle, CheckCircle2, Printer, Sparkles, Award, History,
-    Lock, Unlock
+    Lock, Unlock, Loader2
 } from 'lucide-react';
 import {
     questionBank as initialBank, paperCodes,
@@ -34,13 +34,15 @@ const typeBadge = (t: QuestionType) => {
 const typeLabel = (t: QuestionType) => ({ objective: 'Objective', subjective: 'Subjective', 'multiple-answer': 'Multi-Answer' }[t]);
 
 // ── Upload Questions Sub-tab ──────────────────────────────────
-const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyName = 'Admin User', facultyProfileUrl = '' }: {
+const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyName = 'Admin User', facultyProfileUrl = '', editingQuestion = null, onCancelEdit }: {
     bank: BankQuestion[];
     fullBank?: BankQuestion[];
     setBank: (b: BankQuestion[]) => void;
     role?: string;
     facultyName?: string;
     facultyProfileUrl?: string;
+    editingQuestion?: BankQuestion | null;
+    onCancelEdit?: () => void;
 }) => {
     const [paperCode, setPaperCode] = useState('');
     const [type, setType] = useState<QuestionType>('objective');
@@ -59,6 +61,8 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
     const [cropImageSrc, setCropImageSrc] = useState('');
     const [cropFileName, setCropFileName] = useState('question-image.jpg');
     const [saved, setSaved] = useState(false);
+    const [reference, setReference] = useState('');
+    const [saving, setSaving] = useState(false);
 
     // AI Prediction States
     const [aiCredit, setAiCredit] = useState<number | null>(null);
@@ -77,6 +81,50 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
             mlClassifier.registerReferences(refBank);
         }
     }, [bank, fullBank]);
+
+    useEffect(() => {
+        if (editingQuestion) {
+            setPaperCode(editingQuestion.paperCode);
+            setType(editingQuestion.type);
+            setDifficulty(editingQuestion.difficulty);
+            setText(editingQuestion.text);
+            setUnit(editingQuestion.unit || '');
+            setMarks(String(editingQuestion.marks));
+            setNegEnabled(!!editingQuestion.negativeMarks);
+            setNegMarks(editingQuestion.negativeMarks ? String(editingQuestion.negativeMarks) : '0.25');
+            setOptions(editingQuestion.options || ['', '', '', '']);
+            if (editingQuestion.type === 'objective') {
+                setCorrectSingle(editingQuestion.correctAnswer as string || '');
+            } else if (editingQuestion.type === 'multiple-answer') {
+                setCorrectMulti(editingQuestion.correctAnswer as string[] || []);
+            }
+            setImagePreview(editingQuestion.image || null);
+            setReference(editingQuestion.reference || '');
+            setAiCredit(editingQuestion.creditLevel || null);
+            setAiConfidence(editingQuestion.aiConfidence || null);
+            setAiRepeated(editingQuestion.isRepeated || null);
+            setIsReverified(true);
+        } else {
+            setPaperCode('');
+            setType('objective');
+            setDifficulty('medium');
+            setText('');
+            setUnit('');
+            setMarks('1');
+            setNegEnabled(false);
+            setNegMarks('0.25');
+            setOptions(['', '', '', '']);
+            setCorrectSingle('');
+            setCorrectMulti([]);
+            setImagePreview(null);
+            setImageFile(null);
+            setReference('');
+            setAiCredit(null);
+            setAiConfidence(null);
+            setAiRepeated(null);
+            setIsReverified(false);
+        }
+    }, [editingQuestion]);
 
     const updateOption = (i: number, val: string) => setOptions(prev => prev.map((o, idx) => idx === i ? val : o));
     const toggleMulti = (opt: string) => setCorrectMulti(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]);
@@ -104,7 +152,10 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
                     if (filledOptions.length > 0) {
                         analysisPayload += " " + filledOptions.map((opt, i) => `(${String.fromCharCode(97 + i)}) ${opt.trim()}`).join(" ");
                     }
-                    const prediction = mlClassifier.predict(analysisPayload);
+                    
+                    const selectedPaperObj = paperCodes.find(p => p.code === paperCode);
+                    const topicName = selectedPaperObj ? selectedPaperObj.name : '';
+                    const prediction = mlClassifier.predict(analysisPayload, topicName);
                     
                     // Add details of options inclusion to the details list
                     let finalDetails = [...prediction.details];
@@ -152,51 +203,74 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
 
     const handleSave = () => {
         if (!paperCode || !text.trim()) return;
+        setSaving(true);
         
-        const finalCredit = aiCredit !== null ? aiCredit : (difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 4);
-        const finalRep = aiRepeated !== null ? aiRepeated : false;
-        const finalConf = aiConfidence !== null ? aiConfidence : 0.85;
+        setTimeout(() => {
+            const finalCredit = aiCredit !== null ? aiCredit : (difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 4);
+            const finalRep = aiRepeated !== null ? aiRepeated : false;
+            const finalConf = aiConfidence !== null ? aiConfidence : 0.85;
 
-        const newQ: BankQuestion = {
-            id: `Q${String(bank.length + 1).padStart(4, '0')}`,
-            code: genCode(paperCode),
-            paperCode,
-            text: text.trim(),
-            image: imagePreview ?? undefined,
-            type,
-            difficulty,
-            marks: Number(marks),
-            negativeMarks: negEnabled ? Number(negMarks) : undefined,
-            options: (type !== 'subjective') ? options.filter(o => o.trim()) : undefined,
-            correctAnswer: type === 'objective' ? correctSingle : type === 'multiple-answer' ? correctMulti : undefined,
-            unit: unit.trim() || undefined,
-            addedBy: facultyName,
-            addedByRole: role,
-            addedByProfileLink: facultyProfileUrl || undefined,
-            addedOn: new Date().toISOString().split('T')[0],
-            creditLevel: finalCredit,
-            isRepeated: finalRep,
-            aiConfidence: finalConf,
-            sentToUniversity: role === 'COLLEGE' || role === 'COLLEGE_ADMIN' || role === 'SYSTEM_ADMIN' || role === 'SUPER_ADMIN',
-            approvedByUniversity: role === 'SYSTEM_ADMIN' || role === 'SUPER_ADMIN',
-        };
-        setBank([...bank, newQ]);
-        
-        // Reset form
-        setText(''); setUnit(''); setMarks('1'); setNegEnabled(false); setNegMarks('0.25');
-        setOptions(['', '', '', '']); setCorrectSingle(''); setCorrectMulti([]); setImagePreview(null); setImageFile(null);
-        setAiCredit(null); setAiConfidence(null); setAiRepeated(null); setIsReverified(false);
-        setAiDetails([]); setMatchedPYQ(undefined);
-        setSaved(true); setTimeout(() => setSaved(false), 2500);
+            const updatedQ: BankQuestion = {
+                id: editingQuestion ? editingQuestion.id : `Q${String(bank.length + 1).padStart(4, '0')}`,
+                code: editingQuestion ? editingQuestion.code : genCode(paperCode),
+                paperCode,
+                text: text.trim(),
+                image: imagePreview ?? undefined,
+                type,
+                difficulty,
+                marks: Number(marks),
+                negativeMarks: negEnabled ? Number(negMarks) : undefined,
+                options: (type !== 'subjective') ? options.filter(o => o.trim()) : undefined,
+                correctAnswer: type === 'objective' ? correctSingle : type === 'multiple-answer' ? correctMulti : undefined,
+                unit: unit.trim() || undefined,
+                addedBy: facultyName,
+                addedByRole: role,
+                addedByProfileLink: facultyProfileUrl || undefined,
+                addedOn: new Date().toISOString().split('T')[0],
+                creditLevel: finalCredit,
+                isRepeated: finalRep,
+                aiConfidence: finalConf,
+                sentToUniversity: editingQuestion ? false : (role === 'COLLEGE' || role === 'COLLEGE_ADMIN' || role === 'SYSTEM_ADMIN' || role === 'SUPER_ADMIN'),
+                approvedByUniversity: editingQuestion ? false : (role === 'SYSTEM_ADMIN' || role === 'SUPER_ADMIN'),
+                needsRevision: false,
+                reviewNotes: undefined,
+                reference: reference.trim() || undefined,
+            };
+
+            if (editingQuestion) {
+                setBank(bank.map(q => q.id === editingQuestion.id ? updatedQ : q));
+            } else {
+                setBank([...bank, updatedQ]);
+            }
+            
+            // Reset form
+            setText(''); setUnit(''); setMarks('1'); setNegEnabled(false); setNegMarks('0.25'); setReference('');
+            setOptions(['', '', '', '']); setCorrectSingle(''); setCorrectMulti([]); setImagePreview(null); setImageFile(null);
+            setAiCredit(null); setAiConfidence(null); setAiRepeated(null); setIsReverified(false);
+            setAiDetails([]); setMatchedPYQ(undefined);
+
+            if (editingQuestion && onCancelEdit) {
+                onCancelEdit();
+            } else {
+                setSaved(true); setTimeout(() => setSaved(false), 2500);
+            }
+            setSaving(false);
+        }, 800);
     };
 
     return (
         <div className="space-y-6">
             {/* ── Add Question Form ── */}
             <div className="border border-slate-200 rounded-lg bg-white overflow-hidden shadow-sm">
-                <div className="px-5 py-4 bg-bg-secondary border-b border-slate-200 flex items-center gap-2">
-                    <Plus size={16} className="text-accent-primary" />
-                    <h3 className="text-sm font-bold text-text-primary">Add New Question</h3>
+                <div className={`px-5 py-4 border-b border-slate-200 flex items-center gap-2 ${editingQuestion ? 'bg-red-50/50' : 'bg-bg-secondary'}`}>
+                    {editingQuestion ? (
+                        <History size={16} className="text-red-600 animate-pulse" />
+                    ) : (
+                        <Plus size={16} className="text-accent-primary" />
+                    )}
+                    <h3 className={`text-sm font-bold ${editingQuestion ? 'text-red-900' : 'text-text-primary'}`}>
+                        {editingQuestion ? `Edit & Resubmit Question [${editingQuestion.code}]` : 'Add New Question'}
+                    </h3>
                 </div>
                 <div className="p-6 space-y-4">
                     {/* Row 1: Course + Type + Diff */}
@@ -271,6 +345,11 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
                                 <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Course Unit / Topic <span className="text-text-muted font-normal">(optional)</span></label>
                                 <input value={unit} onChange={e => setUnit(e.target.value)} placeholder="e.g. Unit 3: Transport Layer Protocols"
                                     className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-1.5">Question Reference / Citation <span className="text-text-muted font-normal">(optional)</span></label>
+                                <input value={reference} onChange={e => setReference(e.target.value)} placeholder="e.g. Textbook Chapter 4, Page 120, or Web Citation URL"
+                                    className="w-full h-10 px-3 border border-slate-200 rounded-md text-sm bg-white text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20" />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -368,76 +447,138 @@ const UploadQuestions = ({ bank, fullBank, setBank, role = 'COLLEGE', facultyNam
                         </div>
                     )}
 
-                    {isReverified && aiCredit && (
-                        <div className="p-4 bg-white rounded-xl border-2 border-emerald-400/80 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center animate-slide-down mt-4">
-                            <div className="text-center md:text-left space-y-0.5">
-                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-md border border-emerald-100">
-                                    AI VERIFIED MODEL
-                                </span>
-                                <h4 className="text-xs font-extrabold text-slate-900 mt-1">Scoring Completed</h4>
-                                <p className="text-[10px] text-slate-500 font-semibold">Classification accuracy: {(aiConfidence! * 100).toFixed(1)}%</p>
-                            </div>
-
-                            <div className="flex flex-col items-center justify-center">
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Generated Credit Level</p>
-                                <div className="flex items-center gap-0.5">
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                        <Award 
-                                            key={star} 
-                                            size={16} 
-                                            className={star <= aiCredit ? 'text-indigo-600 fill-indigo-600' : 'text-slate-200'} 
-                                        />
-                                    ))}
-                                </div>
-                                <span className="text-[10px] font-black text-indigo-700 mt-1">{aiCredit} Credits</span>
-                            </div>
-
-                            <div className="text-center md:text-right">
-                                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Novelty Analysis</p>
-                                {aiRepeated ? (
-                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-wide border border-amber-100">
-                                        <History size={11} /> Repeated PYQ (Low Credit)
+                    {isReverified && aiCredit !== null && (
+                        aiCredit === 0 ? (
+                            <div className="p-5 bg-red-50 rounded-xl border-2 border-red-500 shadow-sm flex flex-col gap-4 animate-slide-down mt-4">
+                                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                    <div className="flex items-start gap-3 text-left">
+                                        <div className="p-2 bg-red-500 text-white rounded-full shrink-0 animate-bounce">
+                                            <AlertCircle size={20} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="px-2.5 py-0.5 bg-red-600 text-white text-[9px] font-black uppercase tracking-wider rounded-md">
+                                                AI CRITICAL VERIFICATION FAILURE
+                                            </span>
+                                            <h4 className="text-xs font-black text-red-950 mt-1">Semantic Validity Audit Failed</h4>
+                                            <p className="text-[11px] text-red-800 font-semibold leading-relaxed">
+                                                This input does not pass our standard academic content validation (Gibberish or non-academic layout detected). Credit rating is blocked.
+                                            </p>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wide border border-green-100">
-                                        <Sparkles size={11} /> Novel Question (High Credit)
+                                    <div className="w-full sm:w-auto border-t sm:border-t-0 sm:border-l border-red-200/60 pt-3 sm:pt-0 sm:pl-5 space-y-1 text-left sm:text-right shrink-0">
+                                        <p className="text-[8px] font-black text-red-500 uppercase tracking-widest leading-none">Status</p>
+                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-red-600 text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-sm">
+                                            <Lock size={10} /> BLOCKED
+                                        </div>
+                                    </div>
+                                </div>
+                                {aiDetails.length > 0 && (
+                                    <div className="border-t border-red-200/60 pt-3 space-y-1.5 text-left text-[10px] font-bold text-red-900">
+                                        {aiDetails.map((det, idx) => (
+                                            <div key={idx} className="flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                                <span>{det}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
+                        ) : (
+                            <div className="p-4 bg-white rounded-xl border-2 border-emerald-400/80 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-center animate-slide-down mt-4">
+                                <div className="text-center md:text-left space-y-0.5">
+                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black uppercase tracking-wider rounded-md border border-emerald-100">
+                                        AI VERIFIED MODEL
+                                    </span>
+                                    <h4 className="text-xs font-extrabold text-slate-900 mt-1">Scoring Completed</h4>
+                                    <p className="text-[10px] text-slate-500 font-semibold">Classification accuracy: {(aiConfidence! * 100).toFixed(1)}%</p>
+                                </div>
 
-                            {/* Cosine Overlap Diagnostics Panel */}
-                            {(matchedPYQ || aiDetails.length > 0) && (
-                                <div className="col-span-1 md:col-span-3 border-t border-slate-100 pt-3 mt-1 space-y-2 text-left">
-                                    {matchedPYQ && (
-                                        <div className="bg-slate-50 border border-slate-200/60 p-2.5 rounded-lg">
-                                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5 flex items-center gap-1">
-                                                <History size={10} /> Nearest PYQ Match Detected in Database
-                                            </p>
-                                            <p className="text-[11px] font-medium text-slate-700 italic">"{matchedPYQ}"</p>
-                                        </div>
-                                    )}
-                                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] text-slate-500 font-bold">
-                                        {aiDetails.map((det, idx) => (
-                                            <span key={idx} className="flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> {det}
-                                            </span>
+                                <div className="flex flex-col items-center justify-center">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Generated Credit Level</p>
+                                    <div className="flex items-center gap-0.5">
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <Award 
+                                                key={star} 
+                                                size={16} 
+                                                className={star <= aiCredit ? 'text-indigo-600 fill-indigo-600' : 'text-slate-200'} 
+                                            />
                                         ))}
                                     </div>
+                                    <span className="text-[10px] font-black text-indigo-700 mt-1">{aiCredit} Credits</span>
                                 </div>
-                            )}
-                        </div>
+
+                                <div className="text-center md:text-right">
+                                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Novelty Analysis</p>
+                                    {aiRepeated ? (
+                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-wide border border-amber-100">
+                                            <History size={11} /> Repeated PYQ (Low Credit)
+                                        </div>
+                                    ) : (
+                                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-50 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wide border border-green-100">
+                                            <Sparkles size={11} /> Novel Question (High Credit)
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Cosine Overlap Diagnostics Panel */}
+                                {(matchedPYQ || aiDetails.length > 0) && (
+                                    <div className="col-span-1 md:col-span-3 border-t border-slate-100 pt-3 mt-1 space-y-2 text-left">
+                                        {aiDetails.some(det => det.includes('WARNING: Topic drift')) && (
+                                            <div className="bg-amber-50 border border-amber-200 p-3 rounded-xl flex items-start gap-2.5 shadow-sm animate-pulse mb-1">
+                                                <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={14} />
+                                                <div className="space-y-0.5">
+                                                    <h5 className="text-[10px] font-black text-amber-950 uppercase tracking-wide">Warning: Topic Relevance Audit Flagged!</h5>
+                                                    <p className="text-[9px] text-amber-800 font-semibold leading-relaxed">
+                                                        This question appears to deviate from the selected paper syllabus. Credit level has been penalized and capped at 1.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        {matchedPYQ && (
+                                            <div className="bg-slate-50 border border-slate-200/60 p-2.5 rounded-lg">
+                                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1.5 flex items-center gap-1">
+                                                    <History size={10} /> Nearest PYQ Match Detected in Database
+                                                </p>
+                                                <p className="text-[11px] font-medium text-slate-700 italic">"{matchedPYQ}"</p>
+                                            </div>
+                                        )}
+                                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] text-slate-500 font-bold">
+                                            {aiDetails.map((det, idx) => (
+                                                <span key={idx} className="flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> {det}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )
                     )}
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
                         {saved && (
                             <span className="flex items-center gap-1.5 text-xs text-[#16a34a] font-bold animate-pulse">
-                                <CheckCircle2 size={16} /> Question Uploaded and Verified!
+                                <CheckCircle2 size={16} /> Question {editingQuestion ? 'Resubmitted' : 'Uploaded'} and Verified!
                             </span>
                         )}
-                        <button type="button" onClick={handleSave} disabled={!paperCode || !text.trim() || !isReverified}
-                            className="px-6 py-2.5 bg-[#1e3a5f] hover:bg-[#162d4a] disabled:bg-slate-200 disabled:text-text-muted text-white text-xs font-extrabold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
-                            title={!isReverified ? "Please Verify Question Model before adding" : ""}>
-                            Add Question to Bank
+                        {editingQuestion && onCancelEdit && (
+                            <button type="button" onClick={onCancelEdit}
+                                className="px-6 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all shadow-sm cursor-pointer">
+                                Cancel Edit
+                            </button>
+                        )}
+                        <button type="button" onClick={handleSave} disabled={!paperCode || !text.trim() || !isReverified || saving || aiCredit === 0}
+                            className={`px-6 py-2.5 disabled:bg-slate-200 disabled:text-text-muted text-white text-xs font-extrabold uppercase tracking-wider rounded-lg transition-all shadow-sm flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${editingQuestion ? 'bg-red-600 hover:bg-red-700' : 'bg-[#1e3a5f] hover:bg-[#162d4a]'}`}
+                            title={aiCredit === 0 ? "Blocked: Semantic Validity Audit Failed" : !isReverified ? "Please Verify Question Model before adding" : ""}>
+                            {saving ? (
+                                <>
+                                    <Loader2 size={12} className="animate-spin" />
+                                    <span>{editingQuestion ? 'Resubmitting' : 'Uploading'} Question...</span>
+                                </>
+                            ) : (
+                                <span>{editingQuestion ? 'Resubmit Question' : 'Add Question to Bank'}</span>
+                            )}
                         </button>
                     </div>
                 </div>
@@ -536,6 +677,7 @@ const QuestionDirectory = ({ bank, setBank }: {
                                             <p className="font-semibold text-text-primary line-clamp-2">{q.text}</p>
                                             <div className="flex flex-wrap items-center gap-3">
                                                 {q.unit && <span className="text-[10px] text-text-muted font-medium bg-slate-100 px-1.5 py-0.5 rounded">{q.unit}</span>}
+                                                {q.reference && <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded flex items-center gap-0.5">📚 Ref: {q.reference}</span>}
                                                 <div className="flex items-center gap-1">
                                                     <div className="w-3.5 h-3.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center text-[8px] font-black uppercase shrink-0">
                                                         {q.addedBy ? q.addedBy.replace('Dr. ', '').replace('Prof. ', '').charAt(0) : 'U'}
@@ -612,7 +754,7 @@ const TrainModel = ({ bank }: { bank: BankQuestion[] }) => {
                     const controller = new AbortController();
                     const timeoutId = setTimeout(() => controller.abort(), 2500);
                     
-                    const res = await fetch('http://127.0.0.1:5000/api/questions', {
+                    const res = await fetch('http://localhost:5000/api/questions', {
                         signal: controller.signal,
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -2012,7 +2154,7 @@ const GeneratePaper = ({ bank }: { bank: BankQuestion[] }) => {
 };
 
 // ── Main QuestionBank Component ───────────────────────────────
-type QBSubTab = 'upload' | 'directory' | 'train' | 'generate' | 'master' | 'inbox';
+type QBSubTab = 'upload' | 'directory' | 'train' | 'generate' | 'master' | 'inbox' | 'submissions';
 
 interface QuestionBankProps {
     role?: string;
@@ -2029,6 +2171,9 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
 
     const [subTab, setSubTab] = useState<QBSubTab>(isCollege ? 'directory' : 'upload');
     const [toast, setToast] = useState('');
+    const [editingQuestion, setEditingQuestion] = useState<BankQuestion | null>(null);
+    const [returningQuestionId, setReturningQuestionId] = useState<string | null>(null);
+    const [revisionNotes, setRevisionNotes] = useState('');
 
     const showToast = (msg: string) => {
         setToast(msg);
@@ -2074,7 +2219,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 2500);
                 
-                const res = await fetch('http://127.0.0.1:5000/api/questions', {
+                const res = await fetch('http://localhost:5000/api/questions', {
                     signal: controller.signal,
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -2116,9 +2261,9 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
 
     // Reactive, derived pending inbox array (highly optimized reactive state pattern)
     const pendingInbox = isUniAdmin
-        ? bank.filter(q => q.sentToUniversity && !q.approvedByUniversity)
+        ? bank.filter(q => q.sentToUniversity && !q.approvedByUniversity && !q.needsRevision)
         : isCollege
-        ? bank.filter(q => !q.sentToUniversity && !q.approvedByUniversity && q.addedByRole === 'PROFESSOR')
+        ? bank.filter(q => !q.sentToUniversity && !q.approvedByUniversity && q.addedByRole === 'PROFESSOR' && !q.needsRevision)
         : [];
 
     // Scope: faculty sees only their dept questions; college sees all but not yet-approved; uni sees everything
@@ -2128,6 +2273,43 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
         ? bank.filter(q => !q.sentToUniversity || q.approvedByUniversity)
         : bank;
 
+    const updateFacultyCredits = (name: string | undefined, creditLevel: number, isPenalty: boolean) => {
+        if (!name) return;
+        const stored = localStorage.getItem('urp_professors_credits');
+        if (!stored) return;
+        try {
+            const list = JSON.parse(stored);
+            const updated = list.map((p: any) => {
+                if (p.name === name) {
+                    let currentCredits = p.credits !== undefined ? p.credits : (p.approved * 5 + p.novel * 10);
+                    if (isPenalty) {
+                        const penalty = creditLevel >= 4 ? 5 : 3;
+                        currentCredits = Math.max(0, currentCredits - penalty);
+                        return { 
+                            ...p, 
+                            credits: currentCredits,
+                            submitted: Math.max(0, p.submitted - 1)
+                        };
+                    } else {
+                        const addedCredits = creditLevel;
+                        currentCredits += addedCredits;
+                        return {
+                            ...p,
+                            approved: p.approved + 1,
+                            novel: creditLevel >= 4 ? p.novel + 1 : p.novel,
+                            credits: currentCredits
+                        };
+                    }
+                }
+                return p;
+            });
+            localStorage.setItem('urp_professors_credits', JSON.stringify(updated));
+            window.dispatchEvent(new Event('storage'));
+        } catch (e) {
+            console.error('Failed to update faculty credits', e);
+        }
+    };
+
     const handleApprove = (id: string) => {
         setBank(prev => prev.map(q => {
             if (q.id === id) {
@@ -2136,6 +2318,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                     return { ...q, sentToUniversity: true };
                 } else if (isUniAdmin) {
                     showToast(`Successfully approved question "${q.code}" into the Master Bank!`);
+                    updateFacultyCredits(q.addedBy, q.creditLevel || 3, false);
                     return { ...q, approvedByUniversity: true };
                 }
             }
@@ -2148,9 +2331,11 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
             const rejectedQ = prev.find(q => q.id === id);
             if (rejectedQ) {
                 if (isCollege) {
-                    showToast(`Rejected faculty question submission "${rejectedQ.code}".`);
+                    showToast(`Rejected faculty question submission "${rejectedQ.code}". Penalty applied.`);
+                    updateFacultyCredits(rejectedQ.addedBy, rejectedQ.creditLevel || 3, true);
                 } else if (isUniAdmin) {
-                    showToast(`Returned question "${rejectedQ.code}" to the College queue.`);
+                    showToast(`Returned question "${rejectedQ.code}" to College. Penalty applied.`);
+                    updateFacultyCredits(rejectedQ.addedBy, rejectedQ.creditLevel || 3, true);
                 }
             }
             if (isCollege) {
@@ -2161,6 +2346,22 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                 return prev.map(q => q.id === id ? { ...q, sentToUniversity: false } : q);
             }
         });
+    };
+
+    const handleReturnForReview = (id: string, notes: string) => {
+        setBank(prev => prev.map(q => {
+            if (q.id === id) {
+                showToast(`Successfully returned question "${q.code}" for revision!`);
+                return { 
+                    ...q, 
+                    needsRevision: true, 
+                    reviewNotes: notes.trim() || 'Please review and resubmit.' 
+                };
+            }
+            return q;
+        }));
+        setReturningQuestionId(null);
+        setRevisionNotes('');
     };
 
     return (
@@ -2201,6 +2402,21 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                                 : 'Generate Paper'}
                         </button>
                     ))}
+                {isFaculty && (
+                    <button type="button" onClick={() => {
+                        setSubTab('submissions');
+                        setEditingQuestion(null);
+                    }}
+                        className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex items-center gap-1.5 ${subTab === 'submissions' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-text-secondary hover:text-text-primary'}`}>
+                        <History size={14} className="shrink-0 text-indigo-500" />
+                        My Submissions
+                        {bank.filter(q => q.addedBy === facultyName && q.needsRevision).length > 0 && (
+                            <span className="bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">
+                                {bank.filter(q => q.addedBy === facultyName && q.needsRevision).length} Action
+                            </span>
+                        )}
+                    </button>
+                )}
                 {(isUniAdmin || isCollege) && (
                     <button type="button" onClick={() => setSubTab('inbox')}
                         className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap flex items-center gap-1.5 ${subTab === 'inbox' ? 'border-amber-500 text-amber-600' : 'border-transparent text-text-secondary hover:text-text-primary'}`}>
@@ -2221,7 +2437,21 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                 </span>
             </div>
 
-            {subTab === 'upload' && <UploadQuestions bank={displayBank} fullBank={bank} setBank={setBank} role={role} facultyName={facultyName} facultyProfileUrl={facultyProfileUrl} />}
+            {subTab === 'upload' && (
+                <UploadQuestions 
+                    bank={bank} 
+                    fullBank={bank} 
+                    setBank={setBank} 
+                    role={role} 
+                    facultyName={facultyName} 
+                    facultyProfileUrl={facultyProfileUrl} 
+                    editingQuestion={editingQuestion}
+                    onCancelEdit={() => {
+                        setEditingQuestion(null);
+                        setSubTab('submissions');
+                    }}
+                />
+            )}
             {subTab === 'directory' && <QuestionDirectory bank={displayBank} setBank={setBank} />}
             {subTab === 'train' && <TrainModel bank={displayBank} />}
             {subTab === 'generate' && <GeneratePaper bank={displayBank} />}
@@ -2243,7 +2473,7 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                     ) : (
                         <div className="divide-y divide-border-color">
                             {pendingInbox.map(q => (
-                                <div key={q.id} className="p-5 hover:bg-slate-50/50 transition-colors">
+                                <div key={q.id} className="p-5 hover:bg-slate-50/50 transition-colors space-y-3">
                                     <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 space-y-1.5">
                                             <p className="text-sm font-semibold text-text-primary">{q.text}</p>
@@ -2270,17 +2500,147 @@ const QuestionBank = ({ role = 'COLLEGE', department, collegeId, facultyName = '
                                                 <span>• {q.addedOn}</span>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 shrink-0">
+                                        <div className="flex gap-2 shrink-0 flex-wrap justify-end">
                                             <button onClick={() => handleApprove(q.id)}
                                                 className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1">
                                                 <CheckCircle2 size={12} /> {isCollege ? 'Approve & Send to University' : 'Approve'}
                                             </button>
+                                            {isCollege && (
+                                                <button onClick={() => {
+                                                    setReturningQuestionId(returningQuestionId === q.id ? null : q.id);
+                                                    setRevisionNotes('');
+                                                }}
+                                                    className="px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg hover:bg-amber-100 transition-colors flex items-center gap-1">
+                                                    <History size={12} /> Return for Review
+                                                </button>
+                                            )}
                                             <button onClick={() => handleReject(q.id)}
                                                 className="px-3 py-1.5 bg-red-50 text-red-600 border border-red-200 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1">
                                                 <X size={12} /> Reject
                                             </button>
                                         </div>
                                     </div>
+
+                                    {returningQuestionId === q.id && (
+                                        <div className="mt-3 p-4 bg-amber-50/40 rounded-xl border border-amber-200/60 space-y-3 animate-slide-down">
+                                            <div>
+                                                <label className="block text-xs font-extrabold text-amber-900 uppercase tracking-wider mb-1.5">
+                                                    Provide Revision Feedback/Notes for Faculty
+                                                </label>
+                                                <textarea 
+                                                    rows={2} 
+                                                    value={revisionNotes} 
+                                                    onChange={e => setRevisionNotes(e.target.value)} 
+                                                    placeholder="Explain what needs to be changed (e.g. improve novelty, correct spelling, elaborate the question structure)..."
+                                                    className="w-full px-3 py-2 border border-amber-200 rounded-lg text-xs bg-white text-text-primary focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                                                />
+                                            </div>
+                                            <div className="flex justify-end gap-2">
+                                                <button 
+                                                    onClick={() => { setReturningQuestionId(null); setRevisionNotes(''); }}
+                                                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold rounded-lg text-slate-700 transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleReturnForReview(q.id, revisionNotes)}
+                                                    disabled={!revisionNotes.trim()}
+                                                    className="px-3.5 py-2 bg-amber-400 hover:bg-amber-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed border border-amber-300/60 text-amber-950 text-xs font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                                                >
+                                                    <History size={12} /> Send Feedback to Faculty
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {subTab === 'submissions' && isFaculty && (
+                <div className="border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                    <div className="px-5 py-4 bg-indigo-50/60 border-b border-indigo-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <History size={16} className="text-indigo-600 animate-pulse" />
+                            <h3 className="text-sm font-bold text-indigo-900">My Submitted Questions</h3>
+                        </div>
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-1 rounded border border-indigo-200">
+                            {bank.filter(q => q.addedBy === facultyName).length} Submissions
+                        </span>
+                    </div>
+                    {bank.filter(q => q.addedBy === facultyName).length === 0 ? (
+                        <div className="p-12 text-center text-text-muted text-sm font-semibold">
+                            <BookOpen size={40} className="mx-auto mb-3 text-slate-300 animate-bounce" />
+                            You have not submitted any questions yet. Go to "Question Upload" to get started.
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-border-color">
+                            {bank.filter(q => q.addedBy === facultyName).map(q => (
+                                <div key={q.id} className="p-5 hover:bg-slate-50/50 transition-colors">
+                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="font-mono text-xs font-bold text-[#1e3a5f] bg-[#f0f6ff] px-2 py-0.5 rounded border border-blue-100">{q.code}</span>
+                                                <span className={diffBadge(q.difficulty)}>{q.difficulty}</span>
+                                                <span className={typeBadge(q.type)}>{typeLabel(q.type)}</span>
+                                                <span className="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
+                                                    <Award size={10} className="fill-indigo-600" /> {q.creditLevel ?? 3} Credits
+                                                </span>
+                                            </div>
+                                            <p className="text-sm font-semibold text-text-primary leading-relaxed">{q.text}</p>
+                                            {q.unit && (
+                                                <span className="inline-block text-[10px] text-text-muted font-medium bg-slate-100 px-2 py-0.5 rounded">
+                                                    Topic: {q.unit}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="shrink-0 flex items-center gap-2 self-start md:self-center">
+                                            {q.approvedByUniversity ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 border border-green-200 text-xs font-black rounded-lg shadow-sm">
+                                                    <CheckCircle2 size={12} /> Approved & Active
+                                                </span>
+                                            ) : q.needsRevision ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-50 text-red-700 border border-red-200 text-xs font-black rounded-lg animate-pulse shadow-sm">
+                                                    <AlertCircle size={12} /> Revision Requested
+                                                </span>
+                                            ) : q.sentToUniversity ? (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-black rounded-lg shadow-sm">
+                                                    <Loader2 size={12} className="animate-spin text-indigo-500" /> Forwarded to Uni
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-black rounded-lg shadow-sm">
+                                                    ⏳ Pending College Review
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {q.needsRevision && (
+                                        <div className="mt-4 p-4 bg-red-50/60 rounded-xl border border-red-200/65 space-y-3 shadow-inner">
+                                            <div className="flex items-start gap-2.5">
+                                                <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5 animate-pulse" />
+                                                <div className="space-y-1 w-full">
+                                                    <h5 className="text-[10px] font-black text-red-950 uppercase tracking-widest leading-none">Revision Required from College Admin</h5>
+                                                    <p className="text-xs font-semibold text-red-800 italic bg-white p-3 rounded-lg border border-red-100 shadow-sm mt-1.5 leading-relaxed">
+                                                        "{q.reviewNotes || 'Please review spelling, clarity, and novelty of this question.'}"
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-end pt-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingQuestion(q);
+                                                        setSubTab('upload');
+                                                    }}
+                                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md hover:scale-[1.02] active:scale-[0.98] flex items-center gap-1.5 cursor-pointer"
+                                                >
+                                                    <Plus size={14} /> Edit & Resubmit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

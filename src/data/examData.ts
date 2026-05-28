@@ -211,6 +211,9 @@ export interface BankQuestion {
     sentToUniversity?: boolean;          // New: College-to-University workflow sending status
     approvedByUniversity?: boolean;      // New: University approvals workflow
     collegeId?: string;                  // New: College ID scoping
+    reference?: string;                  // New: Optional section for giving question reference
+    needsRevision?: boolean;             // New: true if question needs faculty revision
+    reviewNotes?: string;                // New: college admin revision feedback notes
 }
 
 // Dummy question bank data ────────────────────────────────────

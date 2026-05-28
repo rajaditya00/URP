@@ -1,10 +1,53 @@
 const Question = require('../models/Question');
 
+// Subject name mapping for question code → readable subject
+const QUESTION_SUBJECT_MAP = {
+  'CS-301': 'Computer Networks',
+  'CS-302': 'Database Systems',
+  'CS-303': 'Operating Systems',
+  'CS-352': 'Cryptography & Security',
+  'CS-402': 'Theory of Computation',
+  'CS-403': 'Theory of Computation',
+  'CS-411': 'Machine Learning & AI',
+  'CS-412': 'Distributed Systems',
+  'EE-202': 'Digital Electronics',
+  'EE-205': 'Network Theorems',
+  'EE-401': 'Electromagnetic Fields',
+  'EE-102': 'Basic Electrical',
+  'EE-302': 'Electric Machines',
+  'EE-303': 'Communication Systems',
+  'EE-311': 'Signal Processing',
+  'ME-301': 'Heat Transfer',
+  'ME-404': 'Machine Dynamics',
+  'ME-401': 'Fluid Mechanics',
+  'ME-201': 'Thermodynamics',
+  'ME-202': 'IC Engines',
+  'CE-401': 'Foundation Engineering',
+  'CE-202': 'Structural Analysis',
+  'CE-303': 'Finite Element Methods',
+  'CE-205': 'Environmental Engineering',
+  'CE-204': 'Soil Mechanics',
+  'CE-201': 'Fluid Mechanics',
+  'CH-302': 'Mass Transfer',
+  'CH-401': 'Reactor Design',
+  'CH-204': 'Transport Phenomena',
+  'CH-301': 'Reaction Engineering',
+  'BT-301': 'Genetic Engineering',
+  'BT-202': 'Molecular Biology',
+  'BT-303': 'Bioprocess Technology',
+  'BT-410': 'Gene Editing & CRISPR',
+  'AE-301': 'Aerodynamics',
+  'AE-302': 'Aircraft Propulsion',
+  'AE-201': 'Spaceflight Dynamics',
+  'AE-401': 'Aeroelasticity',
+};
+
 // Seed engineering questions across all departments if database is empty or has old seeds
 const seedEngineeringQuestions = async () => {
   const count = await Question.countDocuments();
-  // If we have our exact expanded set, we don't need to re-seed
-  if (count === 60) return;
+  // Re-seed if count doesn't match OR if recent-dated questions are missing
+  const hasRecentData = await Question.findOne({ addedOn: '2026-05-20' });
+  if (count === 65 && hasRecentData) return;
 
   await Question.deleteMany({}); // Start clean with the ultimate Indian Technical Universities Semester PYQ database!
 
@@ -18,7 +61,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 12,
       creditLevel: 5,
-      sourceUniversity: "IIT Bombay (Semester V Core Exam)"
+      sourceUniversity: "IIT Bombay (Semester V Core Exam)",
+      addedOn: "2026-05-15"
     },
     {
       text: "What is database normalization? Explain 1NF, 2NF, 3NF, and BCNF with concrete schemas and normal form violations.",
@@ -28,7 +72,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "AKTU Lucknow (Semester V PYQ)"
+      sourceUniversity: "AKTU Lucknow (Semester V PYQ)",
+      addedOn: "2026-05-08"
     },
     {
       text: "Design a Turing machine that accepts the language L = {a^n b^n c^n | n >= 1} and draw the complete transition graph.",
@@ -38,7 +83,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "IIT Madras (Semester VI Theory of Computation)"
+      sourceUniversity: "IIT Madras (Semester VI Theory of Computation)",
+      addedOn: "2026-05-12"
     },
     {
       text: "Explain the concept of Deadlock and detail the four necessary conditions (mutual exclusion, hold & wait, no preemption, circular wait) for deadlock to occur.",
@@ -48,7 +94,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 5,
       creditLevel: 2,
-      sourceUniversity: "JNTU Hyderabad (Semester IV PYQ)"
+      sourceUniversity: "JNTU Hyderabad (Semester IV PYQ)",
+      addedOn: "2026-04-28"
     },
     {
       text: "State the Halting Problem and prove that it is undecidable using Cantor's diagonalization argument.",
@@ -58,7 +105,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "SPPU Pune (Semester VI Theory of Computation)"
+      sourceUniversity: "SPPU Pune (Semester VI Theory of Computation)",
+      addedOn: "2026-04-05"
     },
     {
       text: "Explain the working of deep convolutional neural networks with backpropagation and SGD loss optimization.",
@@ -68,7 +116,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "IIT Madras (Semester VII Advanced ML)"
+      sourceUniversity: "IIT Madras (Semester VII Advanced ML)",
+      addedOn: "2026-05-20"
     },
     {
       text: "Design a fault-tolerant distributed transaction system using the Raft Consensus Protocol.",
@@ -78,7 +127,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "IIT Bombay (Semester VIII Distributed Systems)"
+      sourceUniversity: "IIT Bombay (Semester VIII Distributed Systems)",
+      addedOn: "2026-04-15"
     },
     {
       text: "Explain the difference between symmetric and asymmetric key cryptography. Detail how RSA algorithm achieves key exchange.",
@@ -88,7 +138,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 4,
-      sourceUniversity: "VTU Belagavi (Semester VI Cryptography)"
+      sourceUniversity: "VTU Belagavi (Semester VI Cryptography)",
+      addedOn: "2026-03-25"
     },
 
     // --- ELECTRICAL & ELECTRONICS ENGINEERING ---
@@ -100,7 +151,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "AKTU Lucknow (Semester IV PYQ)"
+      sourceUniversity: "AKTU Lucknow (Semester IV PYQ)",
+      addedOn: "2026-05-10"
     },
     {
       text: "State and prove the Superposition Theorem as applied to alternating current electrical circuits with multiple sources.",
@@ -110,7 +162,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "VTU Belagavi (Semester III PYQ)"
+      sourceUniversity: "VTU Belagavi (Semester III PYQ)",
+      addedOn: "2026-04-18"
     },
     {
       text: "State Maxwell's equations in differential and integral forms, and explain their electromagnetic significance in vacuum.",
@@ -120,7 +173,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "IIT Bombay (Semester VI Core Exam)"
+      sourceUniversity: "IIT Bombay (Semester VI Core Exam)",
+      addedOn: "2026-04-20"
     },
     {
       text: "State and explain Faraday's Law of Electromagnetic Induction and Lenz's Law with practical power transformer examples.",
@@ -130,7 +184,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 5,
       creditLevel: 2,
-      sourceUniversity: "Anna University Chennai (Semester II PYQ)"
+      sourceUniversity: "Anna University Chennai (Semester II PYQ)",
+      addedOn: "2026-02-10"
     },
     {
       text: "Explain the working principle of a Three-Phase Induction Motor and derive the expression for starting torque under varying slip.",
@@ -140,7 +195,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 12,
       creditLevel: 4,
-      sourceUniversity: "JNTU Hyderabad (Semester VI PYQ)"
+      sourceUniversity: "JNTU Hyderabad (Semester VI PYQ)",
+      addedOn: "2026-02-05"
     },
     {
       text: "What is the primary function of a semiconductor diode in rectifier circuits?",
@@ -150,7 +206,8 @@ const seedEngineeringQuestions = async () => {
       type: "objective",
       marks: 2,
       creditLevel: 1,
-      sourceUniversity: "SPPU Pune (Semester I PYQ)"
+      sourceUniversity: "SPPU Pune (Semester I PYQ)",
+      addedOn: "2026-01-15"
     },
     {
       text: "Compare the operations of standard Amplitude Modulation (AM) and Frequency Modulation (FM) systems in noise-limited channels.",
@@ -160,7 +217,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "Anna University Chennai (Semester V PYQ)"
+      sourceUniversity: "Anna University Chennai (Semester V PYQ)",
+      addedOn: "2026-05-03"
     },
     {
       text: "Analyze the frequency response of a second-order active low-pass Butterworth filter circuit and derive its cutoff equation.",
@@ -170,7 +228,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "MAKAUT Kolkata (Semester V PYQ)"
+      sourceUniversity: "MAKAUT Kolkata (Semester V PYQ)",
+      addedOn: "2026-04-07"
     },
 
     // --- MECHANICAL ENGINEERING ---
@@ -182,7 +241,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "AKTU Lucknow (Semester VII PYQ)"
+      sourceUniversity: "AKTU Lucknow (Semester VII PYQ)",
+      addedOn: "2026-05-05"
     },
     {
       text: "Determine the critical speed of a shaft carrying a single rotor with and without damping conditions.",
@@ -192,7 +252,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "VTU Belagavi (Semester VII PYQ)"
+      sourceUniversity: "VTU Belagavi (Semester VII PYQ)",
+      addedOn: "2026-04-30"
     },
     {
       text: "Derive the Navier-Stokes equations for incompressible fluid flow and list key assumptions and boundary conditions.",
@@ -202,7 +263,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "Anna University Chennai (Semester VII PYQ)"
+      sourceUniversity: "Anna University Chennai (Semester VII PYQ)",
+      addedOn: "2026-04-12"
     },
     {
       text: "Which material property defines the resistance of a structural component to plastic deformation?",
@@ -212,7 +274,8 @@ const seedEngineeringQuestions = async () => {
       type: "objective",
       marks: 2,
       creditLevel: 1,
-      sourceUniversity: "Anna University Chennai (Semester I PYQ)"
+      sourceUniversity: "Anna University Chennai (Semester I PYQ)",
+      addedOn: "2026-02-20"
     },
     {
       text: "Derive the Navier-Stokes formulation for microfluidic channels under boundary-slip conditions.",
@@ -222,7 +285,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 5,
-      sourceUniversity: "IIT Kharagpur (Semester VII Advanced Fluid Mechanics)"
+      sourceUniversity: "IIT Kharagpur (Semester VII Advanced Fluid Mechanics)",
+      addedOn: "2026-02-01"
     },
     {
       text: "Explain the Rankine cycle with reheating and regeneration, and draw its T-s diagram representation.",
@@ -232,7 +296,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 15,
       creditLevel: 4,
-      sourceUniversity: "GTU Ahmedabad (Semester VI PYQ)"
+      sourceUniversity: "GTU Ahmedabad (Semester VI PYQ)",
+      addedOn: "2026-01-28"
     },
     {
       text: "Describe the four thermodynamic processes of the Carnot Cycle and derive its thermal efficiency equation using absolute temperatures.",
@@ -242,7 +307,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "IIT Bombay (Semester IV Thermodynamics)"
+      sourceUniversity: "IIT Bombay (Semester IV Thermodynamics)",
+      addedOn: "2026-05-17"
     },
     {
       text: "Explain the working principle of a Four-Stroke Spark-Ignition (SI) internal combustion engine with PV and TS diagrams.",
@@ -252,7 +318,8 @@ const seedEngineeringQuestions = async () => {
       type: "subjective",
       marks: 10,
       creditLevel: 3,
-      sourceUniversity: "SPPU Pune (Semester IV IC Engines)"
+      sourceUniversity: "SPPU Pune (Semester IV IC Engines)",
+      addedOn: "2026-03-28"
     },
 
     // --- CIVIL ENGINEERING ---
@@ -579,13 +646,115 @@ const seedEngineeringQuestions = async () => {
       difficulty: "hard",
       type: "subjective",
       marks: 12,
-      creditLevel: 4,
       sourceUniversity: "IIST Trivandrum (Semester VII Flight Control Systems)"
+    },
+    // --- TRAINING CORPUS QUESTIONS (LAST 2 MONTHS ADDITIONS) ---
+    {
+      text: "Derive the time complexity of the Floyd-Warshall all-pairs shortest path algorithm and prove its optimal substructure.",
+      code: "CS-402",
+      department: "Computer Science",
+      difficulty: "hard",
+      type: "subjective",
+      marks: 15,
+      creditLevel: 5,
+      sourceUniversity: "MIT OpenCourseWare (Algorithms Training Set)",
+      addedOn: "2026-05-18"
+    },
+    {
+      text: "Prove that the Halting Problem is undecidable using diagonalization.",
+      code: "CS-403",
+      department: "Computer Science",
+      difficulty: "hard",
+      type: "subjective",
+      marks: 15,
+      creditLevel: 5,
+      sourceUniversity: "MIT OpenCourseWare (Theory of Computation Training Set)",
+      addedOn: "2026-05-19"
+    },
+    {
+      text: "Explain database ACID properties and how two-phase locking (2PL) guarantees serializability.",
+      code: "CS-302",
+      department: "Computer Science",
+      difficulty: "hard",
+      type: "subjective",
+      marks: 12,
+      creditLevel: 5,
+      sourceUniversity: "Stanford CS (Database Systems Training Set)",
+      addedOn: "2026-05-15"
+    },
+    {
+      text: "Design a fault-tolerant distributed system using the Raft consensus algorithm.",
+      code: "CS-412",
+      department: "Computer Science",
+      difficulty: "hard",
+      type: "subjective",
+      marks: 15,
+      creditLevel: 5,
+      sourceUniversity: "Stanford CS (Distributed Systems Training Set)",
+      addedOn: "2026-05-16"
+    },
+    {
+      text: "Describe IPv6 addressing architecture and compare it directly to legacy IPv4 setups.",
+      code: "CS-301",
+      department: "Computer Science",
+      difficulty: "medium",
+      type: "subjective",
+      marks: 10,
+      creditLevel: 4,
+      sourceUniversity: "UGC-NET (Computer Networks Training Set)",
+      addedOn: "2026-05-14"
     }
   ];
 
   await Question.insertMany(seedData);
   console.log(`✅ Pre-seeded ${seedData.length} prestigious Indian Technical University PYQs successfully across all departments.`);
+};
+
+const { spawn } = require('child_process');
+const path = require('path');
+
+// Helper to run Python ML predictions
+const runPythonML = (questions) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const scriptPath = path.join(__dirname, '../ml/question_ml.py');
+      const child = spawn('python3', [scriptPath, '--action', 'predict']);
+      
+      let stdoutData = '';
+      let stderrData = '';
+      
+      child.stdout.on('data', (data) => {
+        stdoutData += data.toString();
+      });
+      
+      child.stderr.on('data', (data) => {
+        stderrData += data.toString();
+      });
+      
+      child.on('close', (code) => {
+        if (code !== 0) {
+          console.error(`ML Python process exited with code ${code}. Stderr: ${stderrData}`);
+          return reject(new Error(stderrData || `Exit code ${code}`));
+        }
+        try {
+          const parsed = JSON.parse(stdoutData);
+          if (parsed.success) {
+            resolve(parsed);
+          } else {
+            reject(new Error(parsed.error || 'ML script returned success=false'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+      
+      child.stdin.write(JSON.stringify(questions));
+      child.stdin.end();
+      
+    } catch (error) {
+      reject(error);
+    }
+  });
 };
 
 // @desc    Get all questions from overall available engineering departments
@@ -597,7 +766,7 @@ const getQuestions = async (req, res) => {
 
     const { department, difficulty } = req.query;
     let query = {};
-    
+
     if (department && department !== 'all') {
       query.department = department;
     }
@@ -606,12 +775,126 @@ const getQuestions = async (req, res) => {
     }
 
     const questions = await Question.find(query);
-    res.status(200).json({ success: true, count: questions.length, data: questions });
+    
+    // Attempt ML prediction
+    let finalQuestions = questions.map(q => q.toObject());
+    let mlStats = null;
+    try {
+      const mlResult = await runPythonML(finalQuestions);
+      finalQuestions = mlResult.data;
+      mlStats = {
+        engine: mlResult.engine,
+        trainingCorpusQuestions: mlResult.trainingCorpusQuestions,
+        universitiesTrainedCount: mlResult.universitiesTrained?.length || 0,
+        departmentsTrainedCount: mlResult.departmentsTrained?.length || 0
+      };
+    } catch (err) {
+      console.warn("⚠️ Python ML predict failed, falling back to database raw data:", err.message);
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      count: finalQuestions.length, 
+      mlEngineActive: !!mlStats,
+      mlStats,
+      data: finalQuestions 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+// @desc    Get trending questions added in last 2 months, grouped by subject
+// @route   GET /api/questions/trends
+// @access  Private
+const getRecentTrends = async (req, res) => {
+  try {
+    await seedEngineeringQuestions();
+
+    // Calculate 2-month cutoff date string (YYYY-MM-DD)
+    const now = new Date();
+    const cutoff = new Date(now);
+    cutoff.setMonth(cutoff.getMonth() - 2);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+
+    const { department } = req.query;
+    let query = { addedOn: { $gte: cutoffStr } };
+    if (department && department !== 'all') {
+      query.department = department;
+    }
+
+    const questions = await Question.find(query).sort({ addedOn: -1 });
+    let questionObjs = questions.map(q => q.toObject());
+    
+    // Attempt ML prediction
+    let mlStats = null;
+    try {
+      const mlResult = await runPythonML(questionObjs);
+      questionObjs = mlResult.data;
+      mlStats = {
+        engine: mlResult.engine,
+        trainingCorpusQuestions: mlResult.trainingCorpusQuestions,
+        universitiesTrainedCount: mlResult.universitiesTrained?.length || 0,
+        departmentsTrainedCount: mlResult.departmentsTrained?.length || 0
+      };
+    } catch (err) {
+      console.warn("⚠️ Python ML trends predict failed, falling back to basic calculation:", err.message);
+    }
+
+    // Group by subject name using the code map
+    const grouped = {};
+    questionObjs.forEach(q => {
+      const subjectName = QUESTION_SUBJECT_MAP[q.code] || q.department;
+      if (!grouped[subjectName]) {
+        grouped[subjectName] = {
+          subject: subjectName,
+          department: q.department,
+          latestDate: q.addedOn,
+          questions: []
+        };
+      }
+      grouped[subjectName].questions.push({
+        _id: q._id,
+        text: q.text,
+        code: q.code,
+        difficulty: q.difficulty,
+        type: q.type,
+        marks: q.marks,
+        creditLevel: q.creditLevel,
+        sourceUniversity: q.sourceUniversity,
+        addedOn: q.addedOn,
+        // Include ML attributes
+        mlRepetitionProbability: q.mlRepetitionProbability,
+        mlNoveltyRating: q.mlNoveltyRating,
+        mlMatchedUniversity: q.mlMatchedUniversity,
+        mlMatchedScore: q.mlMatchedScore,
+        mlPredictedDifficulty: q.mlPredictedDifficulty
+      });
+      // Track the most recent date for this group
+      if (q.addedOn > grouped[subjectName].latestDate) {
+        grouped[subjectName].latestDate = q.addedOn;
+      }
+    });
+
+    // Sort groups by their most recent question date
+    const result = Object.values(grouped)
+      .sort((a, b) => b.latestDate.localeCompare(a.latestDate));
+
+    res.status(200).json({
+      success: true,
+      count: questionObjs.length,
+      cutoffDate: cutoffStr,
+      mlEngineActive: !!mlStats,
+      mlStats,
+      data: result
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
 module.exports = {
-  getQuestions
+  getQuestions,
+  getRecentTrends
 };
+

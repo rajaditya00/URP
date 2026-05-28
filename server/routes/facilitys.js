@@ -1,13 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { getFacilitys, createFacility, deleteFacility } = require('../controllers/facilityController');
+const { getFacilities, createFacility, updateFacility, deleteFacility } = require('../controllers/facilityController');
 const { protect, authorize } = require('../middleware/auth');
 
+// GET all facilities (role-scoped)
+// POST create facility (SUPER_ADMIN or COLLEGE)
 router.route('/')
-  .get(protect, getFacilitys)
-  .post(protect, authorize('SUPER_ADMIN', 'COLLEGE_ADMIN'), createFacility);
+  .get(protect, getFacilities)
+  .post(protect, authorize('SUPER_ADMIN', 'COLLEGE'), createFacility);
 
+// PUT update facility
+// DELETE facility
 router.route('/:id')
-  .delete(protect, authorize('SUPER_ADMIN'), deleteFacility);
+  .put(protect, authorize('SUPER_ADMIN', 'COLLEGE'), updateFacility)
+  .delete(protect, authorize('SUPER_ADMIN', 'COLLEGE'), deleteFacility);
 
 module.exports = router;

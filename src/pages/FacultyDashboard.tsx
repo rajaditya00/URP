@@ -41,7 +41,7 @@ const FacultyDashboard = () => {
             {/* MAIN CONTENT AREA */}
             <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
                 {/* HEADER */}
-                <header className="bg-[#1e3a5f] text-white sticky top-0 z-40 shadow-md flex-shrink-0 relative overflow-hidden">
+                <header className="bg-[#1e3a5f]/85 backdrop-blur-md text-white sticky top-0 z-40 shadow-[0_10px_30px_rgba(30,58,95,0.08)] border-b border-white/10 flex-shrink-0 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none"></div>
                     <div className="px-6 h-16 flex items-center justify-between w-full relative z-10">
                         <div className="flex items-center gap-3">

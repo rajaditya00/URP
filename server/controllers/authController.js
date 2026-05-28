@@ -331,4 +331,68 @@ const systemAdminLogin = (req, res) => {
     });
 };
 
-module.exports = { signup, login, changePassword, sendAdminOtp, verifyAdminOtp, forgotPassword, resetPassword, systemAdminLogin };
+const updateProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+
+        const { name, mobile, dob, address, aadharNo, department, position, specialRole, semester } = req.body;
+
+        if (name) user.name = name;
+        if (mobile !== undefined) user.mobile = mobile;
+        if (dob !== undefined) user.dob = dob;
+        if (address !== undefined) user.address = address;
+        if (aadharNo !== undefined) user.aadharNo = aadharNo;
+        if (department !== undefined) user.department = department;
+        if (position !== undefined) user.position = position;
+        if (specialRole !== undefined) user.specialRole = specialRole;
+        if (semester !== undefined) user.semester = semester;
+
+        if (req.file) {
+            user.profileImage = `uploads/profileImage/${req.file.filename}`;
+        }
+
+        await user.save();
+
+        res.json({
+            msg: 'Profile updated successfully',
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                position: user.position,
+                department: user.department,
+                specialRole: user.specialRole,
+                status: user.status || 'Active',
+                mobile: user.mobile,
+                dob: user.dob,
+                aadharNo: user.aadharNo,
+                address: user.address,
+                profileImage: user.profileImage,
+                semester: user.semester,
+                createdAt: user.createdAt,
+            }
+        });
+    } catch (err) {
+        console.error('Update profile error:', err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+const getProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id)
+            .select('-password')
+            .populate('university', 'name')
+            .populate('college', 'name')
+            .populate('mentor', 'name email department position');
+        if (!user) return res.status(404).json({ msg: 'User not found' });
+        res.json(user);
+    } catch (err) {
+        console.error('Get profile error:', err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
+
+module.exports = { signup, login, changePassword, sendAdminOtp, verifyAdminOtp, forgotPassword, resetPassword, systemAdminLogin, updateProfile, getProfile };

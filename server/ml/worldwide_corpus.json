@@ -1,0 +1,344 @@
+[
+  {
+    "text": "Design a Turing machine that accepts the language of non-palindromes over {0,1}* and analyze its state-space complexity compared to a standard decider.",
+    "code": "CS-402",
+    "department": "Computer Science",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["turing machine", "automata theory", "state complexity", "languages"]
+  },
+  {
+    "text": "Prove that the Halting Problem is undecidable using Cantor's diagonalization argument and formalize the proof in first-order logic.",
+    "code": "CS-403",
+    "department": "Computer Science",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["halting problem", "undecidability", "diagonalization", "first-order logic"]
+  },
+  {
+    "text": "Explain the difference between TCP and UDP protocols, detailing their header structures, sliding-window flow control, and TCP Reno congestion control states.",
+    "code": "CS-301",
+    "department": "Computer Science",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Bombay",
+    "keyTopics": ["tcp", "udp", "header", "flow control", "congestion control", "reno"]
+  },
+  {
+    "text": "Compare 3NF and BCNF normalization. Design a relational schema that is in 3NF but violates BCNF, and explain the physical dependency preservation trade-offs during decomposition.",
+    "code": "CS-302",
+    "department": "Computer Science",
+    "difficulty": "hard",
+    "marks": 12,
+    "sourceUniversity": "University of Cambridge",
+    "keyTopics": ["normalization", "3nf", "bcnf", "relational database", "dependency preservation"]
+  },
+  {
+    "text": "Formulate the Raft Consensus Protocol, detailing Leader Election, Log Replication, and Safety invariants. How does it handle network partitions in Byzantine-free environments?",
+    "code": "CS-412",
+    "department": "Computer Science",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "ETH Zurich",
+    "keyTopics": ["raft consensus", "distributed systems", "leader election", "log replication", "network partition"]
+  },
+  {
+    "text": "State the four necessary and sufficient conditions for system Deadlocks, and compare the Banker's deadlock avoidance algorithm with dynamic detection-and-recovery strategies.",
+    "code": "CS-303",
+    "department": "Computer Science",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "University of Tokyo",
+    "keyTopics": ["deadlock", "mutual exclusion", "banker's algorithm", "operating systems", "detection"]
+  },
+  {
+    "text": "Explain the architectural layout and backpropagation mechanics of Convolutional Neural Networks (CNNs). Derive the weight gradient update rules for a convolutional layer.",
+    "code": "CS-411",
+    "department": "Computer Science",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["convolutional neural networks", "cnn", "backpropagation", "gradient descent", "deep learning"]
+  },
+  {
+    "text": "State Maxwell's equations in both differential and integral forms, and derive the wave equation for electromagnetic fields in a homogeneous, isotropic lossy medium.",
+    "code": "EE-401",
+    "department": "Electrical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["maxwell's equations", "electromagnetism", "wave equation", "lossy medium"]
+  },
+  {
+    "text": "Analyze the starting and running torque characteristics of a Three-Phase Induction Motor. Derive the slip value for maximum torque under varying rotor resistance.",
+    "code": "EE-302",
+    "department": "Electrical Engineering",
+    "difficulty": "hard",
+    "marks": 12,
+    "sourceUniversity": "IIT Madras",
+    "keyTopics": ["induction motor", "slip", "torque", "rotor resistance", "three-phase"]
+  },
+  {
+    "text": "Design a 4-bit synchronous up/down binary counter using JK Flip-Flops. Draw the state transition diagram, K-maps, and complete digital logic circuit implementation.",
+    "code": "EE-202",
+    "department": "Electrical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Delhi",
+    "keyTopics": ["synchronous counter", "jk flip-flop", "state transition", "k-maps", "digital logic"]
+  },
+  {
+    "text": "Compare Amplitude Modulation (AM) and Frequency Modulation (FM) under signal-to-noise ratio (SNR) constraints. Explain the role of superheterodyne receivers.",
+    "code": "EE-303",
+    "department": "Electrical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "University of Oxford",
+    "keyTopics": ["amplitude modulation", "frequency modulation", "snr", "superheterodyne receiver"]
+  },
+  {
+    "text": "Formulate and prove the Superposition Theorem as applied to linear bilateral networks driven by multiple independent sinusoidal AC sources.",
+    "code": "EE-205",
+    "department": "Electrical Engineering",
+    "difficulty": "easy",
+    "marks": 5,
+    "sourceUniversity": "University of Tokyo",
+    "keyTopics": ["superposition theorem", "ac circuits", "linear networks", "sinusoidal sources"]
+  },
+  {
+    "text": "Analyze the frequency response of a active second-order Butterworth low-pass filter circuit. Derive the expression for the cutoff frequency and overall voltage gain.",
+    "code": "EE-311",
+    "department": "Electrical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "Imperial College London",
+    "keyTopics": ["butterworth filter", "frequency response", "cutoff frequency", "voltage gain", "active filter"]
+  },
+  {
+    "text": "Derive the steady-state, one-dimensional heat conduction equation in a composite hollow cylinder subject to convective boundary conditions on both inner and outer surfaces.",
+    "code": "ME-301",
+    "department": "Mechanical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["heat conduction", "hollow cylinder", "boundary conditions", "convective transfer"]
+  },
+  {
+    "text": "Derive the Navier-Stokes equations for three-dimensional, incompressible Newtonian fluid flow, detailing the physical significance of each term in the momentum equation.",
+    "code": "ME-401",
+    "department": "Mechanical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "ETH Zurich",
+    "keyTopics": ["navier-stokes", "incompressible flow", "newtonian fluid", "fluid dynamics"]
+  },
+  {
+    "text": "Determine the critical whirling speed of a flexible shaft carrying a single centralized rotor, considering both undamped and viscous-damped boundary environments.",
+    "code": "ME-404",
+    "department": "Mechanical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "IIT Bombay",
+    "keyTopics": ["whirling speed", "flexible shaft", "rotor dynamics", "viscous damping"]
+  },
+  {
+    "text": "Analyze the ideal gas Carnot Cycle on Pressure-Volume (P-V) and Temperature-Entropy (T-s) coordinates. Prove that Carnot efficiency depends solely on source and sink temperatures.",
+    "code": "ME-201",
+    "department": "Mechanical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "University of Cambridge",
+    "keyTopics": ["carnot cycle", "entropy", "p-v diagram", "thermal efficiency", "thermodynamics"]
+  },
+  {
+    "text": "Explain the structural mechanics and thermodynamic operations of a Four-Stroke Spark-Ignition (SI) internal combustion engine. Plot the ideal Otto cycle on P-V coordinates.",
+    "code": "ME-202",
+    "department": "Mechanical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Madras",
+    "keyTopics": ["spark-ignition", "otto cycle", "internal combustion engine", "thermodynamic stroke"]
+  },
+  {
+    "text": "Formulate the ultimate load-carrying capacity of a shallow rectangular foundation embedded in clay soil using Terzaghi's bearing capacity theory, explaining all factors.",
+    "code": "CE-401",
+    "department": "Civil Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "University of Oxford",
+    "keyTopics": ["shallow foundation", "terzaghi", "bearing capacity", "clay soil", "load capacity"]
+  },
+  {
+    "text": "Differentiate statically determinate and indeterminate structures. Apply the method of consistent deformations to analyze a propped cantilever beam under uniform load.",
+    "code": "CE-202",
+    "department": "Civil Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Delhi",
+    "keyTopics": ["determinate structures", "propped cantilever", "consistent deformations", "structural analysis"]
+  },
+  {
+    "text": "Derive the stiffness matrix for a 2D pin-jointed truss element in global coordinates, and explain the transformation from localized element coordinates.",
+    "code": "CE-303",
+    "department": "Civil Engineering",
+    "difficulty": "hard",
+    "marks": 12,
+    "sourceUniversity": "ETH Zurich",
+    "keyTopics": ["stiffness matrix", "truss element", "coordinate transformation", "finite element method"]
+  },
+  {
+    "text": "Explain the kinetic mechanism and biochemical reactions occurring in activated sludge processes during aerobic biological wastewater treatment.",
+    "code": "CE-205",
+    "department": "Civil Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["activated sludge", "aerobic treatment", "wastewater engineering", "biochemical kinetics"]
+  },
+  {
+    "text": "Formulate Rankine's and Coulomb's lateral active earth pressure theories, detailing their structural assumptions regarding retaining wall friction.",
+    "code": "CE-305",
+    "department": "Civil Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["earth pressure", "rankine", "coulomb", "retaining wall", "soil mechanics"]
+  },
+  {
+    "text": "Derive the McCabe-Thiele graphical method equations for binary distillation columns. Explain the physical significance of the feed line (q-line) for different feed thermal states.",
+    "code": "CH-302",
+    "department": "Chemical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["mccabe-thiele", "binary distillation", "q-line", "theoretical stages", "mass transfer"]
+  },
+  {
+    "text": "Derive the integral design equation for an ideal Plug Flow Reactor (PFR) operating under steady-state, isothermal conditions with second-order reaction kinetics.",
+    "code": "CH-401",
+    "department": "Chemical Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["plug flow reactor", "pfr", "reaction kinetics", "reactor design", "isothermal"]
+  },
+  {
+    "text": "State Fick's First and Second Laws of molecular diffusion, and derive the equation for steady-state equimolar counter-diffusion of two gases in a cylindrical duct.",
+    "code": "CH-204",
+    "department": "Chemical Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Kharagpur",
+    "keyTopics": ["fick's laws", "molecular diffusion", "equimolar counter-diffusion", "mass transfer"]
+  },
+  {
+    "text": "Formulate the design equation for a Continuous Stirred Tank Reactor (CSTR) operating under non-isothermal steady-state conditions, including the energy balance equation.",
+    "code": "CH-301",
+    "department": "Chemical Engineering",
+    "difficulty": "hard",
+    "marks": 12,
+    "sourceUniversity": "ETH Zurich",
+    "keyTopics": ["cstr", "non-isothermal", "reactor design", "energy balance"]
+  },
+  {
+    "text": "Explain the difference between Newtonian and non-Newtonian fluids. Model the shear stress versus shear rate relationship for power-law (pseudoplastic and dilatant) fluids.",
+    "code": "CH-205",
+    "department": "Chemical Engineering",
+    "difficulty": "easy",
+    "marks": 5,
+    "sourceUniversity": "University of Cambridge",
+    "keyTopics": ["newtonian", "non-newtonian", "power-law fluids", "rheology", "shear stress"]
+  },
+  {
+    "text": "Detail the steps of Recombinant DNA Technology. Explain how restriction endonucleases, DNA ligases, and plasmid vectors are utilized to clone a target gene.",
+    "code": "BT-301",
+    "department": "Biotechnology Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "University of Cambridge",
+    "keyTopics": ["recombinant dna", "restriction endonucleases", "dna ligase", "gene cloning", "plasmid vector"]
+  },
+  {
+    "text": "Describe the three temperature stages of the Polymerase Chain Reaction (PCR) and explain the specific bio-molecular function of heat-stable Taq DNA Polymerase.",
+    "code": "BT-202",
+    "department": "Biotechnology Engineering",
+    "difficulty": "easy",
+    "marks": 5,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["pcr", "polymerase chain reaction", "taq polymerase", "denaturation", "annealing"]
+  },
+  {
+    "text": "Analyze the oxygen mass transfer coefficient (KLa) in aerobic bioreactors. How does impeller design and aeration rate influence bioprocess yield in scaling operations?",
+    "code": "BT-303",
+    "department": "Biotechnology Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["oxygen mass transfer", "kla", "bioreactor", "impeller", "bioprocess scaling"]
+  },
+  {
+    "text": "State the Michaelis-Menten kinetic equations for single-substrate enzyme catalyzed reactions, and derive the expressions for Km and Vmax constants using Lineweaver-Burk plots.",
+    "code": "BT-201",
+    "department": "Biotechnology Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "IIT Bombay",
+    "keyTopics": ["michaelis-menten", "enzyme kinetics", "km", "vmax", "lineweaver-burk"]
+  },
+  {
+    "text": "Explain the molecular mechanism of CRISPR-Cas9 genome editing, detailing the roles of guide RNA (gRNA), PAM sequences, and double-stranded DNA break repairs.",
+    "code": "BT-410",
+    "department": "Biotechnology Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "Harvard University",
+    "keyTopics": ["crispr-cas9", "gene editing", "guide rna", "pam sequence", "double-stranded break"]
+  },
+  {
+    "text": "Explain the generation of aerodynamic lift using circulation theory (Kutta-Joukowski theorem) and Bernoulli's equation over a cambered NACA 4-digit airfoil.",
+    "code": "AE-301",
+    "department": "Aerospace Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "MIT (Massachusetts Institute of Technology)",
+    "keyTopics": ["aerodynamic lift", "circulation theory", "kutta-joukowski", "bernoulli", "airfoil"]
+  },
+  {
+    "text": "Describe the gas-turbine cycle of a turbojet propulsion engine. Draw the ideal Brayton cycle on P-V and T-s diagrams, and derive the thermal efficiency equation.",
+    "code": "AE-302",
+    "department": "Aerospace Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "IIT Kharagpur",
+    "keyTopics": ["turbojet", "gas turbine", "brayton cycle", "propulsion", "thermal efficiency"]
+  },
+  {
+    "text": "Formulate the Tsiolkovsky Rocket Equation, detailing structural mass fraction, payload mass ratio, and specific impulse. Calculate the delta-V required for planetary escape.",
+    "code": "AE-201",
+    "department": "Aerospace Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "California Institute of Technology",
+    "keyTopics": ["tsiolkovsky", "rocket equation", "specific impulse", "delta-v", "planetary escape"]
+  },
+  {
+    "text": "State the six Keplerian orbital elements and describe how they completely specify the 3D position and velocity of a satellite in a closed elliptical orbit.",
+    "code": "AE-305",
+    "department": "Aerospace Engineering",
+    "difficulty": "medium",
+    "marks": 10,
+    "sourceUniversity": "Stanford University",
+    "keyTopics": ["keplerian elements", "orbital mechanics", "elliptical orbit", "satellite tracking"]
+  },
+  {
+    "text": "Explain the phenomenon of aeroelastic wing flutter, detailing the structural coupling between torsional stiffness and bending modes, and outline prevention methods.",
+    "code": "AE-401",
+    "department": "Aerospace Engineering",
+    "difficulty": "hard",
+    "marks": 15,
+    "sourceUniversity": "IIT Kanpur",
+    "keyTopics": ["wing flutter", "aeroelasticity", "torsional stiffness", "bending modes", "structural resonance"]
+  }
+]

@@ -2,10 +2,10 @@ import { Search, Bell, Settings, HelpCircle } from 'lucide-react';
 
 const Navbar = () => {
     return (
-        <header className="h-[60px] flex items-center justify-between px-6 border-b border-border-color bg-bg-primary sticky top-0 z-40 flex-shrink-0">
+        <header className="h-[60px] flex items-center justify-between px-6 border-b border-slate-200/50 bg-white/80 backdrop-blur-md sticky top-0 z-40 flex-shrink-0 shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
             {/* Search */}
             <div className="flex items-center gap-3 flex-1 max-w-md">
-                <div className="flex items-center bg-bg-secondary border border-border-color rounded-md px-3 py-2 w-full transition-all focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/20">
+                <div className="flex items-center bg-slate-50/50 backdrop-blur-sm border border-slate-200/60 rounded-md px-3 py-2 w-full transition-all focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/20">
                     <Search size={15} className="text-text-muted mr-2 flex-shrink-0" />
                     <input
                         type="text"

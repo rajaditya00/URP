@@ -6,6 +6,7 @@ const resultSchema = new mongoose.Schema({
   description: { type: String },
   semester: { type: String, required: true },
   link: { type: String, required: true },
+  linkText: { type: String, default: 'View Result Document' },
   createdAt: { type: Date, default: Date.now }
 });
 

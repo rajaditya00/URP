@@ -17,7 +17,11 @@ const tiers = [
         demoEmail: 'rajaditya.addy00@gmail.com',
         demoPass: 'admin12345',
         role: 'SUPER_ADMIN',
-        theme: 'from-[#0f172a] to-[#1e293b]'
+        theme: 'from-[#0f172a] to-[#1e293b]',
+        activeTab: 'bg-[#0f172a] border-[#0f172a] text-white',
+        activeBtnBg: 'bg-[#0f172a] hover:bg-[#1e293b] border-[#0f172a]',
+        iconColor: 'text-indigo-400',
+        badgeBg: 'bg-slate-700 text-slate-100',
     },
     {
         id: 'College' as LoginTier,
@@ -28,7 +32,11 @@ const tiers = [
         demoEmail: 'principal@cet.edu',
         demoPass: 'college12345',
         role: 'COLLEGE',
-        theme: 'from-[#059669] to-[#047857]'
+        theme: 'from-[#059669] to-[#047857]',
+        activeTab: 'bg-[#059669] border-[#059669] text-white',
+        activeBtnBg: 'bg-[#059669] hover:bg-[#047857] border-[#059669]',
+        iconColor: 'text-emerald-300',
+        badgeBg: 'bg-emerald-700 text-emerald-100',
     },
     {
         id: 'Staff' as LoginTier,
@@ -39,7 +47,11 @@ const tiers = [
         demoEmail: 'faculty@cet.edu',
         demoPass: 'faculty12345',
         role: 'PROFESSOR',
-        theme: 'from-[#2563eb] to-[#1d4ed8]'
+        theme: 'from-[#2563eb] to-[#1d4ed8]',
+        activeTab: 'bg-[#2563eb] border-[#2563eb] text-white',
+        activeBtnBg: 'bg-[#2563eb] hover:bg-[#1d4ed8] border-[#2563eb]',
+        iconColor: 'text-blue-300',
+        badgeBg: 'bg-blue-700 text-blue-100',
     },
     {
         id: 'Student' as LoginTier,
@@ -50,7 +62,11 @@ const tiers = [
         demoEmail: 'student@cet.edu',
         demoPass: 'student12345',
         role: 'STUDENT',
-        theme: 'from-[#7c3aed] to-[#6d28d9]'
+        theme: 'from-[#7c3aed] to-[#6d28d9]',
+        activeTab: 'bg-[#7c3aed] border-[#7c3aed] text-white',
+        activeBtnBg: 'bg-[#7c3aed] hover:bg-[#6d28d9] border-[#7c3aed]',
+        iconColor: 'text-violet-300',
+        badgeBg: 'bg-violet-700 text-violet-100',
     }
 ];
 
@@ -137,7 +153,22 @@ const LoginPortal = () => {
                     _id: 'mock-college-id',
                     name: 'College of Engineering & Technology',
                     email: 'principal@cet.edu'
-                }
+                },
+                ...(matchedTier!.id === 'Student' ? {
+                    department: 'Computer Science',
+                    rollNo: '22IT05',
+                    registrationNo: '22106107006',
+                    semester: 'Sem 6',
+                    programme: 'B.tech',
+                    mobile: '+91 9102435650',
+                    dob: '2003-09-18',
+                    address: 'Bishaul, Harlakhi, Madhubani - 847240',
+                    aadharNo: '352265812884',
+                    fatherName: 'Avadhesh Kumar',
+                    motherName: 'Kamini Kumari',
+                    gender: 'Male',
+                    casteCategory: 'OBC'
+                } : {})
             };
 
             login(isUniAdminDemo ? 'mock-jwt-token-super' : `mock-jwt-token-${matchedTier!.id.toLowerCase()}`, mockUser);
@@ -244,12 +275,13 @@ const LoginPortal = () => {
                                     key={tier.id}
                                     type="button"
                                     onClick={() => handleTierChange(tier.id)}
-                                    className={`flex flex-col sm:flex-row items-center justify-center gap-2 py-3 px-2 sm:px-4 rounded-xl border font-bold text-xs transition-all duration-200 ${isActive
-                                            ? 'bg-[#0f172a] text-white border-[#0f172a] shadow-sm'
+                                    className={`flex flex-col sm:flex-row items-center justify-center gap-2 py-3 px-2 sm:px-4 rounded-xl border font-bold text-xs transition-all duration-200 shadow-sm ${
+                                        isActive
+                                            ? `${tier.activeTab} shadow-md`
                                             : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
-                                        }`}
+                                    }`}
                                 >
-                                    <span className={isActive ? 'text-indigo-400' : 'text-slate-400'}>{tier.icon}</span>
+                                    <span className={isActive ? tier.iconColor : 'text-slate-400'}>{tier.icon}</span>
                                     <span>{tier.title}</span>
                                 </button>
                             );
@@ -259,7 +291,7 @@ const LoginPortal = () => {
                     {/* Info Alert Box with Demo Injection */}
                     <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200/60 rounded-2xl mb-6 gap-3">
                         <div className="min-w-0">
-                            <span className="inline-block text-[9px] font-black text-slate-700 bg-slate-200/80 px-2 py-0.5 rounded uppercase tracking-wider mb-1">
+                            <span className={`inline-block text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider mb-1 ${currentTier.badgeBg}`}>
                                 {currentTier.badge}
                             </span>
                             <p className="text-slate-500 text-xs font-medium truncate">{currentTier.desc}</p>
@@ -267,7 +299,7 @@ const LoginPortal = () => {
                         <button
                             type="button"
                             onClick={injectDemo}
-                            className="bg-[#0f172a] hover:bg-slate-800 text-white text-[10px] font-black px-4 py-2 rounded-xl transition-all uppercase tracking-wider flex-shrink-0 shadow-sm border border-slate-900"
+                            className={`text-white text-[10px] font-black px-4 py-2 rounded-xl transition-all uppercase tracking-wider flex-shrink-0 shadow-sm border ${currentTier.activeBtnBg}`}
                         >
                             Demo Account
                         </button>
@@ -329,7 +361,7 @@ const LoginPortal = () => {
 
                         <button
                             type="submit"
-                            className="w-full h-12 bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-sm transition-all duration-200 mt-4 uppercase tracking-wider border border-slate-900 flex items-center justify-center gap-2"
+                            className={`w-full h-12 text-white font-bold text-xs rounded-xl shadow-sm transition-all duration-200 mt-4 uppercase tracking-wider border flex items-center justify-center gap-2 ${currentTier.activeBtnBg}`}
                         >
                             <ShieldCheck size={14} />
                             Secure Sign In
