@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 const University = require('../models/University');
 const User = require('../models/User');
 const upload = require('../middleware/upload');
@@ -341,6 +343,25 @@ router.put('/:id/details', protect, async (req, res) => {
     res.json(uni);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET - Fetch university logo directly by university name
+router.get('/logo/:name', async (req, res) => {
+  try {
+    const uniName = decodeURIComponent(req.params.name);
+    const uni = await University.findOne({ name: { $regex: new RegExp('^' + uniName + '$', 'i') } });
+    if (!uni || !uni.logoUrl) {
+      return res.status(404).json({ message: 'Logo not found' });
+    }
+    const absolutePath = path.join(__dirname, '..', uni.logoUrl);
+    if (fs.existsSync(absolutePath)) {
+      return res.sendFile(absolutePath);
+    } else {
+      return res.redirect(uni.logoUrl);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

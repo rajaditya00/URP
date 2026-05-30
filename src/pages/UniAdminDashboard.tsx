@@ -16,6 +16,7 @@ type College = {
     email: string;
     phone: string;
     principalName: string;
+    logoUrl?: string;
     adminUser?: { email: string; name: string } | null;
     generatedCredential?: string;
     generatedPassword?: string;
@@ -85,6 +86,7 @@ const UniAdminDashboard = () => {
     const [showAddCollege, setShowAddCollege] = useState(false);
     const [editingCollege, setEditingCollege] = useState<College | null>(null);
     const [newCollege, setNewCollege] = useState({ name: '', address: '', email: '', phone: '', principalName: '' });
+    const [newCollegeLogo, setNewCollegeLogo] = useState<File | null>(null);
 
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState('');
@@ -302,13 +304,29 @@ const UniAdminDashboard = () => {
         }
         setSaving(true);
         try {
+            const formData = new FormData();
+            formData.append('name', newCollege.name);
+            formData.append('email', newCollege.email);
+            formData.append('phone', newCollege.phone);
+            formData.append('principalName', newCollege.principalName);
+            formData.append('address', newCollege.address);
+            if (newCollegeLogo) {
+                formData.append('logo', newCollegeLogo);
+            }
+
+            const fetchHeaders = new Headers();
+            fetchHeaders.append('Authorization', `Bearer ${token}`);
+
             const res = await fetch(BASE_URL + '/api/college', {
-                method: 'POST', headers, body: JSON.stringify(newCollege)
+                method: 'POST', 
+                headers: fetchHeaders, 
+                body: formData
             });
             const data = await res.json();
             if (res.ok) {
                 await loadColleges();
                 setNewCollege({ name: '', address: '', email: '', phone: '', principalName: '' });
+                setNewCollegeLogo(null);
                 setShowAddCollege(false);
                 // Show the dispatched credentials
                 if (data.credentials) {
@@ -785,6 +803,20 @@ const UniAdminDashboard = () => {
                                             </div>
                                         ))}
                                         <div className="sm:col-span-2">
+                                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">College Logo (Optional)</label>
+                                            <div className="relative">
+                                                <input type="file" id="college-logo-upload" accept="image/*" onChange={e => setNewCollegeLogo(e.target.files?.[0] || null)} className="hidden" />
+                                                <label htmlFor="college-logo-upload" className="flex items-center justify-between w-full h-10 px-3.5 border border-[#D0D5DD] rounded-lg text-sm bg-white hover:bg-gray-50 cursor-pointer transition-all">
+                                                    <span className="text-slate-500 text-xs truncate max-w-[250px]">
+                                                        {newCollegeLogo ? `📷 ${newCollegeLogo.name}` : 'Select college logo image...'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#1e3a5f] bg-[#1e3a5f]/5 hover:bg-[#1e3a5f]/10 px-2.5 py-1 rounded transition-colors">
+                                                        Browse
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div className="sm:col-span-2">
                                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1">Full Address</label>
                                             <textarea value={newCollege.address} onChange={e => setNewCollege(p => ({ ...p, address: e.target.value }))}
                                                 className="w-full h-20 px-3 py-2 border border-[#D0D5DD] rounded-lg text-sm focus:border-[#1e3a5f] outline-none resize-none" />
@@ -818,9 +850,13 @@ const UniAdminDashboard = () => {
                                             {/* Header */}
                                             <div className="px-6 py-5 bg-slate-50/50 backdrop-blur-sm border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/5 border border-[#1e3a5f]/10 flex items-center justify-center text-[#1e3a5f]">
-                                                        <School size={20} />
-                                                    </div>
+                                                    {c.logoUrl ? (
+                                                        <img src={`${BASE_URL}/${c.logoUrl.replace(/^\/+/, '')}`} alt="college-logo" className="w-10 h-10 rounded-xl object-contain bg-white border border-[#1e3a5f]/10 p-0.5" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-xl bg-[#1e3a5f]/5 border border-[#1e3a5f]/10 flex items-center justify-center text-[#1e3a5f]">
+                                                            <School size={20} />
+                                                        </div>
+                                                    )}
                                                     <div>
                                                         <h3 className="font-bold text-text-primary text-base">{c.name}</h3>
                                                         {c.principalName && <p className="text-xs text-text-secondary mt-0.5 font-medium flex items-center gap-1">Principal: <span className="font-bold text-[#1e3a5f]">{c.principalName}</span></p>}

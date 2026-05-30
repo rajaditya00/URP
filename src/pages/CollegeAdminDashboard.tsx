@@ -9,7 +9,7 @@ const DEPARTMENTS = ['Computer Science', 'Mechanical Engineering', 'Electrical E
 const FACULTY_POSITIONS = ['Professor', 'Associate Professor', 'Assistant Professor', 'Lecturer', 'Guest Faculty'];
 const SPECIAL_ROLES = ['None', 'Head of Department (HOD)', 'Examination Controller', 'Dean of Academics', 'Placement Coordinator'];
 
-type Faculty = { id: string; name: string; email: string; mobile?: string; department: string; position: string; specialRole: string; status: 'Active' | 'On Leave' };
+type Faculty = { id: string; name: string; email: string; mobile?: string; department: string; position: string; specialRole: string; status: 'Active' | 'On Leave'; generatedPassword?: string };
 type Student = { id: string; name: string; email: string; rollNo: string; registrationNo?: string; department: string; semester: string; batch?: string; status: 'Active' | 'Graduated'; address?: string; fatherName?: string; motherName?: string; gender?: string; dob?: string; casteCategory?: string; mobile?: string; aadharNo?: string; programme?: string; mentor?: { id?: string; _id?: string; name: string; email: string; department?: string; position?: string; }; };
 
 const CollegeAdminDashboard = () => {
@@ -91,7 +91,8 @@ const CollegeAdminDashboard = () => {
                     department: m.department || 'Not Assigned',
                     position: m.position || 'Professor',
                     specialRole: m.specialRole || 'None',
-                    status: 'Active'
+                    status: 'Active',
+                    generatedPassword: m.generatedPassword
                 })));
                 setStudents(data.filter(m => m.role === 'STUDENT').map(m => ({
                     id: m._id, name: m.name, email: m.email,
@@ -322,13 +323,17 @@ const CollegeAdminDashboard = () => {
 
                 <div className="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between w-full relative z-10">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{
-                            background: 'linear-gradient(135deg, rgba(56,189,248,0.75) 0%, rgba(59,130,246,0.85) 100%)',
-                            border: '1px solid rgba(147,210,255,0.3)',
-                            boxShadow: '0 0 16px rgba(56,189,248,0.35), inset 0 1px 0 rgba(255,255,255,0.15)'
-                        }}>
-                            <Building className="text-white w-5 h-5" />
-                        </div>
+                        {user?.college?.logoUrl ? (
+                            <img src={`${BASE_URL}/${user.college.logoUrl.replace(/^\/+/, '')}`} alt="college-logo" className="w-10 h-10 rounded-xl object-contain bg-white p-1 shadow-md border border-white/20" />
+                        ) : (
+                            <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{
+                                background: 'linear-gradient(135deg, rgba(56,189,248,0.75) 0%, rgba(59,130,246,0.85) 100%)',
+                                border: '1px solid rgba(147,210,255,0.3)',
+                                boxShadow: '0 0 16px rgba(56,189,248,0.35), inset 0 1px 0 rgba(255,255,255,0.15)'
+                            }}>
+                                <Building className="text-white w-5 h-5" />
+                            </div>
+                        )}
                         <div>
                             <p className="font-extrabold text-sm tracking-wide" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.4)' }}>{user?.college?.name || 'College Administrator Portal'}</p>
                             <p className="text-[10px] font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(147,210,255,0.65)' }}>Management Dashboard</p>
@@ -642,6 +647,12 @@ const CollegeAdminDashboard = () => {
                                                     <td className="px-6 py-4">
                                                         <p className="font-bold text-slate-900">{f.name}</p>
                                                         <p className="text-xs text-slate-500 font-medium">{f.email}</p>
+                                                        {f.generatedPassword && (
+                                                            <div className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-md text-[10px] text-amber-700 font-medium">
+                                                                <span className="font-bold">Initial Pass:</span>
+                                                                <span className="font-mono bg-amber-100/60 px-1 rounded font-bold">{f.generatedPassword}</span>
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td className="px-6 py-4 text-sm font-semibold text-slate-700">{f.department}</td>
                                                     <td className="px-6 py-4">

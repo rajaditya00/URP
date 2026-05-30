@@ -18,6 +18,7 @@ const collegeSchema = new mongoose.Schema({
   },
   generatedCredential: { type: String }, // Custom abbreviation ID e.g., MIT453
   generatedPassword: { type: String }, // Saved plain text password for dashboard access
+  logoUrl: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

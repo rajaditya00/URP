@@ -194,7 +194,8 @@ router.post('/professor', protect, authorize('COLLEGE'), async (req, res) => {
       department, position, specialRole, mobile,
       university: req.user.university,
       college: req.user.college,
-      mustChangePassword: true
+      mustChangePassword: true,
+      generatedPassword: generatedPassword
     });
     await professor.save();
 

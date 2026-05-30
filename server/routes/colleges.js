@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs');
 const College = require('../models/College');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 const sendEmail = require('../utils/sendEmail');
+const upload = require('../middleware/upload');
 
 // Generate a random password: 2 uppercase + 6 random alphanumeric
 const generatePassword = (prefix = 'CC') => {
@@ -30,7 +33,7 @@ router.get('/', protect, async (req, res) => {
 });
 
 // POST - Add a new college + create college admin user + email credentials
-router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
+router.post('/', protect, authorize('SUPER_ADMIN'), upload.single('logo'), async (req, res) => {
   try {
     const { name, address, email, phone, principalName } = req.body;
 
@@ -53,12 +56,15 @@ router.post('/', protect, authorize('SUPER_ADMIN'), async (req, res) => {
     const randomDigits = Math.floor(100 + Math.random() * 900);
     const generatedCredential = `${prefix}${randomDigits}`;
 
+    const logoUrl = req.file ? `/uploads/logo/${req.file.filename}` : null;
+
     // Create the college record with populated credentials
     const college = new College({
       university: req.user.university,
       name, address, email, phone, principalName,
       generatedCredential,
-      generatedPassword
+      generatedPassword,
+      logoUrl
     });
     await college.save();
 
@@ -184,11 +190,14 @@ IntelliQ Team`;
 });
 
 // PUT - Update college details AND module permissions
-router.put('/:id', protect, authorize('SUPER_ADMIN'), async (req, res) => {
+router.put('/:id', protect, authorize('SUPER_ADMIN'), upload.single('logo'), async (req, res) => {
   try {
     const college = await College.findOne({ _id: req.params.id, university: req.user.university });
     if (!college) return res.status(404).json({ message: 'College not found' });
     Object.assign(college, req.body);
+    if (req.file) {
+      college.logoUrl = `/uploads/logo/${req.file.filename}`;
+    }
     await college.save();
     res.json(college);
   } catch (err) {
@@ -204,6 +213,25 @@ router.delete('/:id', protect, authorize('SUPER_ADMIN'), async (req, res) => {
     // Also remove the college admin user
     await User.deleteMany({ college: college._id });
     res.json({ message: 'College and associated users removed' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET - Fetch college logo directly by college name
+router.get('/logo/:name', async (req, res) => {
+  try {
+    const collegeName = decodeURIComponent(req.params.name);
+    const college = await College.findOne({ name: { $regex: new RegExp('^' + collegeName + '$', 'i') } });
+    if (!college || !college.logoUrl) {
+      return res.status(404).json({ message: 'Logo not found' });
+    }
+    const absolutePath = path.join(__dirname, '..', college.logoUrl);
+    if (fs.existsSync(absolutePath)) {
+      return res.sendFile(absolutePath);
+    } else {
+      return res.redirect(college.logoUrl);
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

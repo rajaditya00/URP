@@ -12,7 +12,7 @@ const protect = async (req, res, next) => {
         let matchedRole = 'PROFESSOR';
         if (rolePart === 'SUPER' || rolePart === 'SUPER_ADMIN') matchedRole = 'SUPER_ADMIN';
         else if (rolePart === 'SYSTEM' || rolePart === 'SYSTEM_ADMIN') matchedRole = 'SYSTEM_ADMIN';
-        else if (rolePart === 'COLLEGE' || rolePart === 'COLLEGE_ADMIN') matchedRole = 'COLLEGE_ADMIN';
+        else if (rolePart === 'COLLEGE' || rolePart === 'COLLEGE_ADMIN') matchedRole = 'COLLEGE';
         else if (rolePart === 'STUDENT') matchedRole = 'STUDENT';
 
         // Check if there is any user in DB of this role to make it realistic, or mock it

@@ -111,6 +111,7 @@ const changePassword = async (req, res) => {
 
         user.password = newPassword;
         user.mustChangePassword = false;
+        user.generatedPassword = undefined;
         await user.save();
 
         res.json({ msg: 'Password updated successfully' });
@@ -293,6 +294,7 @@ const resetPassword = async (req, res) => {
         if (!user) return res.status(400).json({ msg: 'User not found' });
 
         user.password = newPassword;
+        user.generatedPassword = undefined;
         await user.save();
 
         await Otp.deleteOne({ identifier: `reset_${email}` });

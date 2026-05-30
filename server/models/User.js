@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
   mobile: { type: String },
   aadharNo: { type: String },
   profileImage: { type: String },
+  generatedPassword: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 
